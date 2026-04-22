@@ -1,61 +1,105 @@
-# Rokhas Digital Administration Platform
+# Rokhas.
 
-Rokhas is a comprehensive digital administration platform designed to simplify governmental and administrative procedures for citizens and businesses. The platform offers a centralized hub for submitting requests, tracking ongoing dossiers, and processing administrative acts.
+**Digital Administration Platform**  
+*Simplify governmental and administrative procedures for citizens and businesses with an intelligent, automated system.*
 
-This repository employs a microservices-inspired architecture structured into four main components:
+## Overview.
 
-## 🗂 Project Structure
+Rokhas is a comprehensive digital administration platform designed to simplify governmental and administrative procedures. It offers a centralized hub for submitting requests, tracking ongoing dossiers, and processing administrative acts.
 
-### 1. `frontend/`
-The user-facing application built with **Next.js**. It provides a premium, responsive interface tailored for three distinct user profiles:
-- **Citizens**: To submit personal document requests and track files.
-- **Businesses (Entreprises)**: For commercial authorizations and professional services.
-- **Administration**: A secure dashboard for agents to validate and process incoming requests.
+With Rokhas, citizens and businesses can easily manage their administrative needs, while the administration benefits from a secure dashboard and intelligent automated agents to validate and process requests efficiently.
 
-*Tech stack*: Next.js (App Router), TypeScript, Vanilla CSS Modules.
+### Why Rokhas?
+- Centralized hub for all administrative procedures
+- Tailored profiles for Citizens, Businesses, and Administration
+- Intelligent automated system to assist users and route requests
+- Built with modern 2026 tech stack
 
-### 2. `backend/`
-The core API service responsible for business logic, user authentication, and serving data to the frontend. It processes queries, manages transactions, and securely communicates with the database layer.
+## Key Features.
 
-*Tech stack*: (To be initialized)
+### User Portals
+- **Citizens**: Submit personal document requests and track ongoing files.
+- **Businesses (Entreprises)**: Manage commercial authorizations and professional services.
+- **Administration**: Secure dashboard for agents to validate and process requests.
 
-### 3. `agent/`
-An intelligent, automated system designed to assist both users and administrators. The agent can route requests intelligently, summarize dossiers, extract data from uploaded documents, or provide conversational support (chatbot) to help users navigate their administrative tasks.
+### AI-Powered Features (Agent)
+- Intelligent routing of incoming requests
+- Automatic summarization of dossiers
+- Data extraction from uploaded documents
+- Conversational chatbot support to navigate administrative tasks
 
-*Tech stack*: (To be initialized - likely Python/LangChain or similar)
+## Tech Stack.
 
-### 4. `data/`
-This directory manages the data layer of the application. It contains database schemas, initialization scripts, seed data, and any persistent data volumes (like relational databases or vector stores used by the AI agent).
+| Layer          | Technology                                      | Purpose |
+|----------------|--------------------------------------------------|---------|
+| **Frontend**   | Next.js (App Router) + TypeScript + Vanilla CSS | Modern, fast UI |
+| **Backend**    | FastAPI (Python)                                 | Core API service |
+| **Agent**      | Python + LangChain / Anthropic                   | Intelligent automation |
+| **Vector Store**| ChromaDB (local)                                | Embeddings storage |
+| **Database**   | PostgreSQL / Redis                               | Persistent data |
 
-*Tech stack*: (To be initialized - e.g., PostgreSQL / Redis / Vector Database)
+## Architecture.
 
----
+The repository employs a microservices-inspired architecture structured into four main components:
 
-## 🚀 Getting Started
+1. `frontend/` - User-facing application built with Next.js
+2. `backend/` - Core API service for business logic
+3. `agent/` - Intelligent automated system for assistance
+4. `data/` - Database schemas and volumes
 
-Currently, the `frontend` module is initialized. To run the frontend locally:
+## Installation & Setup.
 
-1. Navigate to the frontend directory:
-   ```bash
-   cd frontend
-   ```
+### Prerequisites
+- Node.js 20+
+- Python 3.11+
+- Git
+- Docker & Docker Compose (for complete deployment)
 
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
+### 1. Clone the repository
+```bash
+git clone https://github.com/pluto-hyp/Rokhas.git
+cd Rokhas
+```
 
-3. Start the development server:
-   ```bash
-   npm run dev
-   ```
+### 2. Frontend Setup (Next.js)
+```bash
+cd frontend
+npm install
+npm run dev
+```
+*Open http://localhost:3000*
 
-4. Open [http://localhost:3000](http://localhost:3000) in your browser.
+### 3. Backend & Agent Setup
+*(Further instructions for backend, agent, and data modules will be populated as they are integrated)*
 
-*(Further instructions for `backend`, `agent`, and `data` will be populated here as they are integrated via Docker Compose).*
+## Project Structure.
+```bash
+Rokhas/
+├── frontend/               # Next.js app
+├── backend/                # FastAPI service
+├── agent/                  # Intelligent AI agent (Python)
+├── data/                   # Database schemas & persistent data
+├── docker-compose.yml      # Orchestration
+└── README.md
+```
 
-## 🐳 Docker Deployment
-A `docker-compose.yml` file is provided at the root to orchestrate the entire platform. Once all modules are set up, you will be able to start the complete stack using:
+## Docker Deployment.
+
+A `docker-compose.yml` file is provided at the root to orchestrate the entire platform. Once all modules are set up, start the complete stack using:
 ```bash
 docker-compose up --build
 ```
+
+## License.
+This project is licensed under the **MIT License — see the LICENSE file for details**.
+
+---
+
+<div align="center">
+
+**Made with ❤️ for modern digital administration**
+
+⭐ Star the repo if you like the project!
+Any questions or feedback? Feel free to [open an issue](https://github.com/pluto-hyp/Rokhas/issues) or reach out.
+
+</div>
