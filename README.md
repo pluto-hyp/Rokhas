@@ -82,6 +82,28 @@ Rokhas/
 ├── docker-compose.yml      # Orchestration
 └── README.md
 ```
+### Backend Structure
+```bash
+backend/
+├── app/
+│   ├── main.py                  # FastAPI application instance
+│   ├── core/
+│   │   ├── config.py            # Environment variables & settings
+│   │   ├── security.py          # Password hashing & JWT generation
+│   │   └── database.py          # SQLAlchemy engine & session maker
+│   ├── models/                  # SQLAlchemy ORM Models (e.g., User, Dossier)
+│   ├── schemas/                 # Pydantic schemas (e.g., UserCreate, DossierResponse)
+│   ├── crud/                    # Reusable database operations (Create, Read, Update, Delete)
+│   ├── api/
+│   │   ├── dependencies.py      # FastAPI Depends (e.g., get_db, get_current_user)
+│   │   └── v1/                  # API version 1 routers
+│   │       ├── auth.py          # Login / Registration
+│   │       ├── users.py         # User management
+│   │       └── dossiers.py      # Submitting and tracking requests
+│   └── services/                # Business logic & external API calls (e.g., calling the Agent)
+├── alembic/                     # Database migrations                          
+└── .env             # Environment variables
+```
 
 ## Docker Deployment.
 
