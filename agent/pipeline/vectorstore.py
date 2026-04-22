@@ -1,6 +1,6 @@
 import chromadb
 from sentence_transformers import SentenceTransformer
-from ingest import extract_text_from_pdf, chunk_documents
+from .ingest import extract_text_from_pdf, chunk_documents
 from pathlib import Path
 
 # Modèle multilingue — supporte l'arabe, le français et l'anglais

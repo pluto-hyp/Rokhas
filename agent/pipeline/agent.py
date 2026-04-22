@@ -1,7 +1,7 @@
-import anthropic
 import os
+import requests
 from dotenv import load_dotenv
-from vectorstore import VectorStore
+from .vectorstore import VectorStore
 
 load_dotenv()
 
@@ -23,20 +23,23 @@ Règles importantes :
 
 class RokhasAgent:
     def __init__(self):
-        self.client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
         self.store = VectorStore()
+        
+        # Options: "ollama", "gemini"
+        self.provider = os.getenv("LLM_PROVIDER", "ollama").lower()
+
+        if self.provider == "gemini":
+            import google.generativeai as genai
+            genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+            self.gemini_model = genai.GenerativeModel('gemini-1.5-flash', system_instruction=SYSTEM_PROMPT)
 
     def query(self, question: str, conversation_history: list = []) -> dict:
-        # 1. Retrieval — chercher les chunks pertinents
         relevant_chunks = self.store.search(question, n_results=5)
 
-        # 2. Construire le contexte
         context = "\n\n---\n\n".join([
             f"[Source: {c['source']}]\n{c['content']}"
             for c in relevant_chunks
         ])
-
-        # 3. Construire le message avec contexte
         user_message = f"""Contexte réglementaire pertinent :
 {context}
 
@@ -48,15 +51,42 @@ Question : {question}"""
             {"role": "user", "content": user_message}
         ]
 
-        # 4. Appel LLM
-        response = self.client.messages.create(
-            model="claude-opus-4-6",
-            max_tokens=1500,
-            system=SYSTEM_PROMPT,
-            messages=messages
-        )
-
-        answer = response.content[0].text
+        answer = ""
+        
+        if self.provider == "anthropic":
+            response = self.client.messages.create(
+                model="claude-3-opus-20240229",
+                max_tokens=1500,
+                system=SYSTEM_PROMPT,
+                messages=messages
+            )
+            answer = response.content[0].text
+            
+        elif self.provider == "gemini":
+            gemini_messages = []
+            for m in messages:
+                role = "user" if m["role"] == "user" else "model"
+                gemini_messages.append({"role": role, "parts": [m["content"]]})
+            response = self.gemini_model.generate_content(gemini_messages)
+            answer = response.text
+            
+        elif self.provider == "ollama":
+            ollama_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+            ollama_model = os.getenv("OLLAMA_MODEL", "llama3.1")
+            
+            payload = {
+                "model": ollama_model,
+                "messages": [{"role": "system", "content": SYSTEM_PROMPT}] + messages,
+                "stream": False
+            }
+            try:
+                res = requests.post(f"{ollama_url}/api/chat", json=payload)
+                res.raise_for_status()
+                answer = res.json()["message"]["content"]
+            except requests.exceptions.ConnectionError:
+                answer = "Erreur : Impossible de se connecter à Ollama. Veuillez vérifier que l'application Ollama est installée et lancée (http://localhost:11434)."
+            except Exception as e:
+                answer = f"Erreur inattendue avec Ollama : {e}"
 
         return {
             "answer": answer,
@@ -83,12 +113,10 @@ Liste les points conformes, les non-conformités, et les pièces manquantes.
 if __name__ == "__main__":
     agent = RokhasAgent()
 
-    # Test 1 — question simple
     result = agent.query("Quelle est la hauteur maximale autorisée en zone résidentielle ?")
     print("Réponse :", result["answer"])
     print("Sources :", result["sources"])
 
-    # Test 2 — vérification dossier
     dossier = {
         "type": "Villa individuelle",
         "hauteur": 9.5,
