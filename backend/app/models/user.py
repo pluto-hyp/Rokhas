@@ -10,7 +10,6 @@ class User(Base):
     hashed_password = Column(String, nullable=False)
     full_name = Column(String, index=True)
     
-    # "citizen", "business", "admin"
     role = Column(String, default="citizen", nullable=False)
     
     is_active = Column(Boolean, default=True)

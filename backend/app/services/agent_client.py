@@ -10,7 +10,6 @@ async def verify_dossier_with_agent(dossier_data: Dict[str, Any]) -> Dict[str, A
     """
     async with httpx.AsyncClient() as client:
         try:
-            # We map the database dossier model to the fields expected by the agent
             payload = {
                 "type": dossier_data.get("type", "Non spécifié"),
                 "hauteur": float(dossier_data.get("hauteur") or 0.0),
