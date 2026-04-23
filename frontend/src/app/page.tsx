@@ -1,186 +1,170 @@
-import Link from 'next/link';
-import styles from './page.module.css';
+import Link from "next/link";
+import { SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 
 export default function Home() {
   return (
-    <div className={styles.container}>
-      {/* 1. Hero Section */}
-      <section className={styles.hero}>
-        <div className={styles.heroContent}>
-          <h1 className={styles.title}>Rokhas: The Blueprint of Digital Administration.</h1>
-          <p className={styles.tagline}>
-            Streamlining building permits and architectural planning in Morocco with precision, speed, and intelligence.
+    <div className="min-h-screen bg-topography font-sans text-[var(--color-text)]">
+      
+      {/* Navigation */}
+      <nav className="fixed top-0 w-full bg-[#F4F1EA]/80 backdrop-blur-md z-50 border-b border-[var(--color-border)]">
+        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+          <div className="font-serif text-3xl font-bold tracking-tight text-[var(--color-primary)]">
+            Rokhas.
+          </div>
+          <div className="flex items-center space-x-8">
+            <Link href="#about" className="text-sm font-medium hover:text-[var(--color-primary)] transition-colors">About</Link>
+            <Link href="#workflow" className="text-sm font-medium hover:text-[var(--color-primary)] transition-colors">Workflow</Link>
+            <div className="pl-4 border-l border-[var(--color-border)]">
+              <SignedOut>
+                <SignInButton mode="modal">
+                  <button className="bg-[var(--color-primary)] text-white px-6 py-2 rounded-full text-sm font-semibold hover:bg-[var(--color-primary-hover)] transition-all shadow-sm">
+                    Sign In
+                  </button>
+                </SignInButton>
+              </SignedOut>
+              <SignedIn>
+                <div className="flex items-center gap-4">
+                  <Link href="/dashboard" className="text-sm font-bold text-[var(--color-primary)] hover:underline">Dashboard</Link>
+                  <UserButton afterSignOutUrl="/" appearance={{ elements: { avatarBox: "w-10 h-10 border-2 border-[var(--color-primary)]" } }} />
+                </div>
+              </SignedIn>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      {/* Hero Section */}
+      <section className="pt-40 pb-24 px-6 relative">
+        <div className="max-w-4xl mx-auto text-center space-y-8">
+          <h1 className="font-serif text-6xl md:text-7xl lg:text-8xl font-medium leading-[1.1] text-[#1C1917]">
+            The Blueprint of<br/>
+            <span className="text-[var(--color-primary)] italic pr-4">Digital Administration.</span>
+          </h1>
+          <p className="text-xl md:text-2xl text-[var(--color-text-muted)] max-w-2xl mx-auto leading-relaxed font-light">
+            Streamlining building permits and architectural planning in Morocco with precision, transparency, and intelligence.
           </p>
-          <Link href="/dashboard" className={styles.ctaButton}>
-            Request a Permit
-          </Link>
-        </div>
-      </section>
-
-      {/* 2. What is Rokhas? */}
-      <section className={`${styles.section} ${styles.sectionLight}`}>
-        <div className={styles.sectionHeader}>
-          <h2 className={styles.sectionTitle}>What is Rokhas?</h2>
-          <p className={styles.sectionSubtitle}>
-            Rokhas digitizes and standardizes the entire building permit process in Morocco. From architectural plan submissions to final municipal approvals, our platform provides a single source of truth for all stakeholders.
-          </p>
-        </div>
-        {/* Subtle Watermark Silhouette */}
-        <svg className={styles.watermark} viewBox="0 0 100 100" preserveAspectRatio="none">
-          <path d="M10,90 L10,50 L50,20 L90,50 L90,90 Z" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeDasharray="5,5" fillOpacity="0.1" />
-          <rect x="30" y="60" width="15" height="30" fill="none" stroke="currentColor" strokeWidth="2" />
-          <rect x="60" y="50" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" />
-        </svg>
-      </section>
-
-      {/* 3. Who Uses Rokhas? */}
-      <section className={`${styles.section} ${styles.sectionWhite}`}>
-        <div className={styles.sectionHeader}>
-          <h2 className={styles.sectionTitle}>Who Uses Rokhas?</h2>
-          <p className={styles.sectionSubtitle}>A unified ecosystem for every role in the construction lifecycle.</p>
-        </div>
-        
-        <div className={styles.rolesGrid}>
-          {/* Citizen */}
-          <div className={styles.roleCard}>
-            <div className={styles.roleIcon}>
-              <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-            </div>
-            <h3 className={styles.roleTitle}>Citizen</h3>
-            <p className={styles.roleDesc}>Submit personal building permit requests, track their progress in real-time, and download approved certificates directly.</p>
-          </div>
-
-          {/* Architect */}
-          <div className={styles.roleCard}>
-            <div className={styles.roleIcon}>
-              <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z"></path></svg>
-            </div>
-            <h3 className={styles.roleTitle}>Architect</h3>
-            <p className={styles.roleDesc}>Attach technical plans, structural blueprints, and validate project documentation against municipal regulations.</p>
-          </div>
-
-          {/* Municipality Agent */}
-          <div className={styles.roleCard}>
-            <div className={styles.roleIcon}>
-              <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            </div>
-            <h3 className={styles.roleTitle}>Municipality Agent</h3>
-            <p className={styles.roleDesc}>Review incoming applications, communicate with architects, and formally approve or reject permits via secure digital signatures.</p>
-          </div>
-
-          {/* Inspector */}
-          <div className={styles.roleCard}>
-            <div className={styles.roleIcon}>
-              <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-            </div>
-            <h3 className={styles.roleTitle}>Inspector</h3>
-            <p className={styles.roleDesc}>Conduct on-site construction visits, take photos, and submit field compliance reports directly from your mobile device.</p>
-          </div>
-
-          {/* Admin */}
-          <div className={styles.roleCard}>
-            <div className={styles.roleIcon}>
-              <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-            </div>
-            <h3 className={styles.roleTitle}>Admin</h3>
-            <p className={styles.roleDesc}>Manage user access, configure municipal workflows, and monitor platform health through the master dashboard.</p>
+          <div className="pt-8">
+            <SignedOut>
+              <SignInButton mode="modal">
+                <button className="bg-[#1C1917] text-white px-10 py-4 rounded-full text-lg font-medium hover:bg-black transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1">
+                  Start Your Project
+                </button>
+              </SignInButton>
+            </SignedOut>
+            <SignedIn>
+              <Link href="/dashboard" className="bg-[var(--color-primary)] text-white px-10 py-4 rounded-full text-lg font-medium hover:bg-[var(--color-primary-hover)] transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1 inline-block">
+                Go to Dashboard
+              </Link>
+            </SignedIn>
           </div>
         </div>
       </section>
 
-      {/* 4. How It Works */}
-      <section className={`${styles.section} ${styles.sectionLight}`}>
-        <div className={styles.sectionHeader}>
-          <h2 className={styles.sectionTitle}>How It Works</h2>
-          <p className={styles.sectionSubtitle}>A seamless, transparent pipeline from drafting table to construction site.</p>
-        </div>
-        
-        <div className={styles.workflowContainer}>
-          <div className={styles.step}>
-            <div className={styles.stepNumber}>1</div>
-            <h4 className={styles.stepTitle}>Submit</h4>
-            <p className={styles.stepDesc}>Upload architectural plans & documents</p>
+      {/* Who Uses Rokhas - Editorial Cards */}
+      <section id="about" className="py-24 px-6 bg-[#FFFFFF] border-y border-[var(--color-border)]">
+        <div className="max-w-7xl mx-auto">
+          <div className="mb-16 md:flex justify-between items-end border-b border-[var(--color-border)] pb-8">
+            <div className="max-w-2xl">
+              <h2 className="font-serif text-4xl md:text-5xl font-medium mb-4 text-[#1C1917]">A Unified Ecosystem</h2>
+              <p className="text-lg text-[var(--color-text-muted)]">Connecting every stakeholder in the construction lifecycle.</p>
+            </div>
           </div>
-          <div className={styles.step}>
-            <div className={styles.stepNumber}>2</div>
-            <h4 className={styles.stepTitle}>Review</h4>
-            <p className={styles.stepDesc}>AI Agent & Municipality compliance checks</p>
-          </div>
-          <div className={styles.step}>
-            <div className={styles.stepNumber}>3</div>
-            <h4 className={styles.stepTitle}>Inspect</h4>
-            <p className={styles.stepDesc}>On-site verification</p>
-          </div>
-          <div className={styles.step}>
-            <div className={styles.stepNumber}>4</div>
-            <h4 className={styles.stepTitle}>Approve</h4>
-            <p className={styles.stepDesc}>Digital issuance of permit</p>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {/* Card 1 */}
+            <div className="bg-[#F4F1EA] rounded-3xl p-10 transition-all hover:bg-[#F0EBE1]">
+              <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center mb-8 shadow-sm">
+                <svg className="w-6 h-6 text-[var(--color-primary)]" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+              </div>
+              <h3 className="font-serif text-3xl font-medium mb-4">Citizens</h3>
+              <p className="text-[var(--color-text-muted)] leading-relaxed">
+                Submit personal building permit requests, track their progress in real-time, and download approved certificates directly without physical visits.
+              </p>
+            </div>
+
+            {/* Card 2 */}
+            <div className="bg-[var(--color-primary)] text-white rounded-3xl p-10 transition-all hover:bg-[var(--color-primary-hover)] shadow-xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-8 opacity-10">
+                <svg className="w-48 h-48" fill="none" stroke="currentColor" strokeWidth="1" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z"></path></svg>
+              </div>
+              <div className="relative z-10">
+                <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mb-8">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                </div>
+                <h3 className="font-serif text-3xl font-medium mb-4">Architects</h3>
+                <p className="text-white/80 leading-relaxed">
+                  Attach technical plans, structural blueprints, and validate project documentation against municipal regulations securely.
+                </p>
+              </div>
+            </div>
+
+            {/* Card 3 */}
+            <div className="bg-[#F4F1EA] rounded-3xl p-10 transition-all hover:bg-[#F0EBE1]">
+              <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center mb-8 shadow-sm">
+                <svg className="w-6 h-6 text-[var(--color-primary)]" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+              </div>
+              <h3 className="font-serif text-3xl font-medium mb-4">Municipalities</h3>
+              <p className="text-[var(--color-text-muted)] leading-relaxed">
+                Review incoming applications, communicate directly with architects, and formally approve permits via secure digital signatures.
+              </p>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* 5. Key Features */}
-      <section className={`${styles.section} ${styles.sectionDark}`}>
-        <div className={styles.sectionHeader}>
-          <h2 className={styles.sectionTitle}>Key Features</h2>
-          <p className={styles.sectionSubtitle} style={{color: 'rgba(255,255,255,0.7)'}}>Engineered for precision and reliability.</p>
-        </div>
-
-        <div className={styles.featuresGrid}>
-          <div className={styles.featureItem}>
-            <div className={styles.featureIcon}>
-              <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-            </div>
-            <div className={styles.featureContent}>
-              <h4>Digital Submissions</h4>
-              <p>Eliminate paper waste. Upload high-res CADs and PDFs directly.</p>
-            </div>
-          </div>
+      {/* Workflow Timeline */}
+      <section id="workflow" className="py-32 px-6">
+        <div className="max-w-5xl mx-auto text-center">
+          <h2 className="font-serif text-4xl md:text-5xl font-medium mb-20 text-[#1C1917]">How It Works</h2>
           
-          <div className={styles.featureItem}>
-            <div className={styles.featureIcon}>
-              <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            </div>
-            <div className={styles.featureContent}>
-              <h4>Real-time Tracking</h4>
-              <p>Instant SMS/Email notifications when your dossier status changes.</p>
-            </div>
-          </div>
-          
-          <div className={styles.featureItem}>
-            <div className={styles.featureIcon}>
-              <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-            </div>
-            <div className={styles.featureContent}>
-              <h4>Role-Based Security</h4>
-              <p>Bank-grade encryption ensures only authorized personnel see specific plans.</p>
-            </div>
-          </div>
-
-          <div className={styles.featureItem}>
-            <div className={styles.featureIcon}>
-              <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-            </div>
-            <div className={styles.featureContent}>
-              <h4>AI-Powered RGC Checks</h4>
-              <p>Automated urban planning compliance verification speeds up reviews.</p>
-            </div>
+          <div className="grid md:grid-cols-4 gap-8 relative">
+            <div className="hidden md:block absolute top-10 left-[12%] right-[12%] h-[1px] bg-gradient-to-r from-transparent via-[#1C1917]/20 to-transparent"></div>
+            
+            {[
+              { num: '01', title: 'Submit', desc: 'Upload architectural CADs & PDF documents.' },
+              { num: '02', title: 'Review', desc: 'AI compliance checks & municipal review.' },
+              { num: '03', title: 'Inspect', desc: 'On-site verification via mobile app.' },
+              { num: '04', title: 'Approve', desc: 'Digital issuance of the official permit.' }
+            ].map((step, i) => (
+              <div key={i} className="relative z-10 flex flex-col items-center">
+                <div className="w-20 h-20 bg-[#F4F1EA] border border-[#1C1917]/10 rounded-full flex items-center justify-center font-serif text-3xl text-[var(--color-primary)] mb-6 shadow-sm">
+                  {step.num}
+                </div>
+                <h4 className="text-xl font-bold mb-2">{step.title}</h4>
+                <p className="text-sm text-[var(--color-text-muted)]">{step.desc}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* 6. Footer */}
-      <footer className={styles.footer}>
-        <div className={styles.footerLogo}>Rokhas.</div>
-        <p className={styles.footerTagline}>Digital Administration Platform</p>
-        <div className={styles.footerLinks}>
-          <Link href="#">About</Link>
-          <Link href="#">Contact</Link>
-          <Link href="#">Terms of Service</Link>
-          <Link href="#">Privacy Policy</Link>
+      {/* Footer */}
+      <footer className="bg-[#1C1917] text-white py-16 px-6">
+        <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-8 items-center border-b border-white/10 pb-16">
+          <div>
+            <div className="font-serif text-4xl font-bold tracking-tight text-[var(--color-primary)] mb-4">
+              Rokhas.
+            </div>
+            <p className="text-white/60 max-w-sm">
+              Engineered for precision. Designed for Moroccan Urbanism.
+            </p>
+          </div>
+          <div className="flex md:justify-end gap-8">
+            <div className="flex flex-col gap-3">
+              <span className="font-serif text-lg">Platform</span>
+              <Link href="#" className="text-white/60 hover:text-white transition-colors">Features</Link>
+              <Link href="#" className="text-white/60 hover:text-white transition-colors">Security</Link>
+              <Link href="#" className="text-white/60 hover:text-white transition-colors">Pricing</Link>
+            </div>
+            <div className="flex flex-col gap-3">
+              <span className="font-serif text-lg">Legal</span>
+              <Link href="#" className="text-white/60 hover:text-white transition-colors">Terms of Service</Link>
+              <Link href="#" className="text-white/60 hover:text-white transition-colors">Privacy Policy</Link>
+            </div>
+          </div>
         </div>
-        <div className={styles.footerBottom}>
-          © {new Date().getFullYear()} Rokhas Platform. All rights reserved. Designed for Moroccan Urbanism.
+        <div className="max-w-7xl mx-auto pt-8 text-white/40 text-sm text-center md:text-left">
+          © {new Date().getFullYear()} Rokhas Platform. All rights reserved.
         </div>
       </footer>
     </div>
