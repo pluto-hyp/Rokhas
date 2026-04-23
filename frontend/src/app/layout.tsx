@@ -1,17 +1,21 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import Navbar from "@/components/layout/Navbar";
-import Footer from "@/components/layout/Footer";
+import { EB_Garamond, Inter } from "next/font/google";
+import { ClerkProvider } from '@clerk/nextjs'
 import "./globals.css";
 
-const inter = Inter({
-  variable: "--font-inter",
+const ebGaramond = EB_Garamond({ 
   subsets: ["latin"],
+  variable: "--font-serif",
+});
+
+const inter = Inter({ 
+  subsets: ["latin"],
+  variable: "--font-sans",
 });
 
 export const metadata: Metadata = {
-  title: "Rokhas | Digital Administration",
-  description: "Official digital administration portal for citizens and businesses.",
+  title: "Rokhas",
+  description: "Digital Administration Platform",
 };
 
 export default function RootLayout({
@@ -20,14 +24,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable}`}>
-      <body>
-        <Navbar />
-        <main className="main-content">
+    <ClerkProvider>
+      <html lang="en" className={`${inter.variable} ${ebGaramond.variable}`}>
+        <body className="font-sans antialiased selection:bg-[#B11E47] selection:text-white">
           {children}
-        </main>
-        <Footer />
-      </body>
-    </html>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }
