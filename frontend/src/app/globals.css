@@ -1,17 +1,17 @@
 :root {
-  /* Color Palette - Premium Rokhas Vibe */
-  --color-primary: #0a4f6d; /* Deep Teal/Blue */
-  --color-primary-dark: #073a50;
-  --color-primary-light: #16729a;
+  /* Color Palette - Blueprint Theme */
+  --color-primary: #003566; /* Deep Blueprint Blue */
+  --color-primary-dark: #001D3D;
+  --color-primary-light: #00509E;
   
-  --color-secondary: #c2883a; /* Elegant Gold */
-  --color-secondary-dark: #a1702e;
+  --color-secondary: #FFC300; /* Gold/Yellow Accent */
+  --color-secondary-dark: #CCA000;
   
-  --color-background: #f8fafc; /* Very light slate */
-  --color-surface: #ffffff;
-  --color-text: #1e293b;
-  --color-text-muted: #64748b;
-  --color-border: #e2e8f0;
+  --color-background: #F8F9FA; /* Light Grey */
+  --color-surface: #FFFFFF;
+  --color-text: #212529;
+  --color-text-muted: #6C757D;
+  --color-border: #DEE2E6;
   
   --color-success: #10b981;
   --color-error: #ef4444;
