@@ -26,7 +26,7 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en" className={`${inter.variable} ${ebGaramond.variable}`}>
-        <body className="font-sans antialiased selection:bg-[#B11E47] selection:text-white">
+        <body className="font-sans antialiased selection:bg-[#1E3A8A] selection:text-white">
           {children}
         </body>
       </html>
