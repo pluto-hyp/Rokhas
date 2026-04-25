@@ -12,14 +12,19 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 
+import { useAuth } from "@clerk/nextjs";
+
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const { getToken } = useAuth();
 
   useEffect(() => {
     async function loadProjects() {
       try {
-        const data = await getProjects();
+        const token = await getToken();
+        if (!token) return;
+        const data = await getProjects(token);
         setProjects(data);
       } catch (error) {
         console.error("Failed to load projects", error);
@@ -28,7 +33,7 @@ export default function ProjectsPage() {
       }
     }
     loadProjects();
-  }, []);
+  }, [getToken]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -52,8 +57,8 @@ export default function ProjectsPage() {
             <TableRow className="hover:bg-transparent">
               <TableHead className="w-[100px]">ID</TableHead>
               <TableHead>Project Title</TableHead>
-              <TableHead>Applicant</TableHead>
-              <TableHead>Submitted</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Created At</TableHead>
               <TableHead className="text-right">Status</TableHead>
             </TableRow>
           </TableHeader>
@@ -73,10 +78,10 @@ export default function ProjectsPage() {
             ) : (
               projects.map((project) => (
                 <TableRow key={project.id}>
-                  <TableCell className="font-medium">{project.id}</TableCell>
+                  <TableCell className="font-medium">#{project.id}</TableCell>
                   <TableCell className="font-semibold">{project.title}</TableCell>
-                  <TableCell>{project.applicant}</TableCell>
-                  <TableCell>{project.dateSubmitted}</TableCell>
+                  <TableCell>{project.type || "N/A"}</TableCell>
+                  <TableCell>{new Date(project.created_at).toLocaleDateString()}</TableCell>
                   <TableCell className="text-right">
                     <Badge variant="outline" className={getStatusColor(project.status)}>
                       {project.status}
