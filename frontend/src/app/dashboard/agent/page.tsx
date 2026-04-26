@@ -7,9 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Bot, Send, User } from "lucide-react";
+import { useAuth } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
 
 export default function AgentPage() {
+  const { getToken } = useAuth();
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: "init",
@@ -44,7 +46,9 @@ export default function AgentPage() {
     setIsTyping(true);
 
     try {
-      const agentMsg = await askAgent(userMsg.content);
+      const token = await getToken();
+      if (!token) throw new Error("Not authenticated");
+      const agentMsg = await askAgent(userMsg.content, token);
       setMessages((prev) => [...prev, agentMsg]);
     } catch (error) {
       console.error("Agent failed", error);
