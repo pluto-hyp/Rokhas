@@ -1,10 +1,29 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Show, SignInButton } from "@clerk/nextjs";
 import ConstructionBackground from "@/components/ConstructionBackground";
 
 export default function Home() {
+  const cards = [
+    { 
+      title: "Citizens", 
+      desc: "Submit requests, track progress, and receive certificates digitally.",
+      img: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=800"
+    },
+    { 
+      title: "Architects", 
+      desc: "Technical plans and structural blueprints validated securely.",
+      img: "https://images.unsplash.com/photo-1542621334-a254cf47733d?fm=jpg&q=60&w=3000&auto=format&fit=crop&ixlib=rb-4.1.0"
+    },
+    { 
+      title: "Authorities", 
+      desc: "Streamlined review and digital approval processes.",
+      img: "https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&q=80&w=800"
+    }
+  ];
+
   return (
     <div className="min-h-screen font-sans text-primary selection:bg-primary selection:text-background">
       <ConstructionBackground />
@@ -29,16 +48,16 @@ export default function Home() {
             </p>
             <div className="flex md:justify-end gap-6">
               <Show when="signed-out">
-                <SignInButton mode="modal">
+                <SignInButton mode="modal" signUpFallbackRedirectUrl="/onboarding" fallbackRedirectUrl="/onboarding">
                   <Button size="lg" className="rounded-full h-16 px-10 text-base font-bold bg-primary text-background hover:scale-105 transition-transform active:scale-95">
                     Start Your Project
                   </Button>
                 </SignInButton>
               </Show>
               <Show when="signed-in">
-                <Link href="/dashboard">
+                <Link href="/onboarding">
                   <Button size="lg" className="rounded-full h-16 px-10 text-base font-bold bg-primary text-background hover:scale-105 transition-transform">
-                    Dashboard
+                    Continue Onboarding
                   </Button>
                 </Link>
               </Show>
@@ -60,26 +79,16 @@ export default function Home() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-16">
-            {[
-              { 
-                title: "Citizens", 
-                desc: "Submit requests, track progress, and receive certificates digitally.",
-                img: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=800"
-              },
-              { 
-                title: "Architects", 
-                desc: "Technical plans and structural blueprints validated securely.",
-                img: "https://images.unsplash.com/photo-1542621334-a254cf47733d?fm=jpg&q=60&w=3000&auto=format&fit=crop&ixlib=rb-4.1.0"
-              },
-              { 
-                title: "Authorities", 
-                desc: "Streamlined review and digital approval processes.",
-                img: "https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&q=80&w=800"
-              }
-            ].map((card, i) => (
+            {cards.map((card, i) => (
               <div key={i} className="group cursor-pointer">
-                <div className="aspect-[4/5] bg-gray-100 rounded-3xl overflow-hidden mb-6 transition-transform duration-700 group-hover:scale-[0.98]">
-                  <img src={card.img} alt={card.title} className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-1000 scale-110 group-hover:scale-100" />
+                <div className="relative aspect-[4/5] bg-gray-100 rounded-3xl overflow-hidden mb-6 transition-transform duration-700 group-hover:scale-[0.98]">
+                  <Image 
+                    src={card.img} 
+                    alt={card.title}
+                    fill
+                    className="object-cover grayscale hover:grayscale-0 transition-all duration-1000 scale-110 group-hover:scale-100"
+                    sizes="(max-width: 768px) 100vw, 33vw"
+                  />
                 </div>
                 <h3 className="font-serif text-3xl font-bold mb-2 tracking-tight">{card.title}</h3>
                 <p className="text-primary/50 leading-relaxed font-medium">{card.desc}</p>
@@ -102,8 +111,8 @@ export default function Home() {
             <div className="space-y-4">
               <div className="text-xs font-bold uppercase tracking-widest text-primary/30">Company</div>
               <ul className="space-y-2 text-sm font-bold">
-                <li><Link href="#" className="hover:opacity-50 transition-opacity">About</Link></li>
-                <li><Link href="#" className="hover:opacity-50 transition-opacity">Contact</Link></li>
+                <li><Link href="https://github.com/pluto-hyp/rokhas" className="hover:opacity-50 transition-opacity">About</Link></li>
+                <li><Link href="https://melouich.vercel.app" className="hover:opacity-50 transition-opacity">Contact</Link></li>
               </ul>
             </div>
             <div className="space-y-4">
