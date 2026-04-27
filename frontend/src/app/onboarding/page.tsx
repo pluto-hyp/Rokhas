@@ -35,8 +35,6 @@ export default function OnboardingPage() {
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  if (!isLoaded) return null;
-
   const handleComplete = async (roleOverride?: string) => {
     const roleToSubmit = roleOverride || selectedRole;
     if (!roleToSubmit || !user) return;
@@ -49,12 +47,23 @@ export default function OnboardingPage() {
         body: JSON.stringify({ role: roleToSubmit }),
       });
 
+      console.log("Role submission successful, reloading user...");
       if (res.ok) {
-        // Essential: reload the user to refresh the client-side metadata cache
-        await user.reload();
+        try {
+          await user.reload();
+          console.log("User reloaded, redirecting to dashboard...");
+        } catch (e) {
+          console.error("User reload failed, attempting redirect anyway", e);
+        }
         router.push("/dashboard");
+        setTimeout(() => {
+          if (window.location.pathname !== "/dashboard") {
+            window.location.href = "/dashboard";
+          }
+        }, 2000);
       } else {
         const errorText = await res.text();
+        console.error("Role submission failed:", errorText);
         alert("Failed to save role: " + errorText);
       }
     } catch (error) {
@@ -65,7 +74,6 @@ export default function OnboardingPage() {
     }
   };
 
-  // Auto-assign "citizen" role to Google users for a seamless experience
   useEffect(() => {
     if (isLoaded && user && !user.publicMetadata?.role) {
       const isGoogleUser = user.externalAccounts.some(
@@ -76,6 +84,20 @@ export default function OnboardingPage() {
       }
     }
   }, [isLoaded, user]);
+
+  if (!isLoaded) return null;
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 text-center space-y-6">
+        <h1 className="font-serif text-3xl font-bold">Authentication Required</h1>
+        <p className="text-muted-foreground">You must be signed in to configure your profile.</p>
+        <Button onClick={() => router.push("/")} size="lg" className="rounded-full">
+          Return Home to Sign In
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-6">

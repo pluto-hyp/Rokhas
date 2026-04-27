@@ -48,16 +48,16 @@ export default function Home() {
             </p>
             <div className="flex md:justify-end gap-6">
               <Show when="signed-out">
-                <SignInButton mode="modal">
+                <SignInButton mode="modal" signUpFallbackRedirectUrl="/onboarding" fallbackRedirectUrl="/onboarding">
                   <Button size="lg" className="rounded-full h-16 px-10 text-base font-bold bg-primary text-background hover:scale-105 transition-transform active:scale-95">
                     Start Your Project
                   </Button>
                 </SignInButton>
               </Show>
               <Show when="signed-in">
-                <Link href="/dashboard">
+                <Link href="/onboarding">
                   <Button size="lg" className="rounded-full h-16 px-10 text-base font-bold bg-primary text-background hover:scale-105 transition-transform">
-                    Dashboard
+                    Continue Onboarding
                   </Button>
                 </Link>
               </Show>
