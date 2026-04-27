@@ -4,16 +4,18 @@ const isProtectedRoute = createRouteMatcher(['/dashboard(.*)'])
 
 export default clerkMiddleware(async (auth, req) => {
   if (isProtectedRoute(req)) {
-    const { sessionClaims } = await auth()
-    
-    const role = (sessionClaims?.metadata as any)?.role
+    await auth.protect()
 
-    if (!role && !req.nextUrl.pathname.startsWith('/onboarding')) {
+    const { sessionClaims } = await auth()
+    const role = (sessionClaims?.metadata as any)?.role
+    
+    const isAuthCallback = req.nextUrl.pathname.startsWith('/api/auth')
+    const isOnboarding = req.nextUrl.pathname.startsWith('/onboarding')
+
+    if (!role && !isOnboarding && !isAuthCallback) {
       const onboardingUrl = new URL('/onboarding', req.url)
       return Response.redirect(onboardingUrl)
     }
-
-    await auth.protect()
   }
 })
 

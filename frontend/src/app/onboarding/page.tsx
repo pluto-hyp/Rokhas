@@ -50,6 +50,7 @@ export default function OnboardingPage() {
       });
 
       if (res.ok) {
+        // Essential: reload the user to refresh the client-side metadata cache
         await user.reload();
         router.push("/dashboard");
       } else {
@@ -64,6 +65,7 @@ export default function OnboardingPage() {
     }
   };
 
+  // Auto-assign "citizen" role to Google users for a seamless experience
   useEffect(() => {
     if (isLoaded && user && !user.publicMetadata?.role) {
       const isGoogleUser = user.externalAccounts.some(
