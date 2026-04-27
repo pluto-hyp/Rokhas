@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -37,36 +37,43 @@ export default function OnboardingPage() {
 
   if (!isLoaded) return null;
 
-  const handleComplete = async () => {
-    if (!selectedRole || !user) return;
+  const handleComplete = async (roleOverride?: string) => {
+    const roleToSubmit = roleOverride || selectedRole;
+    if (!roleToSubmit || !user) return;
     
     setIsSubmitting(true);
     try {
-      // In a real production app, you would call a server action here 
-      // that uses the Clerk Backend SDK to update publicMetadata.
-      // For this prototype, we'll use the user.update() method which 
-      // can update some metadata depending on Clerk settings, 
-      // but usually publicMetadata requires the Backend API.
-      
-      // We'll simulate the backend update via a fetch to a future route 
-      // or just assume the user will set this in Clerk.
-      // FOR PROTOTYPE: We'll call a dedicated API route we'll create next.
       const res = await fetch("/api/onboarding", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ role: selectedRole }),
+        body: JSON.stringify({ role: roleToSubmit }),
       });
 
       if (res.ok) {
         await user.reload();
         router.push("/dashboard");
+      } else {
+        const errorText = await res.text();
+        alert("Failed to save role: " + errorText);
       }
     } catch (error) {
       console.error("Onboarding failed", error);
+      alert("An unexpected error occurred. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  useEffect(() => {
+    if (isLoaded && user && !user.publicMetadata?.role) {
+      const isGoogleUser = user.externalAccounts.some(
+        (account) => account.provider === "google"
+      );
+      if (isGoogleUser) {
+        handleComplete("citizen");
+      }
+    }
+  }, [isLoaded, user]);
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-6">
@@ -110,7 +117,7 @@ export default function OnboardingPage() {
             size="lg" 
             className="px-12 rounded-full font-bold uppercase tracking-widest text-xs h-12"
             disabled={!selectedRole || isSubmitting}
-            onClick={handleComplete}
+            onClick={() => handleComplete()}
           >
             {isSubmitting ? "Configuring..." : "Complete Setup"}
           </Button>

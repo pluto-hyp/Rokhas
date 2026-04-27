@@ -6,7 +6,6 @@ export default clerkMiddleware(async (auth, req) => {
   if (isProtectedRoute(req)) {
     const { sessionClaims } = await auth()
     
-    // Check if user has a role in publicMetadata (mapped to session claims)
     const role = (sessionClaims?.metadata as any)?.role
 
     if (!role && !req.nextUrl.pathname.startsWith('/onboarding')) {
