@@ -4,12 +4,14 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FolderOpen, CheckCircle, Clock, AlertCircle } from "lucide-react";
 import { getProjects, Project } from "@/lib/api";
-import { useAuth } from "@clerk/nextjs";
+import { useAuth, useUser } from "@clerk/nextjs";
 
 export default function DashboardHome() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const { getToken } = useAuth();
+  const { user } = useUser();
+  const role = user?.publicMetadata?.role as string || "citizen";
 
   useEffect(() => {
     async function loadData() {
@@ -37,8 +39,16 @@ export default function DashboardHome() {
   return (
     <div className="max-w-5xl mx-auto space-y-8">
       <div>
-        <h2 className="text-3xl font-serif font-bold tracking-tight">Overview</h2>
-        <p className="text-muted-foreground mt-2">Welcome back. Here is a summary of your architectural projects.</p>
+        <h2 className="text-3xl font-serif font-bold tracking-tight capitalize">
+          {role === "citizen" ? "My Workspace" : role === "architect" ? "Studio Overview" : "Municipal Portal"}
+        </h2>
+        <p className="text-muted-foreground mt-2">
+          {role === "citizen" 
+            ? "Welcome back. Here is a summary of your architectural projects." 
+            : role === "architect" 
+            ? "Monitor your clients' projects and submission deadlines." 
+            : "Review pending dossiers and track urban development metrics."}
+        </p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

@@ -1,0 +1,121 @@
+"use client";
+
+import { useState } from "react";
+import { useUser } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { User, Briefcase, ShieldCheck } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+const roles = [
+  {
+    id: "citizen",
+    title: "Citizen",
+    description: "Submit permits and track your project status.",
+    icon: User,
+  },
+  {
+    id: "architect",
+    title: "Architect",
+    description: "Manage multiple clients and technical submissions.",
+    icon: Briefcase,
+  },
+  {
+    id: "authority",
+    title: "Authority",
+    description: "Review dossiers and manage urban planning approvals.",
+    icon: ShieldCheck,
+  },
+];
+
+export default function OnboardingPage() {
+  const { user, isLoaded } = useUser();
+  const router = useRouter();
+  const [selectedRole, setSelectedRole] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  if (!isLoaded) return null;
+
+  const handleComplete = async () => {
+    if (!selectedRole || !user) return;
+    
+    setIsSubmitting(true);
+    try {
+      // In a real production app, you would call a server action here 
+      // that uses the Clerk Backend SDK to update publicMetadata.
+      // For this prototype, we'll use the user.update() method which 
+      // can update some metadata depending on Clerk settings, 
+      // but usually publicMetadata requires the Backend API.
+      
+      // We'll simulate the backend update via a fetch to a future route 
+      // or just assume the user will set this in Clerk.
+      // FOR PROTOTYPE: We'll call a dedicated API route we'll create next.
+      const res = await fetch("/api/onboarding", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role: selectedRole }),
+      });
+
+      if (res.ok) {
+        await user.reload();
+        router.push("/dashboard");
+      }
+    } catch (error) {
+      console.error("Onboarding failed", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center p-6">
+      <div className="max-w-3xl w-full space-y-8 text-center">
+        <div className="space-y-2">
+          <h1 className="font-serif text-4xl font-bold tracking-tight">Welcome to Rokhas.</h1>
+          <p className="text-muted-foreground text-lg">Select your profile type to customize your experience.</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {roles.map((role) => {
+            const Icon = role.icon;
+            const isSelected = selectedRole === role.id;
+            
+            return (
+              <Card 
+                key={role.id}
+                className={cn(
+                  "cursor-pointer transition-all duration-300 border-2 hover:border-primary/50",
+                  isSelected ? "border-primary bg-primary/5 ring-1 ring-primary" : "border-border/40"
+                )}
+                onClick={() => setSelectedRole(role.id)}
+              >
+                <CardHeader>
+                  <div className={cn(
+                    "w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-2 transition-colors",
+                    isSelected ? "bg-primary text-white" : "bg-muted text-muted-foreground"
+                  )}>
+                    <Icon size={24} />
+                  </div>
+                  <CardTitle className="text-xl font-serif">{role.title}</CardTitle>
+                  <CardDescription>{role.description}</CardDescription>
+                </CardHeader>
+              </Card>
+            );
+          })}
+        </div>
+
+        <div className="flex justify-center pt-8">
+          <Button 
+            size="lg" 
+            className="px-12 rounded-full font-bold uppercase tracking-widest text-xs h-12"
+            disabled={!selectedRole || isSubmitting}
+            onClick={handleComplete}
+          >
+            {isSubmitting ? "Configuring..." : "Complete Setup"}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}

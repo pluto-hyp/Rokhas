@@ -102,8 +102,8 @@ export default function Home() {
             <div className="space-y-4">
               <div className="text-xs font-bold uppercase tracking-widest text-primary/30">Company</div>
               <ul className="space-y-2 text-sm font-bold">
-                <li><Link href="#" className="hover:opacity-50 transition-opacity">About</Link></li>
-                <li><Link href="#" className="hover:opacity-50 transition-opacity">Contact</Link></li>
+                <li><Link href="https://github.com/pluto-hyp/rokhas" className="hover:opacity-50 transition-opacity">About</Link></li>
+                <li><Link href="https://melouich.vercel.app" className="hover:opacity-50 transition-opacity">Contact</Link></li>
               </ul>
             </div>
             <div className="space-y-4">
