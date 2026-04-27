@@ -28,11 +28,11 @@ export default function ConstructionBackground() {
       <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-500/5 blur-[120px] rounded-full" />
       <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-500/5 blur-[120px] rounded-full" />
       
-      <Canvas shadows={{ type: THREE.PCFShadowMap }} dpr={[1, 2]}>
+      <Canvas shadows={{ type: THREE.PCFShadowMap }} dpr={[1, 1.5]} performance={{ min: 0.5 }}>
         <PerspectiveCamera makeDefault position={[0, 0, 15]} fov={40} />
         
         <ambientLight intensity={1.5} />
-        <pointLight position={[10, 10, 10]} intensity={0.8} />
+        <pointLight position={[10, 10, 10]} intensity={1} />
         
         {/* Balanced Architectural Accents */}
         <ArchitecturalAccent position={[10, 5, -5]} />
@@ -42,8 +42,6 @@ export default function ConstructionBackground() {
         {/* Accents closer to the 'Start Your Project' action area */}
         <ArchitecturalAccent position={[6, -2, -4]} size={1.2} rotation={[0.5, 1.2, 0.3]} />
         <ArchitecturalAccent position={[8, -5, -6]} size={0.8} rotation={[0.8, 0.1, 1.1]} />
-        
-        <Environment preset="studio" />
       </Canvas>
       
       {/* Noise Texture Overlay */}
