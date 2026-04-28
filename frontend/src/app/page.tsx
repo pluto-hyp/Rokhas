@@ -1,8 +1,9 @@
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import Image from "next/image";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
-import ConstructionBackground from "@/components/ConstructionBackground";
+import ConstructionBackgroundLoader from "@/components/ConstructionBackgroundLoader";
 
 export default function Home() {
   const cards = [
@@ -14,7 +15,7 @@ export default function Home() {
     { 
       title: "Architects", 
       desc: "Technical plans and structural blueprints validated securely.",
-      img: "https://images.unsplash.com/photo-1542621334-a254cf47733d?fm=jpg&q=60&w=3000&auto=format&fit=crop&ixlib=rb-4.1.0"
+      img: "https://images.unsplash.com/photo-1542621334-a254cf47733d?fm=jpg&q=70&w=1200&auto=format&fit=crop&ixlib=rb-4.1.0"
     },
     { 
       title: "Authorities", 
@@ -25,7 +26,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen font-sans text-primary selection:bg-primary selection:text-background">
-      <ConstructionBackground />
+      <ConstructionBackgroundLoader />
       <Navbar />
 
       {/* Hero Section */}
@@ -81,6 +82,7 @@ export default function Home() {
                     src={card.img} 
                     alt={card.title}
                     fill
+                    loading="lazy"
                     className="object-cover grayscale hover:grayscale-0 transition-all duration-1000 scale-110 group-hover:scale-100"
                     sizes="(max-width: 768px) 100vw, 33vw"
                   />
