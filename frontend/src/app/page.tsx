@@ -2,7 +2,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
-import { Show, SignInButton } from "@clerk/nextjs";
 import ConstructionBackground from "@/components/ConstructionBackground";
 
 export default function Home() {
@@ -47,20 +46,16 @@ export default function Home() {
               The definitive blueprint for digital administration in Moroccan urbanism. Precise. Transparent. Built for scale.
             </p>
             <div className="flex md:justify-end gap-6">
-              <Show when="signed-out">
-                <SignInButton mode="modal" signUpFallbackRedirectUrl="/onboarding" fallbackRedirectUrl="/onboarding">
-                  <Button size="lg" className="rounded-full h-16 px-10 text-base font-bold bg-primary text-background hover:scale-105 transition-transform active:scale-95">
-                    Start Your Project
-                  </Button>
-                </SignInButton>
-              </Show>
-              <Show when="signed-in">
-                <Link href="/onboarding">
-                  <Button size="lg" className="rounded-full h-16 px-10 text-base font-bold bg-primary text-background hover:scale-105 transition-transform">
-                    Continue Onboarding
-                  </Button>
-                </Link>
-              </Show>
+              <Link href="/register">
+                <Button size="lg" className="rounded-full h-16 px-10 text-base font-bold bg-primary text-background hover:scale-105 transition-transform active:scale-95">
+                  Start Your Project
+                </Button>
+              </Link>
+              <Link href="/login">
+                <Button size="lg" variant="outline" className="rounded-full h-16 px-10 text-base font-bold border-primary text-primary hover:bg-primary/5 transition-colors">
+                  Sign In
+                </Button>
+              </Link>
             </div>
           </div>
         </div>

@@ -12,18 +12,17 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 
-import { useAuth } from "@clerk/nextjs";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
-  const { getToken } = useAuth();
+  const { token } = useAuth();
 
   useEffect(() => {
     async function loadProjects() {
+      if (!token) return;
       try {
-        const token = await getToken();
-        if (!token) return;
         const data = await getProjects(token);
         setProjects(data);
       } catch (error) {
@@ -33,7 +32,7 @@ export default function ProjectsPage() {
       }
     }
     loadProjects();
-  }, [getToken]);
+  }, [token]);
 
   const getStatusColor = (status: string) => {
     switch (status) {

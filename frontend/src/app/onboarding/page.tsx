@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useUser } from "@clerk/nextjs";
+import { useAuth } from "@/contexts/AuthContext";
+import { updateRole } from "@/lib/auth-api";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { User, Briefcase, ShieldCheck } from "lucide-react";
+import { User as UserIcon, Briefcase, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const roles = [
@@ -13,7 +14,7 @@ const roles = [
     id: "citizen",
     title: "Citizen",
     description: "Submit permits and track your project status.",
-    icon: User,
+    icon: UserIcon,
   },
   {
     id: "architect",
@@ -30,62 +31,35 @@ const roles = [
 ];
 
 export default function OnboardingPage() {
-  const { user, isLoaded } = useUser();
+  const { user, token, isLoading, reloadUser } = useAuth();
   const router = useRouter();
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleComplete = async (roleOverride?: string) => {
     const roleToSubmit = roleOverride || selectedRole;
-    if (!roleToSubmit || !user) return;
+    if (!roleToSubmit || !user || !token) return;
     
     setIsSubmitting(true);
     try {
-      const res = await fetch("/api/onboarding", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ role: roleToSubmit }),
-      });
-
-      console.log("Role submission successful, reloading user...");
-      if (res.ok) {
-        try {
-          await user.reload();
-          console.log("User reloaded, redirecting to dashboard...");
-        } catch (e) {
-          console.error("User reload failed, attempting redirect anyway", e);
-        }
-        router.push("/dashboard");
-        setTimeout(() => {
-          if (window.location.pathname !== "/dashboard") {
-            window.location.href = "/dashboard";
-          }
-        }, 2000);
-      } else {
-        const errorText = await res.text();
-        console.error("Role submission failed:", errorText);
-        alert("Failed to save role: " + errorText);
-      }
-    } catch (error) {
+      await updateRole(roleToSubmit, token);
+      await reloadUser();
+      router.push("/dashboard");
+    } catch (error: any) {
       console.error("Onboarding failed", error);
-      alert("An unexpected error occurred. Please try again.");
+      alert(error.message || "Failed to save role. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   useEffect(() => {
-    if (isLoaded && user && !user.publicMetadata?.role) {
-      const isGoogleUser = user.externalAccounts.some(
-        (account) => account.provider === "google"
-      );
-      if (isGoogleUser) {
-        handleComplete("citizen");
-      }
+    if (!isLoading && user && user.role && user.role !== "citizen") {
+      router.push("/dashboard");
     }
-  }, [isLoaded, user]);
+  }, [isLoading, user, router]);
 
-  if (!isLoaded) return null;
+  if (isLoading) return null;
 
   if (!user) {
     return (

@@ -9,7 +9,7 @@ import {
   BarChart3
 } from "lucide-react";
 import Link from "next/link";
-import { SignOutButton, useUser } from "@clerk/nextjs";
+import { useAuth } from "@/contexts/AuthContext";
 
 import {
   Sidebar,
@@ -25,8 +25,8 @@ import {
 } from "@/components/ui/sidebar";
 
 export function AppSidebar() {
-  const { user } = useUser();
-  const role = user?.publicMetadata?.role as string || "citizen";
+  const { user, logout } = useAuth();
+  const role = user?.role || "citizen";
 
   const navigation = {
     citizen: [
@@ -80,23 +80,18 @@ export function AppSidebar() {
       </SidebarContent>
       <SidebarFooter className="p-4 border-t border-border/40">
         <div className="flex items-center gap-3 px-2 py-3">
-          <div className="w-8 h-8 rounded-full bg-primary/10 overflow-hidden">
-            {user?.imageUrl ? (
-              <img src={user.imageUrl} alt="Profile" className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center font-bold text-xs">
-                {user?.firstName?.charAt(0) || "U"}
-              </div>
-            )}
+          <div className="w-8 h-8 rounded-full bg-primary/10 overflow-hidden flex items-center justify-center font-bold text-xs">
+            {user?.full_name?.charAt(0) || "U"}
           </div>
           <div className="flex flex-col">
-            <span className="text-sm font-bold">{user?.fullName || "User"}</span>
-            <SignOutButton>
-              <button className="text-xs text-primary/50 hover:text-primary transition-colors text-left flex items-center gap-1 mt-1">
-                <LogOut className="w-3 h-3" />
-                Sign Out
-              </button>
-            </SignOutButton>
+            <span className="text-sm font-bold">{user?.full_name || "User"}</span>
+            <button 
+              onClick={logout}
+              className="text-xs text-primary/50 hover:text-primary transition-colors text-left flex items-center gap-1 mt-1"
+            >
+              <LogOut className="w-3 h-3" />
+              Sign Out
+            </button>
           </div>
         </div>
       </SidebarFooter>
