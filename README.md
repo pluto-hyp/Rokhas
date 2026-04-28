@@ -69,8 +69,20 @@ npm run dev
 ```
 *Open http://localhost:3000*
 
-### 3. Backend & Agent Setup
-*(Further instructions for backend, agent, and data modules will be populated as they are integrated)*
+### 3. Backend Setup
+Open a separate terminal and start the backend API service:
+```bash
+cd backend
+python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+```
+If Python dependencies are not installed, use:
+```bash
+python -m pip install -r ../requirements.txt
+```
+Then open http://localhost:8000/docs to verify the API is running.
+
+### 4. Agent Setup
+*(Further instructions for agent and data modules will be populated as they are integrated)*
 
 ## Project Structure.
 ```bash

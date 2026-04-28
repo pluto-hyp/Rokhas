@@ -2,8 +2,7 @@
 
 import React from "react";
 import { Canvas } from "@react-three/fiber";
-import { Environment, PerspectiveCamera, Float } from "@react-three/drei";
-import * as THREE from "three";
+import { PerspectiveCamera, Float } from "@react-three/drei";
 
 function ArchitecturalAccent({ position, rotation = [0.5, 0.5, 0.5], size = 2 }: { position: [number, number, number], rotation?: [number, number, number], size?: number }) {
   return (
@@ -28,24 +27,26 @@ export default function ConstructionBackground() {
       <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-500/5 blur-[120px] rounded-full" />
       <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-500/5 blur-[120px] rounded-full" />
       
-      <Canvas shadows={{ type: THREE.PCFShadowMap }} dpr={[1, 1.5]} performance={{ min: 0.5 }}>
+      <Canvas dpr={[1, 1.25]} performance={{ min: 0.85 }}>
         <PerspectiveCamera makeDefault position={[0, 0, 15]} fov={40} />
         
-        <ambientLight intensity={1.5} />
-        <pointLight position={[10, 10, 10]} intensity={1} />
+        <ambientLight intensity={0.8} />
+        <pointLight position={[10, 10, 10]} intensity={0.6} />
         
         {/* Balanced Architectural Accents */}
         <ArchitecturalAccent position={[10, 5, -5]} />
         <ArchitecturalAccent position={[-12, -4, -8]} rotation={[0.2, 0.8, 0.1]} />
         <ArchitecturalAccent position={[-4, 8, -10]} rotation={[1.1, 0.2, 0.5]} />
-        
-        {/* Accents closer to the 'Start Your Project' action area */}
         <ArchitecturalAccent position={[6, -2, -4]} size={1.2} rotation={[0.5, 1.2, 0.3]} />
-        <ArchitecturalAccent position={[8, -5, -6]} size={0.8} rotation={[0.8, 0.1, 1.1]} />
       </Canvas>
       
-      {/* Noise Texture Overlay */}
-      <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')] bg-repeat" />
+      <div
+        className="absolute inset-0 opacity-20 pointer-events-none"
+        style={{
+          backgroundImage:
+            "radial-gradient(circle at top left, rgba(255,255,255,0.08), transparent 25%), radial-gradient(circle at bottom right, rgba(59,130,246,0.08), transparent 30%)",
+        }}
+      />
     </div>
   );
 }
