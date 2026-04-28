@@ -4,20 +4,18 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FolderOpen, CheckCircle, Clock, AlertCircle } from "lucide-react";
 import { getProjects, Project } from "@/lib/api";
-import { useAuth, useUser } from "@clerk/nextjs";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function DashboardHome() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
-  const { getToken } = useAuth();
-  const { user } = useUser();
-  const role = user?.publicMetadata?.role as string || "citizen";
+  const { user, token } = useAuth();
+  const role = user?.role || "citizen";
 
   useEffect(() => {
     async function loadData() {
+      if (!token) return;
       try {
-        const token = await getToken();
-        if (!token) return;
         const data = await getProjects(token);
         setProjects(data);
       } catch (error) {
@@ -27,7 +25,7 @@ export default function DashboardHome() {
       }
     }
     loadData();
-  }, [getToken]);
+  }, [token]);
 
   const stats = {
     total: projects.length,

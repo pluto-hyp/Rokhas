@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { EB_Garamond, Inter, Geist } from "next/font/google";
-import { ClerkProvider } from '@clerk/nextjs'
+import { AuthProvider } from "@/contexts/AuthContext";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 
@@ -22,12 +22,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
-      <html lang="en" className={cn(ebGaramond.variable, "font-sans", geist.variable)}>
-        <body className="font-sans antialiased selection:bg-[#1E3A8A] selection:text-white">
+    <html lang="en" className={cn(ebGaramond.variable, "font-sans", geist.variable)}>
+      <body className="font-sans antialiased selection:bg-[#1E3A8A] selection:text-white">
+        <AuthProvider>
           {children}
-        </body>
-      </html>
-    </ClerkProvider>
+        </AuthProvider>
+      </body>
+    </html>
   );
 }

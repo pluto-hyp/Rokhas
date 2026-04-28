@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Show, SignInButton, UserButton } from "@clerk/nextjs";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import {
   NavigationMenu,
@@ -20,6 +20,8 @@ export function Navbar() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  const { user, isLoading } = useAuth();
 
   return (
     <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-fit px-4">
@@ -57,29 +59,24 @@ export function Navbar() {
         <div className="h-6 w-px bg-border/40" />
 
         <div className="flex items-center gap-3">
-          <Show when="signed-out">
-            <SignInButton mode="modal">
+          {!isLoading && !user ? (
+            <Link href="/login">
               <Button variant="ghost" className="rounded-full h-9 px-4 text-xs font-bold uppercase tracking-widest hover:bg-black hover:text-white transition-all">
                 Sign In
               </Button>
-            </SignInButton>
-          </Show>
-          <Show when="signed-in">
+            </Link>
+          ) : !isLoading && user ? (
             <div className="flex items-center gap-4">
               <Link href="/dashboard">
                 <Button variant="ghost" className="rounded-full h-9 px-4 text-xs font-bold uppercase tracking-widest">
                   Dashboard
                 </Button>
               </Link>
-              <UserButton 
-                appearance={{ 
-                  elements: { 
-                    avatarBox: "w-8 h-8 border border-border/50" 
-                  } 
-                }} 
-              />
+              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center font-bold text-xs border border-border/50">
+                {user.full_name?.charAt(0) || "U"}
+              </div>
             </div>
-          </Show>
+          ) : null}
         </div>
       </nav>
     </div>

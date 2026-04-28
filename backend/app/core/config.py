@@ -10,8 +10,6 @@ class Settings(BaseSettings):
     
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./rokhas.db") 
 
-    CLERK_ISSUER: str = os.getenv("CLERK_ISSUER", "")
-
     class Config:
         env_file = ".env"
 
