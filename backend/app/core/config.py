@@ -10,7 +10,6 @@ class Settings(BaseSettings):
     
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./rokhas.db") 
 
-    class Config:
-        env_file = ".env"
+    model_config = {"extra": "ignore"}
 
 settings = Settings()
