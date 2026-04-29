@@ -1,6 +1,5 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { AuthProvider } from "@/contexts/AuthContext";
 
 export default async function RegisterLayout({ children }: { children: React.ReactNode }) {
   const cookieStore = await cookies();
@@ -8,5 +7,5 @@ export default async function RegisterLayout({ children }: { children: React.Rea
     redirect("/dashboard");
   }
 
-  return <AuthProvider>{children}</AuthProvider>;
+  return <>{children}</>;
 }
