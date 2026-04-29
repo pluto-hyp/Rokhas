@@ -22,7 +22,7 @@ class Dossier(Base):
     ai_analysis = Column(Text, nullable=True)
 
     owner_id = Column(Integer, ForeignKey("users.id"))
-    owner = relationship("User")
+    owner = relationship("User", back_populates="dossiers")
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
