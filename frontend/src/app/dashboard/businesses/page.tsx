@@ -1,50 +1,54 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getProjects, Project } from "@/lib/api";
-import { FileText, Search, Plus, Filter, MoreHorizontal } from "lucide-react";
+import { Building2, Search, Plus, Filter, MoreHorizontal } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { cn } from "@/lib/utils";
 
-export default function ProjectsPage() {
-  const [projects, setProjects] = useState<Project[]>([]);
+export default function BusinessesPage() {
+  const [businesses, setBusinesses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const { token } = useAuth();
 
   useEffect(() => {
-    async function loadProjects() {
+    async function fetchBusinesses() {
       if (!token) return;
       try {
-        const data = await getProjects(token);
-        setProjects(data);
-      } catch (error) {
-        console.error("Failed to load projects", error);
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/businesses/`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setBusinesses(data);
+        }
+      } catch (err) {
+        console.error(err);
       } finally {
         setLoading(false);
       }
     }
-    loadProjects();
+    fetchBusinesses();
   }, [token]);
 
   return (
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Permit Requests</h1>
-          <p className="text-muted-foreground mt-1">Monitor and manage your active and archived permit applications.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">Businesses</h1>
+          <p className="text-muted-foreground mt-1">Manage local business licenses and commercial registrations.</p>
         </div>
         <div className="flex items-center gap-3">
           <div className="relative w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input placeholder="Search requests..." className="pl-10 rounded-xl" />
+            <Input placeholder="Search businesses..." className="pl-10 rounded-xl" />
           </div>
           <Button className="rounded-xl bg-primary text-primary-foreground gap-2">
             <Plus className="w-4 h-4" />
-            Submit New
+            Register Business
           </Button>
         </div>
       </div>
@@ -57,17 +61,17 @@ export default function ProjectsPage() {
               Filter
             </Button>
           </div>
-          <p className="text-xs text-muted-foreground">{projects.length} requests found</p>
+          <p className="text-xs text-muted-foreground">{businesses.length} businesses found</p>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead className="bg-muted/30 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
               <tr>
-                <th className="px-6 py-4">Ref No.</th>
-                <th className="px-6 py-4">Title</th>
+                <th className="px-6 py-4">Business Name</th>
                 <th className="px-6 py-4">Type</th>
-                <th className="px-6 py-4">Date</th>
-                <th className="px-6 py-4 text-right">Status</th>
+                <th className="px-6 py-4">Reg. Date</th>
+                <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border/40">
@@ -77,39 +81,34 @@ export default function ProjectsPage() {
                     <td colSpan={5} className="px-6 py-8 h-12 bg-muted/10" />
                   </tr>
                 ))
-              ) : projects.length === 0 ? (
+              ) : businesses.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-6 py-20 text-center text-muted-foreground">
-                    <FileText className="w-12 h-12 mx-auto mb-4 opacity-20" />
-                    <p>No permit requests found.</p>
+                    <Building2 className="w-12 h-12 mx-auto mb-4 opacity-20" />
+                    <p>No businesses found.</p>
                   </td>
                 </tr>
               ) : (
-                projects.map((project) => (
-                  <tr key={project.id} className="hover:bg-muted/10 transition-colors cursor-pointer">
+                businesses.map((biz) => (
+                  <tr key={biz.id} className="hover:bg-muted/10 transition-colors">
                     <td className="px-6 py-4">
-                      <p className="text-xs font-bold text-muted-foreground">RKH-2026-{project.id.toString().padStart(4, '0')}</p>
+                      <p className="text-sm font-bold text-foreground">{biz.name}</p>
                     </td>
                     <td className="px-6 py-4">
-                      <p className="text-sm font-bold text-foreground">{project.title}</p>
-                    </td>
-                    <td className="px-6 py-4">
-                      <p className="text-xs text-muted-foreground">{project.type || "N/A"}</p>
+                      <p className="text-xs text-muted-foreground">{biz.type}</p>
                     </td>
                     <td className="px-6 py-4 text-xs font-medium text-muted-foreground">
-                      {new Date(project.created_at).toLocaleDateString()}
+                      {new Date(biz.registration_date).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4">
+                      <Badge variant="outline" className={cn("rounded-full px-2 py-0.5 text-[10px] font-bold", biz.status === "Active" ? "text-emerald-500 border-emerald-500/20" : "text-amber-500 border-amber-500/20")}>
+                        {biz.status}
+                      </Badge>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <Badge variant="outline" className={cn(
-                        "rounded-full px-3 py-1 text-[10px] font-bold border-border/40 bg-white",
-                        project.status === "Approved" ? "text-foreground" : "text-muted-foreground"
-                      )}>
-                        <div className={cn(
-                          "w-1 h-1 rounded-full mr-2 inline-block",
-                          project.status === "Approved" ? "bg-primary" : "bg-muted-foreground"
-                        )} />
-                        {project.status}
-                      </Badge>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
+                        <MoreHorizontal className="w-4 h-4" />
+                      </Button>
                     </td>
                   </tr>
                 ))
