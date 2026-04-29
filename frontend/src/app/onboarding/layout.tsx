@@ -1,9 +1,8 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { AuthProvider } from "@/contexts/AuthContext";
 
 function OnboardingClientLayout({ children }: { children: React.ReactNode }) {
-  return <AuthProvider>{children}</AuthProvider>;
+  return <>{children}</>;
 }
 
 export default async function OnboardingLayout({ children }: { children: React.ReactNode }) {

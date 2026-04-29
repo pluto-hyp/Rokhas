@@ -15,6 +15,8 @@ export const metadata: Metadata = {
   description: "Digital Administration Platform",
 };
 
+import { Providers } from "@/components/Providers";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -23,7 +25,9 @@ export default function RootLayout({
   return (
     <html lang="en" data-scroll-behavior="smooth" className={cn(ebGaramond.variable, "font-sans", geist.variable)}>
       <body className="font-sans antialiased selection:bg-[#1E3A8A] selection:text-white">
-        {children}
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   );
