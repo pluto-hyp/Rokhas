@@ -2,20 +2,27 @@
 
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
+import { ModeToggle } from "@/components/ui/mode-toggle";
+
 export default function DashboardClientLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <SidebarProvider>
+    <SidebarProvider className="dashboard-shell">
       <AppSidebar />
-      <main className="flex-1 w-full flex flex-col h-screen overflow-hidden bg-[#FDFCFB]">
-        <header className="h-16 border-b border-border/40 flex items-center px-8 bg-white/50 backdrop-blur-md z-10 shrink-0">
-          <SidebarTrigger />
-          <div className="ml-4 h-6 w-px bg-border/40 md:hidden" />
+      <main className="flex-1 w-full flex flex-col h-screen overflow-hidden bg-background text-foreground">
+        <header className="h-16 flex items-center justify-between border-b border-border bg-background/95 px-8 z-10 shrink-0 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+          <div className="flex items-center">
+            <SidebarTrigger className="rounded-md text-muted-foreground hover:text-foreground" />
+            <div className="ml-4 h-6 w-px bg-border/40 md:hidden" />
+          </div>
+          <div className="flex items-center gap-4">
+            <ModeToggle />
+          </div>
         </header>
-        <div className="flex-1 overflow-y-auto p-8">
+        <div className="flex-1 overflow-y-auto p-6 md:p-8 animate-appear">
           {children}
         </div>
       </main>

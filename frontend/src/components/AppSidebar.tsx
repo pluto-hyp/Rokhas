@@ -9,8 +9,7 @@ import {
   Star, 
   Settings, 
   BarChart3,
-  LogOut,
-  ChevronRight
+  LogOut
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
@@ -67,14 +66,14 @@ export function AppSidebar() {
   const isLinkActive = (url: string) => pathname === url;
 
   return (
-    <Sidebar className="border-r border-border/40">
+    <Sidebar className="border-r border-sidebar-border bg-sidebar">
       <SidebarHeader className="p-6">
         <div className="flex items-center gap-3">
           <RokhasLogo />
           {state === "expanded" && (
             <div className="flex flex-col">
-              <span className="font-bold text-lg tracking-tight leading-none text-foreground">Rokhas</span>
-              <span className="text-[10px] text-muted-foreground uppercase tracking-widest mt-1 font-medium">Digital Administration</span>
+              <span className="font-bold text-lg tracking-tight leading-none text-sidebar-foreground">Rokhas</span>
+              <span className="text-[10px] text-sidebar-foreground/50 uppercase tracking-widest mt-1 font-medium">Digital Administration</span>
             </div>
           )}
         </div>
@@ -82,7 +81,7 @@ export function AppSidebar() {
 
       <SidebarContent className="px-4">
         <SidebarGroup>
-          <SidebarGroupLabel className="text-muted-foreground/60 text-[10px] font-bold uppercase tracking-wider mb-2 px-2">Overview</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-sidebar-foreground/40 text-[10px] font-bold uppercase tracking-wider mb-2 px-2">Overview</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {navigation.overview.map((item) => {
@@ -92,19 +91,21 @@ export function AppSidebar() {
                     <SidebarMenuButton 
                       isActive={active}
                       className={cn(
-                        "w-full justify-between px-3 py-2 rounded-xl transition-all duration-200",
-                        active ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                        "w-full justify-between px-3 py-2 rounded-md transition-colors",
+                        active 
+                          ? "bg-sidebar-primary text-sidebar-primary-foreground" 
+                          : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                       )}
                       render={
                         <Link href={item.url}>
                           <div className="flex items-center gap-3">
                             <item.icon className="w-5 h-5" />
-                            <span>{item.title}</span>
+                            <span className="font-medium">{item.title}</span>
                           </div>
                           {item.badge && (
                             <span className={cn(
                               "text-[10px] font-bold px-2 py-0.5 rounded-full",
-                              active ? "bg-primary-foreground/20 text-primary-foreground" : "bg-muted-foreground/10 text-muted-foreground"
+                              active ? "bg-sidebar-primary-foreground/20 text-sidebar-primary-foreground" : "bg-muted text-muted-foreground"
                             )}>
                               {item.badge}
                             </span>
@@ -120,7 +121,7 @@ export function AppSidebar() {
         </SidebarGroup>
 
         <SidebarGroup className="mt-4">
-          <SidebarGroupLabel className="text-muted-foreground/60 text-[10px] font-bold uppercase tracking-wider mb-2 px-2">Services</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-sidebar-foreground/40 text-[10px] font-bold uppercase tracking-wider mb-2 px-2">Services</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {navigation.services.map((item) => {
@@ -130,19 +131,21 @@ export function AppSidebar() {
                     <SidebarMenuButton 
                       isActive={active}
                       className={cn(
-                        "w-full justify-between px-3 py-2 rounded-xl transition-all duration-200",
-                        active ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                        "w-full justify-between px-3 py-2 rounded-md transition-colors",
+                        active 
+                          ? "bg-sidebar-primary text-sidebar-primary-foreground" 
+                          : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                       )}
                       render={
                         <Link href={item.url}>
                           <div className="flex items-center gap-3">
                             <item.icon className="w-5 h-5" />
-                            <span>{item.title}</span>
+                            <span className="font-medium">{item.title}</span>
                           </div>
                           {item.badge && (
                             <span className={cn(
                               "text-[10px] font-bold px-2 py-0.5 rounded-full",
-                              active ? "bg-primary-foreground/20 text-primary-foreground" : "bg-muted-foreground/10 text-muted-foreground"
+                              active ? "bg-sidebar-primary-foreground/20 text-sidebar-primary-foreground" : "bg-muted text-muted-foreground"
                             )}>
                               {item.badge}
                             </span>
@@ -158,7 +161,7 @@ export function AppSidebar() {
         </SidebarGroup>
 
         <SidebarGroup className="mt-4">
-          <SidebarGroupLabel className="text-muted-foreground/60 text-[10px] font-bold uppercase tracking-wider mb-2 px-2">System</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-sidebar-foreground/40 text-[10px] font-bold uppercase tracking-wider mb-2 px-2">System</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {navigation.system.map((item) => {
@@ -168,14 +171,16 @@ export function AppSidebar() {
                     <SidebarMenuButton 
                       isActive={active}
                       className={cn(
-                        "w-full justify-between px-3 py-2 rounded-xl transition-all duration-200",
-                        active ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                        "w-full justify-between px-3 py-2 rounded-md transition-colors",
+                        active 
+                          ? "bg-sidebar-primary text-sidebar-primary-foreground" 
+                          : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                       )}
                       render={
                         <Link href={item.url}>
                           <div className="flex items-center gap-3">
                             <item.icon className="w-5 h-5" />
-                            <span>{item.title}</span>
+                            <span className="font-medium">{item.title}</span>
                           </div>
                         </Link>
                       }
@@ -189,15 +194,15 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="p-4 mt-auto">
-        <div className="bg-muted/50 border border-border/40 rounded-2xl p-3 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm">
+        <div className="bg-muted/40 border border-sidebar-border rounded-lg p-3 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-md bg-sidebar-primary text-sidebar-primary-foreground flex items-center justify-center font-bold text-sm">
             {user?.full_name?.split(' ').map(n => n[0]).join('') || "AK"}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-foreground truncate">{user?.full_name || "Ahmed Karimi"}</p>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">{role === 'authority' ? 'Administrator' : role}</p>
+            <p className="text-sm font-bold text-sidebar-foreground truncate">{user?.full_name || "Ahmed Karimi"}</p>
+            <p className="text-[10px] text-sidebar-foreground/50 uppercase tracking-wider font-medium">{role === 'authority' ? 'Administrator' : role}</p>
           </div>
-          <button onClick={logout} className="text-muted-foreground hover:text-foreground transition-colors">
+          <button onClick={logout} className="text-sidebar-foreground/50 hover:text-sidebar-foreground transition-colors">
             <LogOut className="w-4 h-4" />
           </button>
         </div>

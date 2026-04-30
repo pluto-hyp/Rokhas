@@ -23,7 +23,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" data-scroll-behavior="smooth" className={cn(ebGaramond.variable, "font-sans", geist.variable)}>
+    <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning className={cn(ebGaramond.variable, "font-sans", geist.variable)}>
       <body className="font-sans antialiased selection:bg-[#1E3A8A] selection:text-white">
         <Providers>
           {children}

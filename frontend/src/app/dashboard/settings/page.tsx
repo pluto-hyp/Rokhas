@@ -6,9 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "next-themes";
 
 export default function SettingsPage() {
   const { user, logout } = useAuth();
+  const { resolvedTheme, setTheme } = useTheme();
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
@@ -19,19 +21,19 @@ export default function SettingsPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         <div className="md:col-span-1 space-y-2">
-          <Button variant="ghost" className="w-full justify-start gap-3 bg-muted/50 rounded-xl font-bold">
+          <Button variant="ghost" className="w-full justify-start gap-3 bg-muted/50 rounded-md font-bold">
             <User className="w-4 h-4" />
             Profile
           </Button>
-          <Button variant="ghost" className="w-full justify-start gap-3 rounded-xl text-muted-foreground">
+          <Button variant="ghost" className="w-full justify-start gap-3 rounded-md text-muted-foreground">
             <Shield className="w-4 h-4" />
             Security
           </Button>
-          <Button variant="ghost" className="w-full justify-start gap-3 rounded-xl text-muted-foreground">
+          <Button variant="ghost" className="w-full justify-start gap-3 rounded-md text-muted-foreground">
             <Bell className="w-4 h-4" />
             Notifications
           </Button>
-          <Button variant="ghost" className="w-full justify-start gap-3 rounded-xl text-muted-foreground">
+          <Button variant="ghost" className="w-full justify-start gap-3 rounded-md text-muted-foreground">
             <Globe className="w-4 h-4" />
             Region & Language
           </Button>
@@ -46,15 +48,15 @@ export default function SettingsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Full Name</label>
-                  <Input defaultValue={user?.full_name ?? ""} className="rounded-xl" />
+                  <Input defaultValue={user?.full_name ?? ""} className="rounded-md" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Email Address</label>
-                  <Input defaultValue={user?.email ?? ""} className="rounded-xl" />
+                  <Input defaultValue={user?.email ?? ""} className="rounded-md" />
                 </div>
               </div>
               <div className="pt-4 flex justify-end">
-                <Button className="rounded-xl bg-primary text-primary-foreground px-8 font-bold">Save Changes</Button>
+                <Button className="rounded-md bg-primary text-primary-foreground px-8 font-bold">Save Changes</Button>
               </div>
             </CardContent>
           </Card>
@@ -76,13 +78,16 @@ export default function SettingsPage() {
                   <p className="text-sm font-bold">Dark Mode</p>
                   <p className="text-xs text-muted-foreground">Toggle between light and dark interface.</p>
                 </div>
-                <Switch />
+                <Switch
+                  checked={resolvedTheme === "dark"}
+                  onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
+                />
               </div>
             </CardContent>
           </Card>
 
           <div className="pt-4">
-            <Button variant="outline" onClick={logout} className="rounded-xl border-rose-500/20 text-rose-500 hover:bg-rose-500 hover:text-white transition-all gap-2 w-full font-bold">
+            <Button variant="outline" onClick={logout} className="rounded-md border-rose-500/20 text-rose-500 hover:bg-rose-500 hover:text-white transition-all gap-2 w-full font-bold">
               <LogOut className="w-4 h-4" />
               Sign Out
             </Button>
