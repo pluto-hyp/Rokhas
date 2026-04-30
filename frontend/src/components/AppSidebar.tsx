@@ -14,6 +14,7 @@ import {
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
+import { AppIcon } from "@/components/AppIcon";
 
 import {
   Sidebar,
@@ -30,15 +31,6 @@ import {
 } from "@/components/ui/sidebar";
 
 import { usePathname } from "next/navigation";
-
-// Custom Logo Component
-const RokhasLogo = () => (
-  <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect width="40" height="40" rx="12" fill="var(--primary)" />
-    <path d="M12 24V14C12 12.8954 12.8954 12 14 12H26C27.1046 12 28 12.8954 28 14V24M12 24L20 18L28 24M12 24H28M20 28V24" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    <rect x="18" y="22" width="4" height="2" rx="1" fill="white" fillOpacity="0.3" />
-  </svg>
-);
 
 export function AppSidebar() {
   const { user, logout } = useAuth();
@@ -69,7 +61,9 @@ export function AppSidebar() {
     <Sidebar className="border-r border-sidebar-border bg-sidebar">
       <SidebarHeader className="p-6">
         <div className="flex items-center gap-3">
-          <RokhasLogo />
+          <div className="flex size-10 items-center justify-center rounded-xl bg-sidebar-primary text-sidebar-primary-foreground">
+            <AppIcon className="size-6" />
+          </div>
           {state === "expanded" && (
             <div className="flex flex-col">
               <span className="font-bold text-lg tracking-tight leading-none text-sidebar-foreground">Rokhas</span>

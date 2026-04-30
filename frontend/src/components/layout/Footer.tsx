@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AppIcon } from "@/components/AppIcon";
 import styles from "./Footer.module.css";
 
 export default function Footer() {
@@ -8,7 +9,9 @@ export default function Footer() {
         <div className={styles.footerContainer}>
           <div className={`${styles.column} ${styles.brandCol}`}>
             <div className={styles.logo}>
-              <div className={styles.logoIcon}>R</div>
+              <div className={styles.logoIcon}>
+                <AppIcon className={styles.logoSvg} />
+              </div>
               <span>Rokhas</span>
             </div>
             <p className={styles.description}>
