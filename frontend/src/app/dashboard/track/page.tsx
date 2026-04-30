@@ -9,6 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 
+const API_URL = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/+$/, "");
+
 export default function TrackPage() {
   const [ref, setRef] = useState("");
   const [result, setResult] = useState<any>(null);
@@ -22,7 +24,7 @@ export default function TrackPage() {
       // Assuming dossier ID is extracted from ref or ref is the ID for now
       // RKH-2026-0841 -> extract 841
       const id = ref.split('-').pop();
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/dossiers/${id}`, {
+      const response = await fetch(`${API_URL}/api/v1/dossiers/${id}`, {
         headers: { "Authorization": `Bearer ${token}` }
       });
       if (response.ok) {

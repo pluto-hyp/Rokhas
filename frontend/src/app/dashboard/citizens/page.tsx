@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
 
+const API_URL = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/+$/, "");
+
 export default function CitizensPage() {
   const [citizens, setCitizens] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -15,7 +17,7 @@ export default function CitizensPage() {
     async function fetchCitizens() {
       if (!token) return;
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/citizens/`, {
+        const response = await fetch(`${API_URL}/api/v1/citizens/`, {
           headers: { "Authorization": `Bearer ${token}` }
         });
         if (response.ok) {

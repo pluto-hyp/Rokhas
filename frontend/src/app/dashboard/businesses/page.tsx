@@ -9,6 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 
+const API_URL = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/+$/, "");
+
 export default function BusinessesPage() {
   const [businesses, setBusinesses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -18,7 +20,7 @@ export default function BusinessesPage() {
     async function fetchBusinesses() {
       if (!token) return;
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/businesses/`, {
+        const response = await fetch(`${API_URL}/api/v1/businesses/`, {
           headers: { "Authorization": `Bearer ${token}` }
         });
         if (response.ok) {

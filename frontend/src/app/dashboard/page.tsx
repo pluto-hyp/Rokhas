@@ -48,8 +48,8 @@ const CATEGORIES = [
 
 // --- Components ---
 
-const StatCard = ({ title, value, trend, trendValue, icon: Icon }: any) => (
-  <Card className="relative overflow-hidden border border-border/40 shadow-none bg-white">
+const StatCard = ({ title, value, trend, trendValue, icon: Icon, delay = "" }: any) => (
+  <Card className={cn("relative overflow-hidden border border-border/40 shadow-none bg-card animate-appear", delay)}>
     <CardContent className="p-6">
       <div className="flex justify-between items-start">
         <div className="space-y-1">
@@ -59,15 +59,18 @@ const StatCard = ({ title, value, trend, trendValue, icon: Icon }: any) => (
             {trend === "up" ? (
               <TrendingUp className="w-3 h-3 text-foreground" />
             ) : trend === "down" ? (
-              <TrendingDown className="w-3 h-3 text-muted-foreground" />
+              <TrendingDown className="w-3 h-3 text-destructive" />
             ) : null}
-            <span className="text-[10px] font-bold text-foreground">
+            <span className={cn(
+              "text-[10px] font-bold",
+              trend === "up" ? "text-foreground" : trend === "down" ? "text-destructive" : "text-muted-foreground"
+            )}>
               {trendValue}
             </span>
             <span className="text-[10px] text-muted-foreground ml-1">this month</span>
           </div>
         </div>
-        <div className="p-2 rounded-xl bg-primary/5 text-primary">
+        <div className="p-2 rounded-xl bg-muted text-foreground">
           <Icon className="w-5 h-5" />
         </div>
       </div>
@@ -161,23 +164,23 @@ export default function DashboardHome() {
         {role === "authority" ? (
           <>
             <StatCard title="Total Permits" value="2,841" trend="up" trendValue="+8.4%" icon={FileText} />
-            <StatCard title="Pending Review" value="143" trend="down" trendValue="+12" icon={Clock} />
-            <StatCard title="Approved" value="2,519" trend="up" trendValue="88.7%" icon={CheckCircle2} />
-            <StatCard title="Active Citizens" value="18.2k" trend="up" trendValue="+341" icon={Users} />
+            <StatCard title="Pending Review" value="143" trend="down" trendValue="+12" icon={Clock} delay="delay-100" />
+            <StatCard title="Approved" value="2,519" trend="up" trendValue="88.7%" icon={CheckCircle2} delay="delay-200" />
+            <StatCard title="Active Citizens" value="18.2k" trend="up" trendValue="+341" icon={Users} delay="delay-300" />
           </>
         ) : role === "architect" ? (
           <>
             <StatCard title="Client Projects" value="24" trend="up" trendValue="+2" icon={Users} />
-            <StatCard title="Pending Submissions" value="5" trend="down" trendValue="-1" icon={Clock} />
-            <StatCard title="Approved Plans" value="18" trend="up" trendValue="75%" icon={CheckCircle2} />
-            <StatCard title="Upcoming Deadlines" value="3" trend="up" trendValue="High" icon={Calendar} />
+            <StatCard title="Pending Submissions" value="5" trend="down" trendValue="-1" icon={Clock} delay="delay-100" />
+            <StatCard title="Approved Plans" value="18" trend="up" trendValue="75%" icon={CheckCircle2} delay="delay-200" />
+            <StatCard title="Upcoming Deadlines" value="3" trend="up" trendValue="High" icon={Calendar} delay="delay-300" />
           </>
         ) : (
           <>
             <StatCard title="My Applications" value="4" trend="up" trendValue="+1" icon={FileText} />
-            <StatCard title="Under Review" value="2" trend="none" trendValue="0" icon={Clock} />
-            <StatCard title="Issued Permits" value="2" trend="up" trendValue="+1" icon={CheckCircle2} />
-            <StatCard title="Notifications" value="12" trend="up" trendValue="+3" icon={Bell} />
+            <StatCard title="Under Review" value="2" trend="none" trendValue="0" icon={Clock} delay="delay-100" />
+            <StatCard title="Issued Permits" value="2" trend="up" trendValue="+1" icon={CheckCircle2} delay="delay-200" />
+            <StatCard title="Notifications" value="12" trend="up" trendValue="+3" icon={Bell} delay="delay-300" />
           </>
         )}
       </div>

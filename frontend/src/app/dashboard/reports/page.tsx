@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 
+const API_URL = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/+$/, "");
+
 export default function ReportsPage() {
   const [report, setReport] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -15,7 +17,7 @@ export default function ReportsPage() {
     async function fetchReport() {
       if (!token) return;
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/reports/summary`, {
+        const response = await fetch(`${API_URL}/api/v1/reports/summary`, {
           headers: { "Authorization": `Bearer ${token}` }
         });
         if (response.ok) {

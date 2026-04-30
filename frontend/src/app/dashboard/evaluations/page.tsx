@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
 
+const API_URL = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/+$/, "");
+
 export default function EvaluationsPage() {
   const [evaluations, setEvaluations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -17,7 +19,7 @@ export default function EvaluationsPage() {
     async function fetchEvaluations() {
       if (!token) return;
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/evaluations/`, {
+        const response = await fetch(`${API_URL}/api/v1/evaluations/`, {
           headers: { "Authorization": `Bearer ${token}` }
         });
         if (response.ok) {

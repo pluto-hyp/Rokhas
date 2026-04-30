@@ -1,7 +1,8 @@
 import httpx
+import os
 from typing import Dict, Any
 
-AGENT_URL = "http://localhost:8000"
+AGENT_URL = os.getenv("AGENT_URL", "http://127.0.0.1:8001")
 
 async def verify_dossier_with_agent(dossier_data: Dict[str, Any]) -> Dict[str, Any]:
     """
