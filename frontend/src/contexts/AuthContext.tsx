@@ -1,9 +1,9 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useCallback, useContext, useState, useEffect } from "react";
 import Cookies from "js-cookie";
 import { getMe, User } from "@/lib/auth-api";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 interface AuthContextType {
   user: User | null;
@@ -21,9 +21,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
-  const pathname = usePathname();
 
-  const loadUser = async (authToken: string) => {
+  const logout = useCallback(() => {
+    Cookies.remove("rokhas_token", { path: '/' });
+    setToken(null);
+    setUser(null);
+    router.push("/login");
+  }, [router]);
+
+  const loadUser = useCallback(async (authToken: string) => {
     try {
       const userData = await getMe(authToken);
       setUser(userData);
@@ -34,35 +40,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [logout]);
 
   useEffect(() => {
-    const storedToken = Cookies.get("rokhas_token");
-    if (storedToken) {
-      loadUser(storedToken);
-    } else {
+    async function initializeAuth() {
+      const storedToken = Cookies.get("rokhas_token");
+      if (storedToken) {
+        await loadUser(storedToken);
+        return;
+      }
+      await Promise.resolve();
       setIsLoading(false);
     }
-  }, []);
+    initializeAuth();
+  }, [loadUser]);
 
-  const login = (newToken: string) => {
+  const login = useCallback((newToken: string) => {
     Cookies.set("rokhas_token", newToken, { expires: 7, path: '/' }); // 7 days
     setToken(newToken);
     loadUser(newToken);
-  };
+  }, [loadUser]);
 
-  const logout = () => {
-    Cookies.remove("rokhas_token", { path: '/' });
-    setToken(null);
-    setUser(null);
-    router.push("/login");
-  };
-
-  const reloadUser = async () => {
+  const reloadUser = useCallback(async () => {
     if (token) {
       await loadUser(token);
     }
-  };
+  }, [loadUser, token]);
 
   return (
     <AuthContext.Provider value={{ user, token, isLoading, login, logout, reloadUser }}>

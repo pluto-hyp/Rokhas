@@ -32,7 +32,7 @@ import {
 } from "@/components/ui/sheet";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
-import { createProject, getProjects, Project, ProjectCreate } from "@/lib/api";
+import { ApiError, createProject, getProjects, Project, ProjectCreate } from "@/lib/api";
 
 const API_URL = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/+$/, "");
 
@@ -160,7 +160,7 @@ const DonutChart = ({ data, total }: { data: typeof FALLBACK_CATEGORIES, total: 
 };
 
 export default function DashboardHome() {
-  const { user, token } = useAuth();
+  const { user, token, isLoading, logout } = useAuth();
   const role = user?.role || "citizen";
   const [projects, setProjects] = useState<Project[]>([]);
   const [report, setReport] = useState<ReportSummary | null>(null);
@@ -194,19 +194,28 @@ export default function DashboardHome() {
 
   useEffect(() => {
     async function loadDashboardData() {
-      if (!token) return;
+      if (isLoading) return;
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+
       try {
         const { projectData, reportData } = await fetchDashboardData(token);
         setProjects(projectData);
         setReport(reportData);
       } catch (error) {
+        if (error instanceof ApiError && error.status === 401) {
+          logout();
+          return;
+        }
         console.error("Failed to load dashboard data", error);
       } finally {
         setLoading(false);
       }
     }
     loadDashboardData();
-  }, [token]);
+  }, [isLoading, token, logout]);
 
   const onFormChange = (field: keyof ProjectCreate, value: string) => {
     const numericFields = ["hauteur", "recul", "emprise", "surface_terrain"];
@@ -235,6 +244,10 @@ export default function DashboardHome() {
       setProjects(projectData);
       setReport(reportData);
     } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        logout();
+        return;
+      }
       setFormError(error instanceof Error ? error.message : "Could not create permit.");
     } finally {
       setSubmitting(false);
