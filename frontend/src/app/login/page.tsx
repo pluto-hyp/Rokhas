@@ -29,10 +29,10 @@ export default function LoginPage() {
       formData.append("password", password);
       
       const res = await loginApi(formData);
-      login(res.access_token);
-      router.push("/dashboard");
-    } catch (err: any) {
-      setError(err.message || "Failed to login. Please check your credentials.");
+      await login(res.access_token);
+      router.replace("/dashboard");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to login. Please check your credentials.");
     } finally {
       setIsLoading(false);
     }

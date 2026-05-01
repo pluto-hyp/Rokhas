@@ -9,7 +9,7 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   isLoading: boolean;
-  login: (token: string) => void;
+  login: (token: string) => Promise<void>;
   logout: () => void;
   reloadUser: () => Promise<void>;
 }
@@ -34,9 +34,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const userData = await getMe(authToken);
       setUser(userData);
       setToken(authToken);
+      return userData;
     } catch (error) {
       console.error("Failed to load user:", error);
       logout();
+      return null;
     } finally {
       setIsLoading(false);
     }
@@ -55,10 +57,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     initializeAuth();
   }, [loadUser]);
 
-  const login = useCallback((newToken: string) => {
+  const login = useCallback(async (newToken: string) => {
+    setIsLoading(true);
     Cookies.set("rokhas_token", newToken, { expires: 7, path: '/' }); // 7 days
     setToken(newToken);
-    loadUser(newToken);
+    const userData = await loadUser(newToken);
+    if (!userData) {
+      throw new Error("Could not validate your session. Please sign in again.");
+    }
   }, [loadUser]);
 
   const reloadUser = useCallback(async () => {
