@@ -13,6 +13,11 @@ const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 export const metadata: Metadata = {
   title: "Rokhas",
   description: "Digital Administration Platform",
+  icons: {
+    icon: [{ url: "/rokhas.svg", type: "image/svg+xml" }],
+    shortcut: "/rokhas.svg",
+    apple: "/rokhas.svg",
+  },
 };
 
 import { Providers } from "@/components/Providers";

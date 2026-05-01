@@ -10,6 +10,7 @@ import {
   NavigationMenuList,
 } from "@/components/ui/navigation-menu";
 import { cn } from "@/lib/utils";
+import { AppIcon } from "@/components/AppIcon";
 
 export function Navbar() {
   const [scrolled, setScrolled] = React.useState(false);
@@ -28,8 +29,9 @@ export function Navbar() {
           ? "bg-white/80 backdrop-blur-xl border-border/50 shadow-lg scale-100" 
           : "bg-white/40 backdrop-blur-md border-white/20 scale-105"
       )}>
-        <Link href="/" className="font-serif text-xl font-bold tracking-tight text-primary hover:opacity-70 transition-opacity">
-          Rokhas.
+        <Link href="/" className="flex items-center gap-2 font-serif text-xl font-bold tracking-tight text-primary hover:opacity-70 transition-opacity">
+          <AppIcon className="size-5" />
+          <span>Rokhas.</span>
         </Link>
         
         <div className="h-6 w-px bg-border/40" />

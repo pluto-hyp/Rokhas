@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AppIcon } from "@/components/AppIcon";
 import styles from "./Navbar.module.css";
 
 export default function Navbar() {
@@ -6,7 +7,9 @@ export default function Navbar() {
     <header className={styles.navbar}>
       <div className={`container ${styles.navContainer}`}>
         <Link href="/" className={styles.logo}>
-          <div className={styles.logoIcon}>R</div>
+          <div className={styles.logoIcon}>
+            <AppIcon className={styles.logoSvg} />
+          </div>
           <span>Rokhas</span>
         </Link>
         <nav className={styles.links}>
