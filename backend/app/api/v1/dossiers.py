@@ -24,7 +24,7 @@ def read_dossiers(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
-    if current_user.role == "admin":
+    if current_user.role in {"admin", "authority"}:
         return crud_dossier.get_all_dossiers(db, skip=skip, limit=limit)
     return crud_dossier.get_dossiers_by_owner(db, owner_id=current_user.id, skip=skip, limit=limit)
 

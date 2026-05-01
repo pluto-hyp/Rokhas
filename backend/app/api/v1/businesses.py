@@ -23,6 +23,6 @@ def read_businesses(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
-    if current_user.role == "admin":
+    if current_user.role in {"admin", "authority"}:
         return crud_business.get_businesses(db, skip=skip, limit=limit)
     return crud_business.get_businesses_by_owner(db, owner_id=current_user.id, skip=skip, limit=limit)
