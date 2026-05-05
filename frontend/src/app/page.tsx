@@ -95,6 +95,32 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Workflow Section */}
+      <section id="workflow" className="py-40 px-6 border-t border-border/40">
+        <div className="max-w-6xl mx-auto">
+          <div className="mb-24">
+            <span className="text-xs font-bold uppercase tracking-[0.3em] text-primary/40">The Process</span>
+            <h2 className="font-serif text-5xl md:text-7xl font-bold tracking-tighter mt-4">Simplified<br />Workflow.</h2>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-12">
+            {[
+              { step: "01", title: "Digital Submission", desc: "Upload blueprints and legal documents via our secure, encrypted portal." },
+              { step: "02", title: "AI Compliance", desc: "Automated analysis against Moroccan urbanism codes and zoning regulations." },
+              { step: "03", title: "Review & Signing", desc: "Regional authorities review and digitally sign approvals in real-time." },
+              { step: "04", title: "Issuance", desc: "Receive your certified, QR-secured permit instantly upon final approval." }
+            ].map((item, i) => (
+              <div key={i} className="space-y-6 group">
+                <div className="font-serif text-4xl italic opacity-20 transition-opacity group-hover:opacity-100 duration-500">{item.step}</div>
+                <div className="h-px w-full bg-border/40" />
+                <h3 className="text-xl font-bold tracking-tight">{item.title}</h3>
+                <p className="text-primary/50 text-sm leading-relaxed font-medium">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Footer - Minimalist */}
       <footer className="py-24 px-6 border-t border-border/40">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-start gap-12">
