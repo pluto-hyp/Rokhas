@@ -7,7 +7,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isHomePage = pathname === "/";
+  const isLightForced = ["/", "/privacy", "/terms"].includes(pathname);
 
   return (
     <ThemeProvider 
@@ -15,7 +15,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       defaultTheme="system" 
       enableSystem 
       disableTransitionOnChange
-      forcedTheme={isHomePage ? "light" : undefined}
+      forcedTheme={isLightForced ? "light" : undefined}
     >
       <AuthProvider>
         {children}
