@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getProjects, Project } from "@/lib/api";
-import { FileText, Search, Plus, Filter, MoreHorizontal } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ApiError, getProjects, Project } from "@/lib/api";
+import { FileText, Search, Plus, Filter } from "lucide-react";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,22 +13,31 @@ import { useAuth } from "@/contexts/AuthContext";
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
-  const { token } = useAuth();
+  const { token, isLoading, logout } = useAuth();
 
   useEffect(() => {
     async function loadProjects() {
-      if (!token) return;
+      if (isLoading) return;
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+
       try {
         const data = await getProjects(token);
         setProjects(data);
       } catch (error) {
+        if (error instanceof ApiError && error.status === 401) {
+          logout();
+          return;
+        }
         console.error("Failed to load projects", error);
       } finally {
         setLoading(false);
       }
     }
     loadProjects();
-  }, [token]);
+  }, [isLoading, token, logout]);
 
   return (
     <div className="space-y-8">

@@ -1,15 +1,15 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useCallback, useContext, useState, useEffect } from "react";
 import Cookies from "js-cookie";
 import { getMe, User } from "@/lib/auth-api";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 interface AuthContextType {
   user: User | null;
   token: string | null;
   isLoading: boolean;
-  login: (token: string) => void;
+  login: (token: string) => Promise<void>;
   logout: () => void;
   reloadUser: () => Promise<void>;
 }
@@ -21,48 +21,57 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
-  const pathname = usePathname();
 
-  const loadUser = async (authToken: string) => {
-    try {
-      const userData = await getMe(authToken);
-      setUser(userData);
-      setToken(authToken);
-    } catch (error) {
-      console.error("Failed to load user:", error);
-      logout();
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    const storedToken = Cookies.get("rokhas_token");
-    if (storedToken) {
-      loadUser(storedToken);
-    } else {
-      setIsLoading(false);
-    }
-  }, []);
-
-  const login = (newToken: string) => {
-    Cookies.set("rokhas_token", newToken, { expires: 7, path: '/' }); // 7 days
-    setToken(newToken);
-    loadUser(newToken);
-  };
-
-  const logout = () => {
+  const logout = useCallback(() => {
     Cookies.remove("rokhas_token", { path: '/' });
     setToken(null);
     setUser(null);
     router.push("/login");
-  };
+  }, [router]);
 
-  const reloadUser = async () => {
+  const loadUser = useCallback(async (authToken: string) => {
+    try {
+      const userData = await getMe(authToken);
+      setUser(userData);
+      setToken(authToken);
+      return userData;
+    } catch (error) {
+      console.error("Failed to load user:", error);
+      logout();
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [logout]);
+
+  useEffect(() => {
+    async function initializeAuth() {
+      const storedToken = Cookies.get("rokhas_token");
+      if (storedToken) {
+        await loadUser(storedToken);
+        return;
+      }
+      await Promise.resolve();
+      setIsLoading(false);
+    }
+    initializeAuth();
+  }, [loadUser]);
+
+  const login = useCallback(async (newToken: string) => {
+    setIsLoading(true);
+    Cookies.set("rokhas_token", newToken, { expires: 7, path: '/' }); // 7 days
+    setToken(newToken);
+    const userData = await loadUser(newToken);
+    if (!userData) {
+      throw new Error("Could not validate your session. Please sign in again.");
+    }
+  }, [loadUser]);
+
+  const reloadUser = useCallback(async () => {
     if (token) {
       await loadUser(token);
     }
-  };
+  }, [loadUser, token]);
 
   return (
     <AuthContext.Provider value={{ user, token, isLoading, login, logout, reloadUser }}>

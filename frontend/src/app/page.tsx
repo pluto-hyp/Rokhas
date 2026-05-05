@@ -3,6 +3,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
+import { GitHubIcon, LinkedInIcon } from "@/components/BrandIcons";
+import { Globe } from "lucide-react";
 import ConstructionBackgroundLoader from "@/components/ConstructionBackgroundLoader";
 
 export default function Home() {
@@ -95,28 +97,66 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Workflow Section */}
+      <section id="workflow" className="py-40 px-6 border-t border-border/40">
+        <div className="max-w-6xl mx-auto">
+          <div className="mb-24">
+            <span className="text-xs font-bold uppercase tracking-[0.3em] text-primary/40">The Process</span>
+            <h2 className="font-serif text-5xl md:text-7xl font-bold tracking-tighter mt-4">Simplified<br />Workflow.</h2>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-12">
+            {[
+              { step: "01", title: "Digital Submission", desc: "Upload blueprints and legal documents via our secure, encrypted portal." },
+              { step: "02", title: "AI Compliance", desc: "Automated analysis against Moroccan urbanism codes and zoning regulations." },
+              { step: "03", title: "Review & Signing", desc: "Regional authorities review and digitally sign approvals in real-time." },
+              { step: "04", title: "Issuance", desc: "Receive your certified, QR-secured permit instantly upon final approval." }
+            ].map((item, i) => (
+              <div key={i} className="space-y-6 group">
+                <div className="font-serif text-4xl italic opacity-20 transition-opacity group-hover:opacity-100 duration-500">{item.step}</div>
+                <div className="h-px w-full bg-border/40" />
+                <h3 className="text-xl font-bold tracking-tight">{item.title}</h3>
+                <p className="text-primary/50 text-sm leading-relaxed font-medium">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Footer - Minimalist */}
       <footer className="py-24 px-6 border-t border-border/40">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-start gap-12">
           <div>
             <div className="font-serif text-4xl font-bold tracking-tight mb-4">Rokhas.</div>
-            <p className="text-primary/40 text-sm max-w-xs font-medium">
+            <p className="text-primary/40 text-sm max-w-xs font-medium mb-6">
               Precision-engineered for Moroccan Urbanism.
             </p>
+            <div className="flex gap-4">
+              <Link href="https://github.com/pluto-hyp/rokhas" target="_blank" className="text-primary/40 hover:text-primary transition-colors">
+                <GitHubIcon size={20} />
+              </Link>
+              <Link href="https://www.linkedin.com/in/melouich" target="_blank" className="text-primary/40 hover:text-primary transition-colors">
+                <LinkedInIcon size={20} />
+              </Link>
+              <Link href="https://melouich.vercel.app" target="_blank" className="text-primary/40 hover:text-primary transition-colors">
+                <Globe size={20} />
+              </Link>
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-16">
             <div className="space-y-4">
               <div className="text-xs font-bold uppercase tracking-widest text-primary/30">Company</div>
               <ul className="space-y-2 text-sm font-bold">
-                <li><Link href="https://github.com/pluto-hyp/rokhas" className="hover:opacity-50 transition-opacity">About</Link></li>
-                <li><Link href="https://melouich.vercel.app" className="hover:opacity-50 transition-opacity">Contact</Link></li>
+                <li><Link href="#about" className="hover:opacity-50 transition-opacity">About</Link></li>
+                <li><Link href="#workflow" className="hover:opacity-50 transition-opacity">Workflow</Link></li>
+                <li><Link href="mailto:elouichouanimouad@gmail.com" className="hover:opacity-50 transition-opacity">Contact</Link></li>
               </ul>
             </div>
             <div className="space-y-4">
               <div className="text-xs font-bold uppercase tracking-widest text-primary/30">Legal</div>
               <ul className="space-y-2 text-sm font-bold">
-                <li><Link href="#" className="hover:opacity-50 transition-opacity">Privacy</Link></li>
-                <li><Link href="#" className="hover:opacity-50 transition-opacity">Terms</Link></li>
+                <li><Link href="/privacy" className="hover:opacity-50 transition-opacity">Privacy</Link></li>
+                <li><Link href="/terms" className="hover:opacity-50 transition-opacity">Terms</Link></li>
               </ul>
             </div>
           </div>
