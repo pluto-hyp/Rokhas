@@ -1,15 +1,16 @@
 "use client";
 
-import { 
-  LayoutDashboard, 
-  FileText, 
-  Search, 
-  UserCircle, 
-  Building2, 
-  Star, 
-  Settings, 
+import {
+  LayoutDashboard,
+  FileText,
+  Search,
+  UserCircle,
+  Building2,
+  Star,
+  Settings,
   BarChart3,
-  LogOut
+  LogOut,
+  type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
@@ -32,75 +33,99 @@ import {
 
 import { usePathname } from "next/navigation";
 
+type NavItem = {
+  title: string;
+  url: string;
+  icon: LucideIcon;
+  badge?: number;
+};
+
 export function AppSidebar() {
   const { user, logout } = useAuth();
   const { state } = useSidebar();
   const pathname = usePathname();
   const role = user?.role || "citizen";
 
-  const navigation = {
-    overview: [
+  const navigation: Array<{ title: string; items: NavItem[] }> = [
+    {
+      title: "Overview",
+      items: [
       { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
       { title: "Permit Requests", url: "/dashboard/projects", icon: FileText, badge: 12 },
       { title: "Track Application", url: "/dashboard/track", icon: Search },
-    ],
-    services: [
+      ],
+    },
+    {
+      title: "Services",
+      items: [
       { title: "Citizens Portal", url: "/dashboard/citizens", icon: UserCircle },
       { title: "Businesses", url: "/dashboard/businesses", icon: Building2, badge: 3 },
       { title: "Evaluations", url: "/dashboard/evaluations", icon: Star },
-    ],
-    system: [
+      ],
+    },
+    {
+      title: "System",
+      items: [
       { title: "Settings", url: "/dashboard/settings", icon: Settings },
       { title: "Reports", url: "/dashboard/reports", icon: BarChart3 },
-    ],
-  };
+      ],
+    },
+  ];
 
   const isLinkActive = (url: string) => pathname === url;
+  const initials = user?.full_name?.split(" ").map((n) => n[0]).join("") || "RK";
 
   return (
-    <Sidebar className="border-r border-sidebar-border bg-sidebar">
-      <SidebarHeader className="p-6">
-        <div className="flex items-center gap-3">
-          <div className="flex size-10 items-center justify-center rounded-xl bg-sidebar-primary text-sidebar-primary-foreground">
+    <Sidebar className="border-r border-sidebar-border/60 bg-sidebar">
+      <SidebarHeader className="p-5 pb-3">
+        <div className="flex items-center gap-2.5">
+          <div className="flex size-9 items-center justify-center rounded-xl bg-sidebar-primary text-sidebar-primary-foreground shadow-sm">
             <AppIcon className="size-6" />
           </div>
           {state === "expanded" && (
             <div className="flex flex-col">
-              <span className="font-bold text-lg tracking-tight leading-none text-sidebar-foreground">Rokhas</span>
-              <span className="text-[10px] text-sidebar-foreground/50 uppercase tracking-widest mt-1 font-medium">Digital Administration</span>
+              <span className="text-base font-semibold tracking-tight leading-none text-sidebar-foreground">Rokhas CRM</span>
+              <span className="mt-1 text-[10px] font-medium uppercase tracking-widest text-sidebar-foreground/50">
+                Digital Administration
+              </span>
             </div>
           )}
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="px-4">
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-sidebar-foreground/40 text-[10px] font-bold uppercase tracking-wider mb-2 px-2">Overview</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {navigation.overview.map((item) => {
+      <SidebarContent className="px-3">
+        {navigation.map((section) => (
+          <SidebarGroup key={section.title} className="mt-1">
+            <SidebarGroupLabel className="mb-1 px-2 text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/40">
+              {section.title}
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {section.items.map((item) => {
                 const active = isLinkActive(item.url);
                 return (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton 
+                    <SidebarMenuButton
                       isActive={active}
                       className={cn(
-                        "w-full justify-between px-3 py-2 rounded-md transition-colors",
-                        active 
-                          ? "bg-sidebar-primary text-sidebar-primary-foreground" 
+                        "h-10 w-full justify-between rounded-lg px-3 py-2 transition-colors",
+                        active
+                          ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm"
                           : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                       )}
                       render={
                         <Link href={item.url}>
-                          <div className="flex items-center gap-3">
-                            <item.icon className="w-5 h-5" />
+                          <div className="flex items-center gap-2.5">
+                            <item.icon className="h-4 w-4" />
                             <span className="font-medium">{item.title}</span>
                           </div>
                           {item.badge && (
-                            <span className={cn(
-                              "text-[10px] font-bold px-2 py-0.5 rounded-full",
+                            <span
+                              className={cn(
+                                "rounded-full px-2 py-0.5 text-[10px] font-semibold",
                               active ? "bg-sidebar-primary-foreground/20 text-sidebar-primary-foreground" : "bg-muted text-muted-foreground"
-                            )}>
+                              )}
+                            >
                               {item.badge}
                             </span>
                           )}
@@ -110,94 +135,25 @@ export function AppSidebar() {
                   </SidebarMenuItem>
                 );
               })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <SidebarGroup className="mt-4">
-          <SidebarGroupLabel className="text-sidebar-foreground/40 text-[10px] font-bold uppercase tracking-wider mb-2 px-2">Services</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {navigation.services.map((item) => {
-                const active = isLinkActive(item.url);
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton 
-                      isActive={active}
-                      className={cn(
-                        "w-full justify-between px-3 py-2 rounded-md transition-colors",
-                        active 
-                          ? "bg-sidebar-primary text-sidebar-primary-foreground" 
-                          : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                      )}
-                      render={
-                        <Link href={item.url}>
-                          <div className="flex items-center gap-3">
-                            <item.icon className="w-5 h-5" />
-                            <span className="font-medium">{item.title}</span>
-                          </div>
-                          {item.badge && (
-                            <span className={cn(
-                              "text-[10px] font-bold px-2 py-0.5 rounded-full",
-                              active ? "bg-sidebar-primary-foreground/20 text-sidebar-primary-foreground" : "bg-muted text-muted-foreground"
-                            )}>
-                              {item.badge}
-                            </span>
-                          )}
-                        </Link>
-                      }
-                    />
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <SidebarGroup className="mt-4">
-          <SidebarGroupLabel className="text-sidebar-foreground/40 text-[10px] font-bold uppercase tracking-wider mb-2 px-2">System</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {navigation.system.map((item) => {
-                const active = isLinkActive(item.url);
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton 
-                      isActive={active}
-                      className={cn(
-                        "w-full justify-between px-3 py-2 rounded-md transition-colors",
-                        active 
-                          ? "bg-sidebar-primary text-sidebar-primary-foreground" 
-                          : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                      )}
-                      render={
-                        <Link href={item.url}>
-                          <div className="flex items-center gap-3">
-                            <item.icon className="w-5 h-5" />
-                            <span className="font-medium">{item.title}</span>
-                          </div>
-                        </Link>
-                      }
-                    />
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
       </SidebarContent>
 
-      <SidebarFooter className="p-4 mt-auto">
-        <div className="bg-muted/40 border border-sidebar-border rounded-lg p-3 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-md bg-sidebar-primary text-sidebar-primary-foreground flex items-center justify-center font-bold text-sm">
-            {user?.full_name?.split(' ').map(n => n[0]).join('') || "AK"}
+      <SidebarFooter className="mt-auto p-4">
+        <div className="flex items-center gap-3 rounded-xl border border-sidebar-border/80 bg-muted/40 p-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sidebar-primary text-sm font-semibold text-sidebar-primary-foreground">
+            {initials}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-sidebar-foreground truncate">{user?.full_name || "Ahmed Karimi"}</p>
-            <p className="text-[10px] text-sidebar-foreground/50 uppercase tracking-wider font-medium">{role === 'authority' ? 'Administrator' : role}</p>
+            <p className="truncate text-sm font-semibold text-sidebar-foreground">{user?.full_name || "Rokhas User"}</p>
+            <p className="text-[10px] font-medium uppercase tracking-wider text-sidebar-foreground/50">
+              {role === "authority" ? "Administrator" : role}
+            </p>
           </div>
-          <button onClick={logout} className="text-sidebar-foreground/50 hover:text-sidebar-foreground transition-colors">
-            <LogOut className="w-4 h-4" />
+          <button onClick={logout} className="text-sidebar-foreground/50 transition-colors hover:text-sidebar-foreground">
+            <LogOut className="h-4 w-4" />
           </button>
         </div>
       </SidebarFooter>

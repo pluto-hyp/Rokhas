@@ -1,3 +1,8 @@
+ "use client"
+
+import { FormEvent, useState } from "react"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
@@ -8,13 +13,56 @@ import {
   FieldSeparator,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import { useAuth } from "@/contexts/AuthContext"
+import { login as loginApi, register as registerApi } from "@/lib/auth-api"
 
 export function SignupForm({
   className,
   ...props
 }: React.ComponentProps<"form">) {
+  const router = useRouter()
+  const { login } = useAuth()
+  const [fullName, setFullName] = useState("")
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [error, setError] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setError("")
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.")
+      return
+    }
+
+    setIsSubmitting(true)
+    try {
+      await registerApi({
+        email,
+        password,
+        full_name: fullName,
+        role: "citizen",
+      })
+
+      const formData = new FormData()
+      formData.append("username", email)
+      formData.append("password", password)
+      const response = await loginApi(formData)
+      await login(response.access_token)
+      router.push("/onboarding")
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to create account. Please try again."
+      setError(message)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   return (
-    <form className={cn("flex flex-col gap-6", className)} {...props}>
+    <form className={cn("flex flex-col gap-6", className)} onSubmit={handleSubmit} {...props}>
       <FieldGroup>
         <div className="flex flex-col items-center gap-1 text-center">
           <h1 className="text-2xl font-bold">Create your account</h1>
@@ -22,13 +70,32 @@ export function SignupForm({
             Fill in the form below to create your account
           </p>
         </div>
+        {error ? (
+          <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            {error}
+          </div>
+        ) : null}
         <Field>
           <FieldLabel htmlFor="name">Full Name</FieldLabel>
-          <Input id="name" type="text" placeholder="John Doe" required />
+          <Input
+            id="name"
+            type="text"
+            placeholder="John Doe"
+            required
+            value={fullName}
+            onChange={(event) => setFullName(event.target.value)}
+          />
         </Field>
         <Field>
           <FieldLabel htmlFor="email">Email</FieldLabel>
-          <Input id="email" type="email" placeholder="m@example.com" required />
+          <Input
+            id="email"
+            type="email"
+            placeholder="m@example.com"
+            required
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+          />
           <FieldDescription>
             We&apos;ll use this to contact you. We will not share your email
             with anyone else.
@@ -36,18 +103,32 @@ export function SignupForm({
         </Field>
         <Field>
           <FieldLabel htmlFor="password">Password</FieldLabel>
-          <Input id="password" type="password" required />
+          <Input
+            id="password"
+            type="password"
+            required
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+          />
           <FieldDescription>
             Must be at least 8 characters long.
           </FieldDescription>
         </Field>
         <Field>
           <FieldLabel htmlFor="confirm-password">Confirm Password</FieldLabel>
-          <Input id="confirm-password" type="password" required />
+          <Input
+            id="confirm-password"
+            type="password"
+            required
+            value={confirmPassword}
+            onChange={(event) => setConfirmPassword(event.target.value)}
+          />
           <FieldDescription>Please confirm your password.</FieldDescription>
         </Field>
         <Field>
-          <Button type="submit">Create Account</Button>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Creating account..." : "Create Account"}
+          </Button>
         </Field>
         <FieldSeparator>Or continue with</FieldSeparator>
         <Field>
@@ -61,7 +142,7 @@ export function SignupForm({
             Sign up with Google
           </Button>
           <FieldDescription className="px-6 text-center">
-            Already have an account? <a href="/login">Sign in</a>
+            Already have an account? <Link href="/login">Sign in</Link>
           </FieldDescription>
         </Field>
       </FieldGroup>
