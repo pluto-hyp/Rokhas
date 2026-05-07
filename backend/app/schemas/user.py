@@ -8,11 +8,11 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     password: str
-    role: Optional[str] = "citizen"
+    role: Optional[str] = None
 
 class UserResponse(UserBase):
     id: int
-    role: str
+    role: Optional[str]
     is_active: bool
     created_at: datetime
 

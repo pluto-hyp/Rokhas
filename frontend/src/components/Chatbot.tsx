@@ -89,14 +89,14 @@ export default function Chatbot() {
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
       {isOpen && (
         <Card className="w-80 md:w-96 h-[500px] mb-4 shadow-2xl border-border/40 overflow-hidden flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-300">
-          <CardHeader className="bg-primary p-4 flex flex-row items-center justify-between space-y-0">
+          <CardHeader className="bg-primary p-4 flex flex-row items-center justify-between space-y-0 text-primary-foreground">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
-                <Bot className="w-5 h-5 text-white" />
+              <div className="w-8 h-8 rounded-full bg-primary-foreground/10 flex items-center justify-center">
+                <Bot className="w-5 h-5" />
               </div>
-              <CardTitle className="text-sm font-bold text-white">Rokhas Assistant</CardTitle>
+              <CardTitle className="text-sm font-bold">Rokhas Assistant</CardTitle>
             </div>
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-white hover:bg-white/20" onClick={() => setIsOpen(false)}>
+            <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-primary-foreground/10" onClick={() => setIsOpen(false)}>
               <X className="w-4 h-4" />
             </Button>
           </CardHeader>
@@ -121,7 +121,7 @@ export default function Chatbot() {
                       "p-3 rounded-2xl text-xs leading-relaxed shadow-sm",
                       msg.role === "user" 
                         ? "bg-primary text-primary-foreground rounded-tr-none" 
-                        : "bg-white border border-border/40 rounded-tl-none text-foreground"
+                        : "bg-card border border-border/40 rounded-tl-none text-foreground"
                     )}>
                       {msg.content}
                     </div>
@@ -132,7 +132,7 @@ export default function Chatbot() {
                     <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center">
                       <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />
                     </div>
-                    <div className="p-3 rounded-2xl bg-white border border-border/40 rounded-tl-none text-xs text-muted-foreground italic">
+                    <div className="p-3 rounded-2xl bg-card border border-border/40 rounded-tl-none text-xs text-muted-foreground italic">
                       Assistant is typing...
                     </div>
                   </div>
@@ -140,7 +140,7 @@ export default function Chatbot() {
               </div>
             </ScrollArea>
           </CardContent>
-          <CardFooter className="p-3 bg-white border-t border-border/40">
+          <CardFooter className="p-3 bg-background border-t border-border/40">
             <div className="flex w-full items-center gap-2">
               <Input
                 placeholder="Type your message..."

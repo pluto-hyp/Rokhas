@@ -1,5 +1,5 @@
 import os
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Rokhas API"
@@ -10,6 +10,6 @@ class Settings(BaseSettings):
     
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./rokhas.db") 
 
-    model_config = {"extra": "ignore"}
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 settings = Settings()

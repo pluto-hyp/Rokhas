@@ -54,7 +54,7 @@ export default function OnboardingPage() {
   };
 
   useEffect(() => {
-    if (!isLoading && user && user.role && user.role !== "citizen") {
+    if (!isLoading && user && user.role) {
       router.push("/dashboard");
     }
   }, [isLoading, user, router]);
@@ -98,7 +98,7 @@ export default function OnboardingPage() {
                 <CardHeader>
                   <div className={cn(
                     "w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-2 transition-colors",
-                    isSelected ? "bg-primary text-white" : "bg-muted text-muted-foreground"
+                    isSelected ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
                   )}>
                     <Icon size={24} />
                   </div>
