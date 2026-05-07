@@ -29,24 +29,15 @@ import {
 } from "@/components/ui/sheet";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
-import { ApiError, createProject, getProjects, Project, ProjectCreate } from "@/lib/api";
-
-const API_URL = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/+$/, "");
-
-type ReportSummary = {
-  permits: {
-    total: number;
-    approved: number;
-    pending: number;
-    approval_rate: number;
-  };
-  entities: {
-    citizens: number;
-    businesses: number;
-    evaluations: number;
-  };
-  categories: Record<string, number>;
-};
+import {
+  ApiError,
+  createProject,
+  getProjects,
+  getReportSummary,
+  Project,
+  ProjectCreate,
+  ReportSummary,
+} from "@/lib/api";
 
 type Metric = {
   title: string;
@@ -95,16 +86,14 @@ export default function DashboardHome() {
   });
 
   const fetchDashboardData = async (authToken: string) => {
-    const [projectData, reportResponse] = await Promise.all([
+    const [projectData, reportData] = await Promise.all([
       getProjects(authToken),
-      fetch(`${API_URL}/api/v1/reports/summary`, {
-        headers: { Authorization: `Bearer ${authToken}` },
-      }),
+      getReportSummary(authToken),
     ]);
 
     return {
       projectData,
-      reportData: reportResponse.ok ? ((await reportResponse.json()) as ReportSummary) : null,
+      reportData,
     };
   };
 
