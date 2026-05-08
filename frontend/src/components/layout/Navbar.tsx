@@ -20,7 +20,7 @@ export default function Navbar() {
         </nav>
         <div className={styles.actions}>
           <Link href="/login" className={styles.loginBtn}>Se connecter</Link>
-          <Link href="/register" className={styles.registerBtn}>S&apos;inscrire</Link>
+          <Link href="/signup" className={styles.registerBtn}>S&apos;inscrire</Link>
         </div>
       </div>
     </header>

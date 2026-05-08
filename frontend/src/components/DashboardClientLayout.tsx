@@ -2,10 +2,18 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/AppSidebar";
-import { ModeToggle } from "@/components/ui/mode-toggle";
+import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/app-sidebar";
 import { useAuth } from "@/contexts/AuthContext";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import { Separator } from "@/components/ui/separator";
 
 export default function DashboardClientLayout({
   children,
@@ -34,22 +42,35 @@ export default function DashboardClientLayout({
   }
 
   return (
-    <SidebarProvider className="dashboard-shell">
+    <SidebarProvider>
       <AppSidebar />
-      <main className="flex-1 w-full flex flex-col h-screen overflow-hidden bg-background text-foreground">
-        <header className="h-16 flex items-center justify-between border-b border-border bg-background/95 px-8 z-10 shrink-0 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-          <div className="flex items-center">
-            <SidebarTrigger className="rounded-md text-muted-foreground hover:text-foreground" />
-            <div className="ml-4 h-6 w-px bg-border/40 md:hidden" />
-          </div>
-          <div className="flex items-center gap-4">
-            <ModeToggle />
+      <SidebarInset>
+        <header className="flex h-16 shrink-0 items-center gap-2">
+          <div className="flex items-center gap-2 px-4">
+            <SidebarTrigger className="-ml-1" />
+            <Separator
+              orientation="vertical"
+              className="mr-2 data-[orientation=vertical]:h-4"
+            />
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbItem className="hidden md:block">
+                  <BreadcrumbLink href="#">
+                    Build Your Application
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator className="hidden md:block" />
+                <BreadcrumbItem>
+                  <BreadcrumbPage>Data Fetching</BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
           </div>
         </header>
-        <div className="flex-1 overflow-y-auto p-6 md:p-8 animate-appear">
+        <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
           {children}
         </div>
-      </main>
+      </SidebarInset>
     </SidebarProvider>
   );
 }

@@ -9,7 +9,7 @@ from app.services.agent_client import verify_dossier_with_agent
 
 router = APIRouter()
 
-@router.post("/", response_model=DossierResponse)
+@router.post("", response_model=DossierResponse)
 def create_dossier(
     dossier: DossierCreate,
     db: Session = Depends(get_db),
@@ -17,7 +17,7 @@ def create_dossier(
 ):
     return crud_dossier.create_dossier(db=db, dossier=dossier, owner_id=current_user.id)
 
-@router.get("/", response_model=List[DossierResponse])
+@router.get("", response_model=List[DossierResponse])
 def read_dossiers(
     skip: int = 0,
     limit: int = 100,
