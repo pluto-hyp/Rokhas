@@ -1,21 +1,9 @@
 "use client"
 
 import * as React from "react"
-import {
-  BookOpen,
-  Bot,
-  Command,
-  Frame,
-  LifeBuoy,
-  Map,
-  PieChart,
-  Send,
-  Settings2,
-  SquareTerminal,
-} from "lucide-react"
 
+import { NavDocuments } from "@/components/nav-documents"
 import { NavMain } from "@/components/nav-main"
-import { NavProjects } from "@/components/nav-projects"
 import { NavSecondary } from "@/components/nav-secondary"
 import { NavUser } from "@/components/nav-user"
 import {
@@ -27,95 +15,108 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
+import { LayoutDashboardIcon, ListIcon, ChartBarIcon, FolderIcon, UsersIcon, CameraIcon, FileTextIcon, Settings2Icon, CircleHelpIcon, SearchIcon, DatabaseIcon, FileChartColumnIcon, FileIcon, CommandIcon } from "lucide-react"
 
 const data = {
   user: {
     name: "shadcn",
     email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
+    avatar: "/avatars/rokhas.svg",
   },
   navMain: [
     {
-      title: "Playground",
+      title: "Dashboard",
       url: "#",
-      icon: SquareTerminal,
+      icon: (
+        <LayoutDashboardIcon
+        />
+      ),
+    },
+    {
+      title: "Lifecycle",
+      url: "#",
+      icon: (
+        <ListIcon
+        />
+      ),
+    },
+    {
+      title: "Analytics",
+      url: "#",
+      icon: (
+        <ChartBarIcon
+        />
+      ),
+    },
+    {
+      title: "Projects",
+      url: "#",
+      icon: (
+        <FolderIcon
+        />
+      ),
+    },
+    {
+      title: "Team",
+      url: "#",
+      icon: (
+        <UsersIcon
+        />
+      ),
+    },
+  ],
+  navClouds: [
+    {
+      title: "Capture",
+      icon: (
+        <CameraIcon
+        />
+      ),
       isActive: true,
+      url: "#",
       items: [
         {
-          title: "History",
+          title: "Active Proposals",
           url: "#",
         },
         {
-          title: "Starred",
-          url: "#",
-        },
-        {
-          title: "Settings",
+          title: "Archived",
           url: "#",
         },
       ],
     },
     {
-      title: "Models",
+      title: "Proposal",
+      icon: (
+        <FileTextIcon
+        />
+      ),
       url: "#",
-      icon: Bot,
       items: [
         {
-          title: "Genesis",
+          title: "Active Proposals",
           url: "#",
         },
         {
-          title: "Explorer",
-          url: "#",
-        },
-        {
-          title: "Quantum",
+          title: "Archived",
           url: "#",
         },
       ],
     },
     {
-      title: "Documentation",
+      title: "Prompts",
+      icon: (
+        <FileTextIcon
+        />
+      ),
       url: "#",
-      icon: BookOpen,
       items: [
         {
-          title: "Introduction",
+          title: "Active Proposals",
           url: "#",
         },
         {
-          title: "Get Started",
-          url: "#",
-        },
-        {
-          title: "Tutorials",
-          url: "#",
-        },
-        {
-          title: "Changelog",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Settings",
-      url: "#",
-      icon: Settings2,
-      items: [
-        {
-          title: "General",
-          url: "#",
-        },
-        {
-          title: "Team",
-          url: "#",
-        },
-        {
-          title: "Billing",
-          url: "#",
-        },
-        {
-          title: "Limits",
+          title: "Archived",
           url: "#",
         },
       ],
@@ -123,56 +124,76 @@ const data = {
   ],
   navSecondary: [
     {
-      title: "Support",
+      title: "Settings",
       url: "#",
-      icon: LifeBuoy,
+      icon: (
+        <Settings2Icon
+        />
+      ),
     },
     {
-      title: "Feedback",
+      title: "Get Help",
       url: "#",
-      icon: Send,
+      icon: (
+        <CircleHelpIcon
+        />
+      ),
+    },
+    {
+      title: "Search",
+      url: "#",
+      icon: (
+        <SearchIcon
+        />
+      ),
     },
   ],
-  projects: [
+  documents: [
     {
-      name: "Design Engineering",
+      name: "Data Library",
       url: "#",
-      icon: Frame,
+      icon: (
+        <DatabaseIcon
+        />
+      ),
     },
     {
-      name: "Sales & Marketing",
+      name: "Reports",
       url: "#",
-      icon: PieChart,
+      icon: (
+        <FileChartColumnIcon
+        />
+      ),
     },
     {
-      name: "Travel",
+      name: "Word Assistant",
       url: "#",
-      icon: Map,
+      icon: (
+        <FileIcon
+        />
+      ),
     },
   ],
 }
-
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
-    <Sidebar variant="inset" {...props}>
+    <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" render={<a href="#" />}>
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                <Command className="size-4" />
-              </div>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">Acme Inc</span>
-                <span className="truncate text-xs">Enterprise</span>
-              </div>
+            <SidebarMenuButton
+              className="data-[slot=sidebar-menu-button]:p-1.5!"
+              render={<a href="#" />}
+            >
+              <img src="/rokhas.svg" className="size-5!" alt="logo" />
+              <span className="text-base font-semibold">Rokhas.</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        <NavProjects projects={data.projects} />
+        <NavDocuments items={data.documents} />
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
