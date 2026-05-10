@@ -26,6 +26,33 @@ export default function Home() {
     }
   ];
 
+  const companies = [
+    {
+      src: "https://deifkwefumgah.cloudfront.net/shadcnblocks/block/logos/company/fictional-company-logo-1.svg",
+      alt: "Arc",
+    },
+    {
+      src: "https://deifkwefumgah.cloudfront.net/shadcnblocks/block/logos/company/fictional-company-logo-2.svg",
+      alt: "Descript",
+    },
+    {
+      src: "https://deifkwefumgah.cloudfront.net/shadcnblocks/block/logos/company/fictional-company-logo-3.svg",
+      alt: "Mercury",
+    },
+    {
+      src: "https://deifkwefumgah.cloudfront.net/shadcnblocks/block/logos/company/fictional-company-logo-4.svg",
+      alt: "Ramp",
+    },
+    {
+      src: "https://deifkwefumgah.cloudfront.net/shadcnblocks/block/logos/company/fictional-company-logo-5.svg",
+      alt: "Retool",
+    },
+    {
+      src: "https://deifkwefumgah.cloudfront.net/shadcnblocks/block/logos/company/fictional-company-logo-6.svg",
+      alt: "Watershed",
+    },
+  ];
+
   return (
     <div className="min-h-screen font-sans text-primary selection:bg-primary selection:text-background">
       <ConstructionBackgroundLoader />
@@ -96,6 +123,30 @@ export default function Home() {
           </div>
         </div>
       </section>
+      
+      {/* Marquee Section */}
+      <section id="marquee" className="py-16 px-6 border-t border-border/40">
+        <div className="relative flex overflow-hidden">
+          <div className="relative flex overflow-hidden">
+            {/* Left fade */}
+            <div className="pointer-events-none absolute left-0 top-0 z-10 h-full w-24 bg-gradient-to-r from-background to-transparent" />
+            {/* Right fade */}
+            <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-24 bg-gradient-to-l from-background to-transparent" />
+            {/* Duplicated list for seamless loop */}
+            <div className="flex animate-marquee">
+              {[...companies, ...companies].map((company, idx) => (
+                <div key={company.src + idx} className="mx-8 flex shrink-0 items-center">
+                  <img
+                    src={company.src}
+                    alt={company.alt}
+                    className="h-7 w-auto md:h-8 dark:invert"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Workflow Section */}
       <section id="workflow" className="py-40 px-6 border-t border-border/40">
@@ -124,7 +175,7 @@ export default function Home() {
       </section>
 
       {/* Footer - Minimalist */}
-      <footer className="py-24 px-6 border-t border-border/40">
+      <footer className="py-20 px-6 border-t border-border/40">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-start gap-12">
           <div>
             <div className="font-serif text-4xl font-bold tracking-tight mb-4">Rokhas.</div>
@@ -157,6 +208,7 @@ export default function Home() {
               <ul className="space-y-2 text-sm font-bold">
                 <li><Link href="/privacy" className="hover:opacity-50 transition-opacity">Privacy</Link></li>
                 <li><Link href="/terms" className="hover:opacity-50 transition-opacity">Terms</Link></li>
+                <li><Link href="/help" className="hover:opacity-50 transition-opacity">Help</Link></li>
               </ul>
             </div>
           </div>
