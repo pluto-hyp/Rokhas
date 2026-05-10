@@ -1,5 +1,7 @@
 import { ChartAreaInteractive } from "@/components/chart-area-interactive"
 import { ChartBarMultiple } from "@/components/chart-bar-multiple"
+import { ChartTooltipLabelCustom } from "@/components/chart-tooltip-label-custom"
+import { ChartPieInteractive } from "@/components/chart-pie-interactive"
 import { DataTable } from "@/components/data-table"
 import { SectionCards } from "@/components/section-cards"
 
@@ -13,8 +15,10 @@ export default function Page() {
         <div className="px-4 lg:px-6">
           <ChartAreaInteractive />
         </div>
-        <div className="px-4 lg:px-6">
+        <div className="grid grid-cols-1 gap-4 px-4 md:grid-cols-3 lg:px-6 items-start">
           <ChartBarMultiple />
+          <ChartPieInteractive />
+          <ChartTooltipLabelCustom />
         </div>
         <DataTable data={data} />
       </div>

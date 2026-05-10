@@ -22,6 +22,8 @@
     "hooks": "@/hooks"
   },
   "registries": {
-    "@launchui": "https://www.launchuicomponents.com/r/{name}.json"
+    "@launchui": "https://www.launchuicomponents.com/r/{name}.json",
+    "@shadcnblocks": "https://shadcnblocks.com/r/{name}.json",
+    "@diceui": "https://diceui.com/r/{name}.json"
   }
 }
