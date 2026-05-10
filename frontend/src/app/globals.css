@@ -12,6 +12,13 @@
   --color-text: #1A1A1A;
   --color-text-muted: #4A4A4A;
   --color-border: #E5E5E5;
+  --animate-marquee: marquee 30s linear infinite;
+}
+
+/* Marquee animation block */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
 }
 
 /* Base resets and topography aesthetics */
@@ -19,7 +26,6 @@
   body {
     background-color: var(--color-background);
     color: var(--color-text);
-    /* A subtle paper texture / grain effect could go here */
     @apply bg-background text-foreground;
   }
 
