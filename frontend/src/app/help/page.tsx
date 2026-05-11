@@ -10,29 +10,8 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
 
-interface HelpCategory {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  articles: number;
-}
-
-interface PopularTopic {
-  title: string;
-  href: string;
-}
-
-interface Help1Props {
-  title?: string;
-  description?: string;
-  categories?: HelpCategory[];
-  popularTopics?: PopularTopic[];
-  className?: string;
-}
-
-const DEFAULT_CATEGORIES: HelpCategory[] = [
+const categories = [
   {
     icon: <Package className="size-5" />,
     title: "Orders",
@@ -71,7 +50,7 @@ const DEFAULT_CATEGORIES: HelpCategory[] = [
   },
 ];
 
-const DEFAULT_TOPICS: PopularTopic[] = [
+const topics = [
   { title: "Where is my order?", href: "#" },
   { title: "How to return an item", href: "#" },
   { title: "Forgot my password", href: "#" },
@@ -80,21 +59,15 @@ const DEFAULT_TOPICS: PopularTopic[] = [
   { title: "Shipping to my country", href: "#" },
 ];
 
-const Help1 = ({
-  title = "Help Center",
-  description = "How can we help you today?",
-  categories = DEFAULT_CATEGORIES,
-  popularTopics = DEFAULT_TOPICS,
-  className,
-}: Help1Props) => {
+export default function HelpPage() {
   return (
-    <section className={cn("py-32", className)}>
-      <div className="container max-w-4xl">
+    <section className="py-32">
+      <div className="container max-w-4xl mx-auto px-6">
         <div className="mb-10 text-center">
           <h1 className="mb-4 text-4xl font-medium tracking-tight md:text-5xl">
-            {title}
+            Help Center
           </h1>
-          <p className="text-muted-foreground">{description}</p>
+          <p className="text-muted-foreground">How can we help you today?</p>
         </div>
 
         <div className="mb-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -129,7 +102,7 @@ const Help1 = ({
         <div className="rounded-xl bg-muted/50 p-6">
           <h2 className="mb-3 text-lg font-medium">Popular Topics</h2>
           <div className="-mx-2 grid sm:grid-cols-2 lg:grid-cols-3">
-            {popularTopics.map((topic, index) => (
+            {topics.map((topic, index) => (
               <a
                 key={index}
                 href={topic.href}
@@ -151,6 +124,4 @@ const Help1 = ({
       </div>
     </section>
   );
-};
-
-export { Help1 };
+}

@@ -88,7 +88,7 @@ export default function Chatbot() {
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
       {isOpen && (
-        <Card className="w-80 md:w-96 h-[500px] mb-4 shadow-2xl border-border/40 overflow-hidden flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-300">
+        <Card className="w-80 md:w-96 h-[500px] mb-4 shadow-2xl border-border/40 overflow-hidden flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-300 p-0">
           <CardHeader className="bg-primary p-4 flex flex-row items-center justify-between space-y-0 text-primary-foreground">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-full bg-primary-foreground/10 flex items-center justify-center">
@@ -147,7 +147,7 @@ export default function Chatbot() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                className="flex-1 rounded-xl bg-muted/30 border-transparent focus-visible:ring-primary h-10 text-xs"
+                className="flex-1 rounded-xl bg-muted/30 border-transparent focus-visible:ring-1 focus-visible:ring-border h-10 text-xs"
               />
               <Button size="icon" className="rounded-xl h-10 w-10 shrink-0 bg-primary text-primary-foreground" onClick={handleSend} disabled={isLoading}>
                 <Send className="w-4 h-4" />

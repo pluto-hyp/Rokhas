@@ -38,6 +38,10 @@ export default function ConstructionBackground() {
         <ArchitecturalAccent position={[-12, -4, -8]} rotation={[0.2, 0.8, 0.1]} />
         <ArchitecturalAccent position={[-4, 8, -10]} rotation={[1.1, 0.2, 0.5]} />
         <ArchitecturalAccent position={[6, -2, -4]} size={1.2} rotation={[0.5, 1.2, 0.3]} />
+        <ArchitecturalAccent position={[0, 0, -6]} size={1.8} rotation={[0.3, 0.4, 0.2]} />
+        <ArchitecturalAccent position={[-10, 4, -4]} size={1.0} rotation={[0.6, 0.1, 0.8]} />
+        <ArchitecturalAccent position={[-10, 2, -8]} size={2.2} rotation={[0.1, 0.9, 0.3]} />
+        <ArchitecturalAccent position={[12, -4, -8]} size={2.2} rotation={[0.1, 0.9, 0.3]} />
       </Canvas>
       
       <div
