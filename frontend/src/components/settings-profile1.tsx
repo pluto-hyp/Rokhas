@@ -1,16 +1,7 @@
 "use client";
 
-import { Camera, X } from "lucide-react";
-import { useState } from "react";
+import { X } from "lucide-react";
 
-import {
-  FileUpload,
-  FileUploadItem,
-  FileUploadItemDelete,
-  FileUploadList,
-  FileUploadTrigger,
-} from "@/components/ui/file-upload";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -22,159 +13,185 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 
-interface ProfileFormData {
-  name: string;
-  email: string;
-  username: string;
-  avatar?: string;
-  bio?: string;
-}
-
 interface SettingsProfile1Props {
-  defaultValues?: Partial<ProfileFormData>;
-  onSave?: (data: ProfileFormData) => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   className?: string;
 }
 
-const SettingsProfile1 = ({
-  defaultValues = {
-    name: "Alex Morgan",
-    email: "alex.morgan@email.com",
-    username: "alexmorgan",
-    avatar:
-      "https://deifkwefumgah.cloudfront.net/shadcnblocks/block/avatar/avatar8.jpg",
-    bio: "Product designer with 8+ years of experience crafting intuitive digital experiences. Currently focused on design systems and accessibility.",
-  },
+function formatRole(role?: string | null) {
+  if (!role) return "Not configured";
+  return role.charAt(0).toUpperCase() + role.slice(1);
+}
+
+export function SettingsProfile1({
+  open,
+  onOpenChange,
   className,
-}: SettingsProfile1Props) => {
-  const [avatarFiles, setAvatarFiles] = useState<File[]>([]);
+}: SettingsProfile1Props) {
+  const { user } = useAuth();
 
-  const initials = defaultValues.name
-    ?.split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase();
-
-  // Get preview URL from uploaded file or use default avatar
-  const avatarPreview =
-    avatarFiles.length > 0
-      ? URL.createObjectURL(avatarFiles[0])
-      : defaultValues.avatar;
+  if (!open) return null;
 
   return (
-    <Card className={cn("w-full max-w-lg", className)}>
-      <CardHeader>
-        <CardTitle>Profile</CardTitle>
-        <CardDescription>
-          Update your personal information and profile picture
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Avatar Upload */}
-        <FileUpload
-          value={avatarFiles}
-          onValueChange={setAvatarFiles}
-          accept="image/*"
-          maxFiles={1}
-          maxSize={2 * 1024 * 1024}
-        >
-          <div className="flex items-center gap-4">
-            <FileUploadTrigger render={<button type="button" className="group relative size-20 shrink-0 cursor-pointer rounded-full focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none" />}><Avatar className="size-20">
-                                        <AvatarImage
-                                          src={avatarPreview}
-                                          alt={defaultValues.name}
-                                          className="object-cover"
-                                        />
-                                        <AvatarFallback className="text-xl font-semibold">
-                                          {initials}
-                                        </AvatarFallback>
-                                      </Avatar><div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
-                                        <Camera className="size-6 text-white" />
-                                      </div></FileUploadTrigger>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4 py-6"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="account-profile-title"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) {
+          onOpenChange(false);
+        }
+      }}
+    >
+      <Card
+        className={cn(
+          "max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-background shadow-xl",
+          className
+        )}
+      >
+        <CardHeader className="relative pr-12">
+          <CardTitle id="account-profile-title" className="text-xl font-semibold">
+            Account Profile
+          </CardTitle>
+          <CardDescription>
+            Review the official details connected to your Rokhas government
+            service account.
+          </CardDescription>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label="Close account profile"
+            onClick={() => onOpenChange(false)}
+            className="absolute right-3 top-3 rounded-md"
+          >
+            <X className="size-4" />
+          </Button>
+        </CardHeader>
 
-            <div className="space-y-1">
-              <p className="text-sm font-medium">Profile Photo</p>
-              <p className="text-xs text-muted-foreground">
-                Click the avatar to upload a new photo
+        <CardContent className="space-y-6">
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-base font-semibold">Official identity</h3>
+              <p className="text-sm text-muted-foreground">
+                These fields are used on applications, permits, and authority
+                reviews.
               </p>
-              <p className="text-xs text-muted-foreground">
-                JPG, PNG or GIF. Max 2MB.
-              </p>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="profile-full-name">Full legal name</Label>
+                <Input
+                  id="profile-full-name"
+                  defaultValue={user?.full_name ?? ""}
+                  placeholder="Enter your full legal name"
+                  className="h-10 rounded-md"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="profile-role">Account type</Label>
+                <Input
+                  id="profile-role"
+                  value={formatRole(user?.role)}
+                  readOnly
+                  className="h-10 rounded-md bg-muted/30"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="profile-identifier">
+                  National ID / Registry No.
+                </Label>
+                <Input
+                  id="profile-identifier"
+                  placeholder="Verified by the authority"
+                  readOnly
+                  className="h-10 rounded-md bg-muted/30"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="profile-municipality">
+                  Primary municipality
+                </Label>
+                <Select defaultValue="casablanca">
+                  <SelectTrigger
+                    id="profile-municipality"
+                    className="h-10 w-full rounded-md bg-background"
+                  >
+                    <SelectValue placeholder="Select municipality" />
+                  </SelectTrigger>
+                  <SelectContent align="start">
+                    <SelectItem value="casablanca">Casablanca</SelectItem>
+                    <SelectItem value="rabat">Rabat</SelectItem>
+                    <SelectItem value="marrakesh">Marrakesh</SelectItem>
+                    <SelectItem value="tangier">Tangier</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
 
-          {avatarFiles.length > 0 && (
-            <FileUploadList className="mt-3">
-              {avatarFiles.map((file, index) => (
-                <FileUploadItem
-                  key={index}
-                  value={file}
-                  className="rounded-lg border bg-muted/30 p-2"
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">{file.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {(file.size / 1024).toFixed(1)} KB
-                    </p>
-                  </div>
-                  <FileUploadItemDelete render={<Button variant="ghost" size="icon" className="size-8" />}><X className="size-4" /></FileUploadItemDelete>
-                </FileUploadItem>
-              ))}
-            </FileUploadList>
-          )}
-        </FileUpload>
+          <Separator />
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="name">Full Name</Label>
-            <Input
-              id="name"
-              placeholder="Enter your name"
-              defaultValue={defaultValues.name}
-            />
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-base font-semibold">Contact information</h3>
+              <p className="text-sm text-muted-foreground">
+                Used for receipts, inspection updates, and permit decisions.
+              </p>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="profile-email">Email address</Label>
+                <Input
+                  id="profile-email"
+                  type="email"
+                  defaultValue={user?.email ?? ""}
+                  placeholder="name@example.com"
+                  className="h-10 rounded-md"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="profile-phone">Mobile number</Label>
+                <Input
+                  id="profile-phone"
+                  type="tel"
+                  placeholder="+212 6 00 00 00 00"
+                  className="h-10 rounded-md"
+                />
+              </div>
+            </div>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="username">Username</Label>
-            <Input
-              id="username"
-              placeholder="Enter username"
-              defaultValue={defaultValues.username}
-            />
-          </div>
-        </div>
+        </CardContent>
 
-        <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
-          <Input
-            id="email"
-            type="email"
-            placeholder="Enter your email"
-            defaultValue={defaultValues.email}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="bio">Bio</Label>
-          <Textarea
-            id="bio"
-            placeholder="Tell us about yourself"
-            rows={4}
-            defaultValue={defaultValues.bio}
-          />
-          <p className="text-xs text-muted-foreground">
-            Brief description for your profile. Max 160 characters.
-          </p>
-        </div>
-      </CardContent>
-      <CardFooter className="flex justify-end gap-2">
-        <Button variant="outline">Cancel</Button>
-        <Button>Save Changes</Button>
-      </CardFooter>
-    </Card>
+        <CardFooter className="flex flex-col-reverse gap-2 bg-background sm:flex-row sm:justify-end">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            className="w-full rounded-md sm:w-auto"
+          >
+            Cancel
+          </Button>
+          <Button type="button" className="w-full rounded-md sm:w-auto">
+            Save profile
+          </Button>
+        </CardFooter>
+      </Card>
+    </div>
   );
-};
-
-export { SettingsProfile1 };
+}

@@ -73,7 +73,7 @@ export default function Home() {
           
           <div className="grid md:grid-cols-2 gap-12 items-end">
             <p className="text-xl md:text-2xl text-primary/70 leading-tight font-medium max-w-md">
-              The definitive blueprint for digital administration in Moroccan urbanism. Precise. Transparent. Built for scale.
+              Streamlining construction permits for citizens, architects, and authorities across Morocco.
             </p>
             <div className="flex md:justify-end gap-6">
               <Link href="/signup">
@@ -194,7 +194,7 @@ export default function Home() {
               </Link>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-16">
+          <div className="grid grid-cols-3 gap-16">
             <div className="space-y-4">
               <div className="text-xs font-bold uppercase tracking-widest text-primary/30">Company</div>
               <ul className="space-y-2 text-sm font-bold">
@@ -209,6 +209,15 @@ export default function Home() {
                 <li><Link href="/privacy" className="hover:opacity-50 transition-opacity">Privacy</Link></li>
                 <li><Link href="/terms" className="hover:opacity-50 transition-opacity">Terms</Link></li>
                 <li><Link href="/help" className="hover:opacity-50 transition-opacity">Help</Link></li>
+              </ul>
+            </div>
+            <div className="space-y-4">
+              <div className="text-xs font-bold uppercase tracking-widest text-primary/30">Getting started</div>
+              <ul className="space-y-2 text-sm font-bold">
+                <li><Link href="#" className="hover:opacity-50 transition-opacity">Infos</Link></li>
+                <li><Link href="#" className="hover:opacity-50 transition-opacity">FAQ</Link></li>
+                <li><Link href="/signup" className="hover:opacity-50 transition-opacity">Sign up</Link></li>
+                <li><Link href="/login" className="hover:opacity-50 transition-opacity">Login</Link></li>
               </ul>
             </div>
           </div>
