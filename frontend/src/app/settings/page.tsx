@@ -8,6 +8,7 @@ import {
   LogOut,
   ShieldCheck,
   UserRound,
+  type LucideIcon,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useState } from "react";
@@ -35,7 +36,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 type NavItem = "Identity" | "Organization" | "Security" | "Notifications" | "Language";
 
-const navigation: { label: NavItem; icon: React.ElementType }[] = [
+const navigation: { label: NavItem; icon: LucideIcon }[] = [
   { label: "Identity", icon: UserRound },
   { label: "Organization", icon: Building2 },
   { label: "Security", icon: ShieldCheck },
@@ -330,7 +331,9 @@ export default function SettingsPage() {
                       <Label htmlFor="theme">Display mode</Label>
                       <Select
                         value={resolvedTheme === "dark" ? "dark" : "light"}
-                        onValueChange={(v) => setTheme(v)}
+                        onValueChange={(v) => {
+                          if (v) setTheme(v);
+                        }}
                       >
                         <SelectTrigger id="theme" className="h-10 w-full rounded-md bg-background">
                           <SelectValue placeholder="Select display mode" />

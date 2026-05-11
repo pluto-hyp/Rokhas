@@ -4,6 +4,7 @@ from app.api.dependencies import get_db, get_current_active_user
 from app.models.user import User
 from pydantic import BaseModel
 import httpx
+import os
 
 router = APIRouter()
 
@@ -16,7 +17,7 @@ class ChatResponse(BaseModel):
     content: str
     timestamp: str
 
-AGENT_API_URL = "http://localhost:8001/chat"
+AGENT_API_URL = os.getenv("AGENT_API_URL", "http://127.0.0.1:8001/chat")
 
 @router.post("/chat", response_model=ChatResponse)
 async def chat_with_agent(
