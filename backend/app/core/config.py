@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     
     SECRET_KEY: str = os.getenv("SECRET_KEY", "super_secret_key_change_me_in_production")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8
+    GOOGLE_CLIENT_ID: str = os.getenv("GOOGLE_CLIENT_ID", "")
     
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./rokhas.db") 
 

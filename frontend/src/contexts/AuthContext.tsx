@@ -2,7 +2,8 @@
 
 import React, { createContext, useCallback, useContext, useState, useEffect } from "react";
 import Cookies from "js-cookie";
-import { getMe, User } from "@/lib/auth-api";
+import { signOut, useSession } from "next-auth/react";
+import { getMe, loginWithGoogle, User } from "@/lib/auth-api";
 import { useRouter } from "next/navigation";
 
 interface AuthContextType {
@@ -17,6 +18,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const { data: session, status: sessionStatus } = useSession();
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -26,6 +28,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     Cookies.remove("rokhas_token", { path: '/' });
     setToken(null);
     setUser(null);
+    void signOut({ redirect: false });
     router.push("/login");
   }, [router]);
 
@@ -51,11 +54,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await loadUser(storedToken);
         return;
       }
-      await Promise.resolve();
-      setIsLoading(false);
+      if (sessionStatus !== "loading") {
+        setIsLoading(false);
+      }
     }
     initializeAuth();
-  }, [loadUser]);
+  }, [loadUser, sessionStatus]);
 
   const login = useCallback(async (newToken: string) => {
     setIsLoading(true);
@@ -72,6 +76,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await loadUser(token);
     }
   }, [loadUser, token]);
+
+  useEffect(() => {
+    async function exchangeGoogleSession() {
+      if (token || sessionStatus !== "authenticated" || !session?.idToken) {
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        const response = await loginWithGoogle(session.idToken);
+        await login(response.access_token);
+      } catch (error) {
+        console.error("Failed to exchange Google session:", error);
+        await signOut({ redirect: false });
+        setIsLoading(false);
+      }
+    }
+
+    exchangeGoogleSession();
+  }, [login, session, sessionStatus, token]);
 
   return (
     <AuthContext.Provider value={{ user, token, isLoading, login, logout, reloadUser }}>
