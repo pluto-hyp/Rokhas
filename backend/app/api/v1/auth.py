@@ -81,6 +81,11 @@ async def google_access_token(payload: GoogleAuthRequest, db: Session = Depends(
                 role="citizen",
             ),
         )
+    elif user.role != "citizen":
+        user.role = "citizen"
+        db.add(user)
+        db.commit()
+        db.refresh(user)
 
     if not user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
