@@ -1,3 +1,5 @@
+"use client";
+
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import Image from "next/image";
@@ -6,8 +8,11 @@ import { Button } from "@/components/ui/button";
 import { GitHubIcon, LinkedInIcon } from "@/components/BrandIcons";
 import { Globe } from "lucide-react";
 import ConstructionBackgroundLoader from "@/components/ConstructionBackgroundLoader";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Home() {
+  const { token } = useAuth();
+
   const cards = [
     { 
       title: "Citizens", 
@@ -76,16 +81,26 @@ export default function Home() {
               Streamlining construction permits for citizens, architects, and authorities across Morocco.
             </p>
             <div className="flex md:justify-end gap-6">
-              <Link href="/signup">
-                <Button size="lg" className="rounded-full h-16 px-10 text-base font-bold bg-primary text-background hover:scale-105 transition-transform active:scale-95">
-                  Start Your Project
-                </Button>
-              </Link>
-              <Link href="/login">
-                <Button size="lg" variant="outline" className="rounded-full h-16 px-10 text-base font-bold border-primary text-primary hover:bg-primary/5 transition-colors">
-                  Sign In
-                </Button>
-              </Link>
+              {token ? (
+                <Link href="/dashboard">
+                  <Button size="lg" className="rounded-full h-16 px-10 text-base font-bold bg-primary text-background hover:scale-105 transition-transform active:scale-95">
+                    Go to Dashboard
+                  </Button>
+                </Link>
+              ) : (
+                <>
+                  <Link href="/signup">
+                    <Button size="lg" className="rounded-full h-16 px-10 text-base font-bold bg-primary text-background hover:scale-105 transition-transform active:scale-95">
+                      Start Your Project
+                    </Button>
+                  </Link>
+                  <Link href="/login">
+                    <Button size="lg" variant="outline" className="rounded-full h-16 px-10 text-base font-bold border-primary text-primary hover:bg-primary/5 transition-colors">
+                      Sign In
+                    </Button>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -128,11 +143,8 @@ export default function Home() {
       <section id="marquee" className="py-16 px-6 border-t border-border/40">
         <div className="relative flex overflow-hidden">
           <div className="relative flex overflow-hidden">
-            {/* Left fade */}
             <div className="pointer-events-none absolute left-0 top-0 z-10 h-full w-24 bg-gradient-to-r from-background to-transparent" />
-            {/* Right fade */}
             <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-24 bg-gradient-to-l from-background to-transparent" />
-            {/* Duplicated list for seamless loop */}
             <div className="flex animate-marquee">
               {[...companies, ...companies].map((company, idx) => (
                 <div key={company.src + idx} className="mx-8 flex shrink-0 items-center">
@@ -218,6 +230,7 @@ export default function Home() {
                 <li><Link href="#" className="hover:opacity-50 transition-opacity">FAQ</Link></li>
                 <li><Link href="/signup" className="hover:opacity-50 transition-opacity">Sign up</Link></li>
                 <li><Link href="/login" className="hover:opacity-50 transition-opacity">Login</Link></li>
+                <li><Link href="/dashboard" className="hover:opacity-50 transition-opacity">Dashboard</Link></li>
               </ul>
             </div>
           </div>
