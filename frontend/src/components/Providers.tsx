@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { SessionProvider } from "next-auth/react";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Chatbot from "@/components/Chatbot";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -10,17 +11,19 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const isLightForced = ["/", "/privacy", "/terms"].includes(pathname);
 
   return (
-    <ThemeProvider 
-      attribute="class" 
-      defaultTheme="system" 
-      enableSystem 
-      disableTransitionOnChange
-      forcedTheme={isLightForced ? "light" : undefined}
-    >
-      <AuthProvider>
-        {children}
-        <Chatbot />
-      </AuthProvider>
-    </ThemeProvider>
+    <SessionProvider>
+      <ThemeProvider 
+        attribute="class" 
+        defaultTheme="system" 
+        enableSystem 
+        disableTransitionOnChange
+        forcedTheme={isLightForced ? "light" : undefined}
+      >
+        <AuthProvider>
+          {children}
+          <Chatbot />
+        </AuthProvider>
+      </ThemeProvider>
+    </SessionProvider>
   );
 }
