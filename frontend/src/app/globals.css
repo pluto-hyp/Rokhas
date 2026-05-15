@@ -16,8 +16,13 @@
 }
 
 @keyframes marquee {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
 }
 
 @layer base {
@@ -26,12 +31,15 @@
     color: var(--color-text);
     @apply bg-background text-foreground;
   }
+
   html[data-scroll-behavior="smooth"] {
     scroll-behavior: smooth;
   }
+
   html {
     @apply font-sans;
   }
+
   * {
     @apply border-border outline-ring/50;
   }
@@ -87,77 +95,74 @@
 }
 
 :root {
-  --background: #fdfcfb;
-  --foreground: #1a1a1a;
-  --card: #ffffff;
-  --card-foreground: #1a1a1a;
+  --background: #ffffff;
+  --foreground: #111111;
+  --card: #f8f8f8;
+  --card-foreground: #111111;
   --popover: #ffffff;
-  --popover-foreground: #1a1a1a;
-  --primary: #1a1a1a;
+  --popover-foreground: #111111;
+  --primary: #000000;
   --primary-foreground: #ffffff;
-  --secondary: #64748b;
-  --secondary-foreground: #1a1a1a;
-  --muted: #f1f5f9;
-  --muted-foreground: #64748b;
-  --accent: #f1f5f9;
-  --accent-foreground: #1a1a1a;
-  --destructive: #ef4444;
-  --border: #e2e8f0;
+  --secondary: #6b7280;
+  --secondary-foreground: #111111;
+  --muted: #e5e7eb;
+  --muted-foreground: #4b5563;
+  --accent: #9ca3af;
+  --accent-foreground: #111111;
+  --destructive: #c92a2a;
+  --border: #d1d5db;
   --input: #f8fafc;
-  --ring: #3b82f6;
-  
-  --chart-1: #3b82f6; 
-  --chart-2: #10b981;   
-  --chart-3: #f59e0b; 
-  --chart-4: #8b5cf6; 
-  --chart-5: #ec4899; 
-  
-  --radius: 0.75rem;
-  --sidebar: #f8fafc;
-  --sidebar-foreground: #1a1a1a;
-  --sidebar-primary: #1a1a1a;
+  --ring: #9ca3af;
+  --chart-1: #3b82f6;
+  --chart-2: #10b981;
+  --chart-3: #f59e0b;
+  --chart-4: #8b5cf6;
+  --chart-5: #ec4899;
+  --radius: 0.625rem;
+  --sidebar: #f3f4f6;
+  --sidebar-foreground: #111111;
+  --sidebar-primary: #000000;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #f1f5f9;
-  --sidebar-accent-foreground: #1a1a1a;
-  --sidebar-border: #e2e8f0;
-  --sidebar-ring: #3b82f6;
+  --sidebar-accent: #e5e7eb;
+  --sidebar-accent-foreground: #111111;
+  --sidebar-border: #d1d5db;
+  --sidebar-ring: #9ca3af;
 }
 
 .dark {
-  --background: #0f172a;
+  --background: #0a0a0a;
   --foreground: #f8fafc;
-  --card: #1e293b;
+  --card: #141414;
   --card-foreground: #f8fafc;
-  --popover: #0f172a;
+  --popover: #0a0a0a;
   --popover-foreground: #f8fafc;
   --primary: #f8fafc;
-  --primary-foreground: #0f172a;
-  --secondary: #94a3b8;
+  --primary-foreground: #0a0a0a;
+  --secondary: #404040;
   --secondary-foreground: #f8fafc;
-  --muted: #1e293b;
-  --muted-foreground: #94a3b8;
-  --accent: #334155;
+  --muted: #1a1a1a;
+  --muted-foreground: #a3a3a3;
+  --accent: #1a1a1a;
   --accent-foreground: #f8fafc;
   --destructive: #f87171;
-  --border: #334155;
-  --input: #1e293b;
+  --border: #262626;
+  --input: #141414;
   --ring: #3b82f6;
   --chart-1: #3b82f6;
   --chart-2: #10b981;
   --chart-3: #f59e0b;
   --chart-4: #8b5cf6;
   --chart-5: #ec4899;
-  --sidebar: #0f172a;
+  --sidebar: #0a0a0a;
   --sidebar-foreground: #f8fafc;
   --sidebar-primary: #f8fafc;
-  --sidebar-primary-foreground: #0f172a;
-  --sidebar-accent: #334155;
+  --sidebar-primary-foreground: #0a0a0a;
+  --sidebar-accent: #1a1a1a;
   --sidebar-accent-foreground: #f8fafc;
-  --sidebar-border: #334155;
+  --sidebar-border: #262626;
   --sidebar-ring: #3b82f6;
 }
 
-/* Dashboard-only polish. */
 .dashboard-shell {
   background: var(--background);
   color: var(--foreground);
@@ -176,7 +181,8 @@
 .dashboard-shell [data-slot="card"] {
   border: 1px solid var(--border);
   border-radius: 0.875rem;
-  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  box-shadow: none;
+  --tw-ring-color: transparent;
 }
 
 .dashboard-shell [data-slot="card-header"],
@@ -185,7 +191,7 @@
 }
 
 .dashboard-shell table thead {
-  background: var(--muted);
+  background: color-mix(in srgb, var(--muted) 42%, transparent);
 }
 
 .dashboard-shell table tbody tr {
@@ -193,11 +199,32 @@
 }
 
 .dashboard-shell table tbody tr:hover {
-  background: color-mix(in srgb, var(--muted) 40%, transparent);
+  background: color-mix(in srgb, var(--muted) 26%, transparent);
 }
 
 .dashboard-shell input,
 .dashboard-shell [data-slot="button"][data-variant="outline"] {
   background: var(--background);
   border-color: var(--border);
+}
+
+.dashboard-shell .rounded-xl,
+.dashboard-shell .rounded-2xl {
+  border-radius: 0.75rem;
+}
+
+.dashboard-shell .rounded-full {
+  border-radius: 9999px;
+}
+
+.dashboard-shell .bg-muted\/10,
+.dashboard-shell .bg-muted\/20,
+.dashboard-shell .bg-muted\/30,
+.dashboard-shell .bg-muted\/50 {
+  background-color: color-mix(in srgb, var(--muted) 46%, transparent) !important;
+}
+
+.dashboard-shell .text-primary\/50,
+.dashboard-shell .text-primary\/70 {
+  color: var(--muted-foreground) !important;
 }
