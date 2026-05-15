@@ -7,7 +7,7 @@
 @theme {
   --color-primary: #1A1A1A;
   --color-primary-hover: #000000;
-  --color-background: #FDFCFB; /* Warm off-white/cream */
+  --color-background: #FDFCFB;
   --color-surface: #FFFFFF;
   --color-text: #1A1A1A;
   --color-text-muted: #4A4A4A;
@@ -15,13 +15,16 @@
   --animate-marquee: marquee 30s linear infinite;
 }
 
-/* Marquee animation block */
 @keyframes marquee {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
 }
 
-/* Base resets and topography aesthetics */
 @layer base {
   body {
     background-color: var(--color-background);
@@ -29,19 +32,19 @@
     @apply bg-background text-foreground;
   }
 
-  /* Smooth scrolling */
   html[data-scroll-behavior="smooth"] {
     scroll-behavior: smooth;
   }
+
   html {
     @apply font-sans;
   }
+
   * {
     @apply border-border outline-ring/50;
   }
 }
 
-/* Topographic background utility */
 @layer utilities {
   .bg-topography {
     background-image: url("data:image/svg+xml,%3Csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cpattern id='topography' width='100' height='100' patternUnits='userSpaceOnUse'%3E%3Cpath d='M10 10c20 0 40 20 60 20s40-20 60-20 40 20 60 20 40-20 60-20' fill='none' stroke='%23334155' stroke-width='1' stroke-opacity='0.2'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23topography)'/%3E%3C/svg%3E");
@@ -110,11 +113,11 @@
   --border: #d1d5db;
   --input: #f8fafc;
   --ring: #9ca3af;
-  --chart-1: #111111;
-  --chart-2: #4b5563;
-  --chart-3: #6b7280;
-  --chart-4: #9ca3af;
-  --chart-5: #d1d5db;
+  --chart-1: #3b82f6;
+  --chart-2: #10b981;
+  --chart-3: #f59e0b;
+  --chart-4: #8b5cf6;
+  --chart-5: #ec4899;
   --radius: 0.625rem;
   --sidebar: #f3f4f6;
   --sidebar-foreground: #111111;
@@ -127,40 +130,39 @@
 }
 
 .dark {
-  --background: #111111;
+  --background: #0a0a0a;
   --foreground: #f8fafc;
-  --card: #1f1f1f;
+  --card: #141414;
   --card-foreground: #f8fafc;
-  --popover: #171717;
+  --popover: #0a0a0a;
   --popover-foreground: #f8fafc;
   --primary: #f8fafc;
-  --primary-foreground: #111111;
-  --secondary: #9ca3af;
+  --primary-foreground: #0a0a0a;
+  --secondary: #404040;
   --secondary-foreground: #f8fafc;
-  --muted: #2b2b2b;
-  --muted-foreground: #d1d5db;
-  --accent: #f8fafc;
-  --accent-foreground: #111111;
+  --muted: #1a1a1a;
+  --muted-foreground: #a3a3a3;
+  --accent: #1a1a1a;
+  --accent-foreground: #f8fafc;
   --destructive: #f87171;
-  --border: rgba(255, 255, 255, 0.1);
-  --input: rgba(255, 255, 255, 0.1);
-  --ring: #9ca3af;
-  --chart-1: #f8fafc;
-  --chart-2: #d1d5db;
-  --chart-3: #9ca3af;
-  --chart-4: #6b7280;
-  --chart-5: #4b5563;
-  --sidebar: #111111;
+  --border: #262626;
+  --input: #141414;
+  --ring: #3b82f6;
+  --chart-1: #3b82f6;
+  --chart-2: #10b981;
+  --chart-3: #f59e0b;
+  --chart-4: #8b5cf6;
+  --chart-5: #ec4899;
+  --sidebar: #0a0a0a;
   --sidebar-foreground: #f8fafc;
   --sidebar-primary: #f8fafc;
-  --sidebar-primary-foreground: #111111;
-  --sidebar-accent: #d1d5db;
-  --sidebar-accent-foreground: #111111;
-  --sidebar-border: rgba(255, 255, 255, 0.1);
-  --sidebar-ring: #9ca3af;
+  --sidebar-primary-foreground: #0a0a0a;
+  --sidebar-accent: #1a1a1a;
+  --sidebar-accent-foreground: #f8fafc;
+  --sidebar-border: #262626;
+  --sidebar-ring: #3b82f6;
 }
 
-/* Dashboard-only polish. Uses existing theme tokens and does not alter homepage/global colors. */
 .dashboard-shell {
   background: var(--background);
   color: var(--foreground);

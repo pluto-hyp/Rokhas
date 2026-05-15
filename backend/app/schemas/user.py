@@ -10,6 +10,11 @@ class UserCreate(UserBase):
     password: str
     role: Optional[str] = None
 
+class UserUpdate(BaseModel):
+    email: Optional[EmailStr] = None
+    full_name: Optional[str] = None
+    password: Optional[str] = None
+
 class UserResponse(UserBase):
     id: int
     role: Optional[str]

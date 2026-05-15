@@ -47,7 +47,7 @@ export function CreateProjectSheet({
     recul: 0,
     emprise: 0,
     surface_terrain: 0,
-    zone: "Zone Urbaine",
+    zone: "Urban Zone",
     citizen_name: "",
     citizen_cin: "",
     land_reference: "",
@@ -65,7 +65,7 @@ export function CreateProjectSheet({
       const missingFiles = requiredFiles.filter(f => !files[f]);
       
       if (missingFiles.length > 0) {
-        toast.error("Veuillez télécharger TOUS les documents: Plans, Dossier Architecture, CIN, Propriété, et Mandat.");
+        toast.error("Please upload ALL documents: Plans, Architecture Dossier, CIN, Property, and Proxy.");
         return;
       }
     }
@@ -80,13 +80,13 @@ export function CreateProjectSheet({
       };
       
       await createProject(finalData, token);
-      toast.success("Dossier soumis ! L'Agent IA vérifie actuellement la conformité des plans et documents.");
+      toast.success("Dossier submitted! The AI Agent is currently verifying plan compliance and document validity.");
       onOpenChange(false);
       if (onSuccess) onSuccess();
       resetForm();
     } catch (error) {
       console.error("Failed to create project:", error);
-      toast.error(error instanceof Error ? error.message : "Erreur lors de la soumission");
+      toast.error(error instanceof Error ? error.message : "Error during submission");
     } finally {
       setLoading(false);
     }
@@ -101,7 +101,7 @@ export function CreateProjectSheet({
       recul: 0,
       emprise: 0,
       surface_terrain: 0,
-      zone: "Zone Urbaine",
+      zone: "Urban Zone",
       citizen_name: "",
       citizen_cin: "",
       land_reference: "",
@@ -130,12 +130,12 @@ export function CreateProjectSheet({
     toast.promise(
       new Promise((resolve) => setTimeout(resolve, 1000)),
       {
-        loading: 'Téléchargement...',
+        loading: 'Uploading...',
         success: () => {
           setFiles(prev => ({ ...prev, [key]: true }));
-          return 'Document téléchargé !';
+          return 'Document uploaded!';
         },
-        error: 'Erreur',
+        error: 'Error',
       }
     );
   };
@@ -145,12 +145,12 @@ export function CreateProjectSheet({
       <SheetContent className="sm:max-w-[600px] overflow-y-auto">
         <SheetHeader className="mb-6">
           <SheetTitle className="text-2xl font-serif">
-            {role === "architect" ? "Soumission de Projet Urbain" : "Nouvelle Demande Économique"}
+            {role === "architect" ? "Urban Project Submission" : "New Economic Request"}
           </SheetTitle>
           <SheetDescription>
             {role === "architect" 
-              ? "L'Agent IA vérifie la conformité technique des plans et la validité légale des procurations."
-              : "Soumettez votre demande d'autorisation commerciale directement."}
+              ? "The AI Agent verifies technical plan compliance and legal proxy validity."
+              : "Submit your commercial authorization request directly."}
           </SheetDescription>
         </SheetHeader>
 
@@ -159,12 +159,12 @@ export function CreateProjectSheet({
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="title" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                Titre du Projet
+                Project Title
               </Label>
               <Input
                 id="title"
                 name="title"
-                placeholder={role === "architect" ? "Construction d'une Villa à Rabat" : "Ouverture d'un Commerce - Casablanca"}
+                placeholder={role === "architect" ? "Villa Construction in Rabat" : "Business Opening - Casablanca"}
                 value={formData.title}
                 onChange={handleChange}
                 required
@@ -176,12 +176,12 @@ export function CreateProjectSheet({
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="citizen_name" className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                    <UserIcon size={14} /> Nom du Propriétaire
+                    <UserIcon size={14} /> Owner Name
                   </Label>
                   <Input
                     id="citizen_name"
                     name="citizen_name"
-                    placeholder="Nom complet"
+                    placeholder="Full Name"
                     value={formData.citizen_name}
                     onChange={handleChange}
                     required
@@ -190,7 +190,7 @@ export function CreateProjectSheet({
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="citizen_cin" className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                    <CreditCard size={14} /> N° CIN
+                    <CreditCard size={14} /> CIN Number
                   </Label>
                   <Input
                     id="citizen_cin"
@@ -204,12 +204,12 @@ export function CreateProjectSheet({
                 </div>
                 <div className="space-y-2 col-span-2">
                   <Label htmlFor="land_reference" className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                    <FileText size={14} /> Référence Foncière (Titre de Propriété)
+                    <FileText size={14} /> Land Reference (Title Deed)
                   </Label>
                   <Input
                     id="land_reference"
                     name="land_reference"
-                    placeholder="Ex: 12345/R - Titre Foncier"
+                    placeholder="Ex: 12345/R - Land Title"
                     value={formData.land_reference}
                     onChange={handleChange}
                     required
@@ -224,7 +224,7 @@ export function CreateProjectSheet({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="type" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                Type de Demande
+                Request Type
               </Label>
               <Select
                 value={formData.type}
@@ -236,14 +236,14 @@ export function CreateProjectSheet({
                 <SelectContent>
                   {role === "architect" ? (
                     <>
-                      <SelectItem value="Building Permit">Permis de Construire</SelectItem>
-                      <SelectItem value="Renovation">Autorisation de Rénovation</SelectItem>
-                      <SelectItem value="Demolition">Permis de Démolir</SelectItem>
+                      <SelectItem value="Building Permit">Building Permit</SelectItem>
+                      <SelectItem value="Renovation">Renovation Authorization</SelectItem>
+                      <SelectItem value="Demolition">Demolition Permit</SelectItem>
                     </>
                   ) : (
                     <>
-                      <SelectItem value="Economic Authorization">Autorisation Économique</SelectItem>
-                      <SelectItem value="Commercial License">Licence Commerciale</SelectItem>
+                      <SelectItem value="Economic Authorization">Economic Authorization</SelectItem>
+                      <SelectItem value="Commercial License">Commercial License</SelectItem>
                     </>
                   )}
                 </SelectContent>
@@ -251,7 +251,7 @@ export function CreateProjectSheet({
             </div>
             <div className="space-y-2">
               <Label htmlFor="zone" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                Zone d'Urbanisme
+                Urban Planning Zone
               </Label>
               <Select
                 value={formData.zone}
@@ -261,10 +261,10 @@ export function CreateProjectSheet({
                   <SelectValue placeholder="Select zone" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Zone Urbaine">Zone Urbaine (U)</SelectItem>
-                  <SelectItem value="Zone Industrielle">Zone Industrielle (I)</SelectItem>
-                  <SelectItem value="Zone Rurale">Zone Rurale (R)</SelectItem>
-                  <SelectItem value="Zone Touristique">Zone Touristique (T)</SelectItem>
+                  <SelectItem value="Urban Zone">Urban Zone (U)</SelectItem>
+                  <SelectItem value="Industrial Zone">Industrial Zone (I)</SelectItem>
+                  <SelectItem value="Rural Zone">Rural Zone (R)</SelectItem>
+                  <SelectItem value="Tourist Zone">Tourist Zone (T)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -273,7 +273,7 @@ export function CreateProjectSheet({
           {/* Document Upload Section */}
           <div className="space-y-4">
             <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-              Documents Requis <span className="text-[10px] text-amber-600 border border-amber-600/30 px-1 rounded">Validation Agent IA</span>
+              Required Documents <span className="text-[10px] text-amber-600 border border-amber-600/30 px-1 rounded">AI Agent Validation</span>
             </Label>
             <div className="grid gap-3">
               {role === "architect" ? (
@@ -287,8 +287,8 @@ export function CreateProjectSheet({
                         <Briefcase size={18} />
                       </div>
                       <div>
-                        <p className="font-bold">Procuration / Mandat</p>
-                        <p className="text-xs text-muted-foreground">Preuve légale obligatoire</p>
+                        <p className="font-bold">Proxy / Mandate</p>
+                        <p className="text-xs text-muted-foreground">Mandatory legal proof</p>
                       </div>
                     </div>
                     {files.agency ? <ShieldCheck className="text-emerald-500" /> : <UploadCloud size={20} className="text-muted-foreground" />}
@@ -303,8 +303,8 @@ export function CreateProjectSheet({
                         <Building2 size={18} />
                       </div>
                       <div>
-                        <p className="font-bold">Plans de Construction</p>
-                        <p className="text-xs text-muted-foreground text-amber-600 font-bold italic">REQUIS: Nom du citoyen sur le plan</p>
+                        <p className="font-bold">Construction Plans</p>
+                        <p className="text-xs text-muted-foreground text-amber-600 font-bold italic">REQUIRED: Owner name on plan</p>
                       </div>
                     </div>
                     {files.plan ? <ShieldCheck className="text-emerald-500" /> : <UploadCloud size={20} className="text-muted-foreground" />}
@@ -319,8 +319,8 @@ export function CreateProjectSheet({
                         <FileText size={18} />
                       </div>
                       <div>
-                        <p className="font-bold">Dossier Architecture</p>
-                        <p className="text-xs text-muted-foreground">Notes techniques obligatoires</p>
+                        <p className="font-bold">Architecture Dossier</p>
+                        <p className="text-xs text-muted-foreground">Mandatory technical notes</p>
                       </div>
                     </div>
                     {files.arch ? <ShieldCheck className="text-emerald-500" /> : <UploadCloud size={20} className="text-muted-foreground" />}
@@ -336,8 +336,8 @@ export function CreateProjectSheet({
                         {files.cin && <ShieldCheck size={14} className="text-emerald-500" />}
                       </div>
                       <div>
-                        <p className="text-xs font-bold">CIN du Citoyen</p>
-                        <p className="text-[10px] text-muted-foreground text-amber-600">Vérifié par IA</p>
+                        <p className="text-xs font-bold">Owner CIN</p>
+                        <p className="text-[10px] text-muted-foreground text-amber-600">AI Verified</p>
                       </div>
                     </div>
 
@@ -350,8 +350,8 @@ export function CreateProjectSheet({
                         {files.prop && <ShieldCheck size={14} className="text-emerald-500" />}
                       </div>
                       <div>
-                        <p className="text-xs font-bold">Titre Foncier</p>
-                        <p className="text-[10px] text-muted-foreground text-emerald-600">Preuve Propriété</p>
+                        <p className="text-xs font-bold">Land Title</p>
+                        <p className="text-[10px] text-muted-foreground text-emerald-600">Property Proof</p>
                       </div>
                     </div>
                   </div>
@@ -366,8 +366,8 @@ export function CreateProjectSheet({
                       <Building2 size={18} />
                     </div>
                     <div>
-                      <p className="font-bold">Documents de l'Entreprise</p>
-                      <p className="text-xs text-muted-foreground">RC, Statuts, IF, etc.</p>
+                      <p className="font-bold">Business Documents</p>
+                      <p className="text-xs text-muted-foreground">RC, Articles, IF, etc.</p>
                     </div>
                   </div>
                   {files.business ? <ShieldCheck className="text-emerald-500" /> : <UploadCloud size={20} className="text-muted-foreground" />}
@@ -376,7 +376,7 @@ export function CreateProjectSheet({
             </div>
           </div>
 
-          <SheetFooter className="absolute bottom-0 left-0 right-0 p-6 bg-white border-t border-border/40">
+          <SheetFooter className="absolute bottom-0 left-0 right-0 p-6 bg-card border-t border-border/40">
             <Button
               type="submit"
               disabled={loading}
@@ -385,10 +385,10 @@ export function CreateProjectSheet({
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Soumission en cours...
+                  Submitting...
                 </>
               ) : (
-                role === "architect" ? "Soumettre le Dossier d'Urbanisme" : "Soumettre la Demande Économique"
+                role === "architect" ? "Submit Urban Dossier" : "Submit Economic Request"
               )}
             </Button>
           </SheetFooter>

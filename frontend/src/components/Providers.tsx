@@ -9,6 +9,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 export function Providers({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isLightForced = ["/", "/privacy", "/terms"].includes(pathname);
+  const isAgentPage = pathname === "/dashboard/agent";
 
   return (
     <SessionProvider>
@@ -21,7 +22,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       >
         <AuthProvider>
           {children}
-          <Chatbot />
+          {!isAgentPage && <Chatbot />}
         </AuthProvider>
       </ThemeProvider>
     </SessionProvider>

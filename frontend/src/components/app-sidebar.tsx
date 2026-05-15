@@ -40,7 +40,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const getNavMain = () => {
     const common = [
       {
-        title: "Tableau de Bord",
+        title: "Dashboard",
         url: "/dashboard",
         icon: <LayoutDashboardIcon />,
       },
@@ -50,17 +50,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       return [
         ...common,
         {
-          title: "Urbanisme",
+          title: "Urbanism",
           url: "/dashboard/projects",
           icon: <FileTextIcon />,
         },
         {
-          title: "Suivi de Dossier",
+          title: "Track Dossier",
           url: "/dashboard/track",
           icon: <SearchIcon />,
         },
         {
-          title: "Paiements",
+          title: "Payments",
           url: "#",
           icon: <CreditCardIcon />,
         },
@@ -71,17 +71,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       return [
         ...common,
         {
-          title: "Mes Projets",
+          title: "My Projects",
           url: "/dashboard/projects",
           icon: <FolderIcon />,
         },
         {
-          title: "Suivi Technique",
+          title: "Technical Tracking",
           url: "/dashboard/track",
           icon: <SearchIcon />,
         },
         {
-          title: "Cartographie",
+          title: "Mapping",
           url: "#",
           icon: <MapIcon />,
         },
@@ -92,22 +92,22 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       return [
         ...common,
         {
-          title: "Évaluations",
+          title: "Evaluations",
           url: "/dashboard/evaluations",
           icon: <StarIcon />,
         },
         {
-          title: "Gestion Dossiers",
+          title: "Dossier Management",
           url: "/dashboard/projects",
           icon: <ShieldCheckIcon />,
         },
         {
-          title: "Citoyens",
+          title: "Citizens",
           url: "/dashboard/citizens",
           icon: <UsersIcon />,
         },
         {
-          title: "Entreprises",
+          title: "Businesses",
           url: "/dashboard/businesses",
           icon: <Building2Icon />,
         },
@@ -120,12 +120,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const getIntelligence = () => {
     return [
       {
-        name: "Assistant Rokhas AI",
+        name: "Rokhas AI Assistant",
         url: "/dashboard/agent",
         icon: <BotIcon />,
       },
       {
-        name: "Rapports & Stats",
+        name: "Reports & Stats",
         url: "/dashboard/reports",
         icon: <BarChart3Icon />,
       },
@@ -135,17 +135,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const getSecondary = () => {
     return [
       {
-        title: "Paramètres",
+        title: "Settings",
         url: "/settings",
         icon: <Settings2Icon />,
       },
       {
-        title: "Aide & Support",
+        title: "Help & Support",
         url: "/help",
         icon: <CircleHelpIcon />,
       },
       {
-        title: "Réclamations",
+        title: "Complaints",
         url: "#",
         icon: <MessageSquareIcon />,
       },
