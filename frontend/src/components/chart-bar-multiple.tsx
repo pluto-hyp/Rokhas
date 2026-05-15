@@ -18,61 +18,56 @@ import {
   type ChartConfig,
 } from "@/components/ui/chart"
 
-export const description = "A multiple bar chart"
+interface ChartBarMultipleProps {
+  title?: string;
+  description?: string;
+  data?: any[];
+  config?: ChartConfig;
+  dataKeys?: string[];
+  xAxisKey?: string;
+}
 
-const chartData = [
-  { month: "January", desktop: 186, mobile: 80 },
-  { month: "February", desktop: 305, mobile: 200 },
-  { month: "March", desktop: 237, mobile: 120 },
-  { month: "April", desktop: 73, mobile: 190 },
-  { month: "May", desktop: 209, mobile: 130 },
-  { month: "June", desktop: 214, mobile: 140 },
-]
-
-const chartConfig = {
-  desktop: {
-    label: "Desktop",
-    color: "var(--chart-1)",
-  },
-  mobile: {
-    label: "Mobile",
-    color: "var(--chart-2)",
-  },
-} satisfies ChartConfig
-
-export function ChartBarMultiple() {
+export function ChartBarMultiple({
+  title = "Performance Distribution",
+  description = "Category-based analysis",
+  data = [],
+  config = {},
+  dataKeys = ["desktop", "mobile"],
+  xAxisKey = "month"
+}: ChartBarMultipleProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Bar Chart - Multiple</CardTitle>
-        <CardDescription>January - June 2024</CardDescription>
+        <CardTitle>{title}</CardTitle>
+        <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent>
-        <ChartContainer config={chartConfig}>
-          <BarChart accessibilityLayer data={chartData}>
+        <ChartContainer config={config}>
+          <BarChart accessibilityLayer data={data}>
             <CartesianGrid vertical={false} />
             <XAxis
-              dataKey="month"
+              dataKey={xAxisKey}
               tickLine={false}
               tickMargin={10}
               axisLine={false}
-              tickFormatter={(value) => value.slice(0, 3)}
+              tickFormatter={(value) => typeof value === 'string' ? value.slice(0, 3) : value}
             />
             <ChartTooltip
               cursor={false}
               content={<ChartTooltipContent indicator="dashed" />}
             />
-            <Bar dataKey="desktop" fill="var(--color-desktop)" radius={4} />
-            <Bar dataKey="mobile" fill="var(--color-mobile)" radius={4} />
+            {dataKeys.map((key) => (
+              <Bar key={key} dataKey={key} fill={`var(--color-${key})`} radius={4} />
+            ))}
           </BarChart>
         </ChartContainer>
       </CardContent>
       <CardFooter className="flex-col items-start gap-2 text-sm">
-        <div className="flex gap-2 leading-none font-medium">
-          Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
+        <div className="flex gap-2 leading-none font-medium text-emerald-600">
+          Positive growth detected <TrendingUp className="h-4 w-4" />
         </div>
         <div className="leading-none text-muted-foreground">
-          Showing total visitors for the last 6 months
+          Aggregated from Rokhas platform
         </div>
       </CardFooter>
     </Card>

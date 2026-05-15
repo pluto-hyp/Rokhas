@@ -11,9 +11,11 @@ import {
 } from "@/components/ui/navigation-menu";
 import { cn } from "@/lib/utils";
 import { AppIcon } from "@/components/AppIcon";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function Navbar() {
   const [scrolled, setScrolled] = React.useState(false);
+  const { token } = useAuth();
 
   React.useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -58,11 +60,19 @@ export function Navbar() {
         <div className="h-6 w-px bg-border/40" />
 
         <div className="flex items-center gap-3">
-          <Link href="/login">
-            <Button variant="ghost" className="rounded-full h-9 px-4 text-xs font-bold uppercase tracking-widest hover:bg-black hover:text-white transition-all">
-              Sign In
-            </Button>
-          </Link>
+          {token ? (
+            <Link href="/dashboard">
+              <Button variant="ghost" className="rounded-full h-9 px-4 text-xs font-bold uppercase tracking-widest hover:bg-black hover:text-white transition-all">
+                Dashboard
+              </Button>
+            </Link>
+          ) : (
+            <Link href="/login">
+              <Button variant="ghost" className="rounded-full h-9 px-4 text-xs font-bold uppercase tracking-widest hover:bg-black hover:text-white transition-all">
+                Sign In
+              </Button>
+            </Link>
+          )}
         </div>
       </nav>
     </div>
