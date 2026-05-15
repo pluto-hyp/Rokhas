@@ -106,12 +106,11 @@
   --input: #f8fafc;
   --ring: #3b82f6;
   
-  /* Vibrant Chart Palette */
-  --chart-1: #3b82f6; /* Azure Blue */
-  --chart-2: #10b981; /* Emerald Green */
-  --chart-3: #f59e0b; /* Amber Gold */
-  --chart-4: #8b5cf6; /* Royal Purple */
-  --chart-5: #ec4899; /* Deep Pink */
+  --chart-1: #3b82f6; 
+  --chart-2: #10b981;   
+  --chart-3: #f59e0b; 
+  --chart-4: #8b5cf6; 
+  --chart-5: #ec4899; 
   
   --radius: 0.75rem;
   --sidebar: #f8fafc;

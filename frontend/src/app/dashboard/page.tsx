@@ -31,7 +31,7 @@ export default function DashboardPage() {
         setProjects(projectsData)
       } catch (error) {
         console.error("Failed to fetch dashboard data:", error)
-        if (token) toast.error("Impossible de charger les données du tableau de bord")
+        if (token) toast.error("Unable to load dashboard data")
       } finally {
         setLoading(false)
       }
@@ -69,7 +69,7 @@ export default function DashboardPage() {
 
   const areaChartConfig = {
     building: { label: "Construction", color: "var(--chart-1)" },
-    economic: { label: "Économique", color: "var(--chart-4)" },
+    economic: { label: "Economic", color: "var(--chart-4)" },
   }
 
   const pieData = [
@@ -79,9 +79,9 @@ export default function DashboardPage() {
   ]
 
   const pieConfig = {
-    Approved: { label: "Approuvé", color: "var(--chart-2)" },
-    Pending: { label: "En cours", color: "var(--chart-3)" },
-    Rejected: { label: "Rejeté", color: "var(--chart-5)" },
+    Approved: { label: "Approved", color: "var(--chart-2)" },
+    Pending: { label: "Pending", color: "var(--chart-3)" },
+    Rejected: { label: "Rejected", color: "var(--chart-5)" },
   }
 
   const stats = {
@@ -102,8 +102,8 @@ export default function DashboardPage() {
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
               <div className="lg:col-span-2">
                 <ChartAreaInteractive
-                  title={role === "architect" ? "Mes Soumissions" : "Activité de la Plateforme"}
-                  description="Volume de dossiers déposés"
+                  title={role === "architect" ? "My Submissions" : "Platform Activity"}
+                  description="Weekly dossier volume"
                   data={areaChartData}
                   config={areaChartConfig}
                   dataKeys={["building", "economic"]}
@@ -111,8 +111,8 @@ export default function DashboardPage() {
               </div>
               <div className="lg:col-span-1">
                 <ChartPieInteractive
-                  title="État des Dossiers"
-                  description="Répartition par statut"
+                  title="Dossier Status"
+                  description="Distribution by state"
                   data={pieData}
                   config={pieConfig}
                   dataKey="value"
@@ -126,9 +126,9 @@ export default function DashboardPage() {
         {role === "citizen" && (
           <div className="px-4 lg:px-6">
             <div className="bg-card rounded-2xl p-8 border border-border/40 flex flex-col items-center justify-center text-center h-full min-h-[300px]">
-              <h3 className="text-xl font-bold mb-2">Bienvenue sur Rokhas</h3>
+              <h3 className="text-xl font-bold mb-2">Welcome to Rokhas</h3>
               <p className="text-muted-foreground text-sm max-w-md">
-                Gérez vos demandes d'urbanisme et d'autorisations économiques en toute simplicité.
+                Manage your urban planning and economic authorization requests with ease.
               </p>
             </div>
           </div>
@@ -137,7 +137,7 @@ export default function DashboardPage() {
         <div className="px-4 lg:px-6">
           <div className="bg-card rounded-2xl border border-border/40 p-4 shadow-sm">
             <h3 className="text-lg font-bold mb-4 px-2">
-              {role === "authority" ? "Tous les Dossiers" : "Mes Dossiers Récents"}
+              {role === "authority" ? "Global Dossiers" : "My Recent Dossiers"}
             </h3>
             <ProjectTable data={projects} />
           </div>

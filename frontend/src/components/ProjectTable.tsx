@@ -58,7 +58,7 @@ export function ProjectTable({ data }: ProjectTableProps) {
     () => [
       {
         accessorKey: "id",
-        header: "Réf.",
+        header: "Ref.",
         cell: ({ row }) => (
           <span className="font-mono text-xs text-muted-foreground">
             RKH-{2026}-{String(row.original.id).padStart(4, '0')}
@@ -67,7 +67,7 @@ export function ProjectTable({ data }: ProjectTableProps) {
       },
       {
         accessorKey: "title",
-        header: "Titre du Projet",
+        header: "Project Title",
         cell: ({ row }) => <span className="font-medium">{row.getValue("title")}</span>,
       },
       {
@@ -81,7 +81,7 @@ export function ProjectTable({ data }: ProjectTableProps) {
       },
       {
         accessorKey: "status",
-        header: "Statut",
+        header: "Status",
         cell: ({ row }) => {
           const status = row.getValue("status") as string;
           return (
@@ -97,7 +97,7 @@ export function ProjectTable({ data }: ProjectTableProps) {
         header: () => <div className="text-right">Date</div>,
         cell: ({ row }) => (
           <div className="text-right text-xs text-muted-foreground">
-            {new Date(row.getValue("created_at") || Date.now()).toLocaleDateString("fr-FR")}
+            {new Date(row.getValue("created_at") || Date.now()).toLocaleDateString("en-US")}
           </div>
         ),
       },
@@ -154,7 +154,7 @@ export function ProjectTable({ data }: ProjectTableProps) {
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
-                  Aucun dossier trouvé.
+                  No dossiers found.
                 </TableCell>
               </TableRow>
             )}
@@ -162,11 +162,10 @@ export function ProjectTable({ data }: ProjectTableProps) {
         </Table>
       </div>
 
-      {/* Pagination Controls */}
       <div className="flex items-center justify-between px-2">
         <div className="text-xs text-muted-foreground">
-          Page {table.getState().pagination.pageIndex + 1} sur{" "}
-          {table.getPageCount()} ({data.length} dossiers au total)
+          Page {table.getState().pagination.pageIndex + 1} of{" "}
+          {table.getPageCount()} ({data.length} total dossiers)
         </div>
         <div className="flex items-center gap-2">
           <Button
