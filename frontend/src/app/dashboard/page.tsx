@@ -4,7 +4,6 @@ import * as React from "react"
 import { useAuth } from "@/contexts/AuthContext"
 import { getReportSummary, getProjects, ReportSummary, Project } from "@/lib/api"
 import { ChartAreaInteractive } from "@/components/chart-area-interactive"
-import { ChartBarMultiple } from "@/components/chart-bar-multiple"
 import { ChartPieInteractive } from "@/components/chart-pie-interactive"
 import { ProjectTable } from "@/components/ProjectTable"
 import { SectionCards } from "@/components/section-cards"
@@ -14,7 +13,7 @@ import { toast } from "sonner"
 export default function DashboardPage() {
   const { token, user } = useAuth()
   const role = user?.role || "citizen"
-  
+
   const [summary, setSummary] = React.useState<ReportSummary | null>(null)
   const [projects, setProjects] = React.useState<Project[]>([])
   const [loading, setLoading] = React.useState(true)
@@ -32,7 +31,6 @@ export default function DashboardPage() {
         setProjects(projectsData)
       } catch (error) {
         console.error("Failed to fetch dashboard data:", error)
-        // Only toast if token is present and call actually failed
         if (token) toast.error("Impossible de charger les données du tableau de bord")
       } finally {
         setLoading(false)
@@ -60,9 +58,6 @@ export default function DashboardPage() {
     )
   }
 
-  // --- Data Transformation ---
-
-  // Area Chart Data (Global Submissions)
   const areaChartData = [
     { date: "2024-04-01", building: 12, economic: 8 },
     { date: "2024-04-15", building: 24, economic: 15 },
@@ -73,31 +68,20 @@ export default function DashboardPage() {
   ]
 
   const areaChartConfig = {
-    building: { label: "Construction", color: "var(--primary)" },
-    economic: { label: "Économique", color: "var(--chart-2)" },
+    building: { label: "Construction", color: "var(--chart-1)" },
+    economic: { label: "Économique", color: "var(--chart-4)" },
   }
 
-  // Bar Chart Data (Category Distribution)
-  const categoriesData = Object.entries(summary?.categories || {}).map(([name, value]) => ({
-    name,
-    value,
-  }))
-
-  const barChartConfig = {
-    value: { label: "Volume", color: "var(--primary)" }
-  }
-
-  // Pie Chart Data (Status Breakdown)
   const pieData = [
-    { name: "Approved", value: summary?.permits.approved || 0, fill: "var(--emerald-500)" },
-    { name: "Pending", value: summary?.permits.pending || 0, fill: "var(--amber-500)" },
-    { name: "Rejected", value: Math.max(0, (summary?.permits.total || 0) - (summary?.permits.approved || 0) - (summary?.permits.pending || 0)), fill: "var(--destructive)" },
+    { name: "Approved", value: summary?.permits.approved || 0, fill: "var(--chart-2)" },
+    { name: "Pending", value: summary?.permits.pending || 0, fill: "var(--chart-3)" },
+    { name: "Rejected", value: Math.max(0, (summary?.permits.total || 0) - (summary?.permits.approved || 0) - (summary?.permits.pending || 0)), fill: "var(--chart-5)" },
   ]
 
   const pieConfig = {
-    Approved: { label: "Approuvé", color: "var(--emerald-500)" },
-    Pending: { label: "En cours", color: "var(--amber-500)" },
-    Rejected: { label: "Rejeté", color: "var(--destructive)" },
+    Approved: { label: "Approuvé", color: "var(--chart-2)" },
+    Pending: { label: "En cours", color: "var(--chart-3)" },
+    Rejected: { label: "Rejeté", color: "var(--chart-5)" },
   }
 
   const stats = {
@@ -107,71 +91,54 @@ export default function DashboardPage() {
     pendingEvaluations: summary?.entities.evaluations || 0
   }
 
-  // --- Role Based Views ---
-
   return (
     <div className="@container/main flex flex-1 flex-col gap-2">
       <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-        
+
         <SectionCards stats={stats} />
 
-        {/* Architect & Authority see deep analytics */}
         {(role === "architect" || role === "authority") && (
           <div className="px-4 lg:px-6">
-            <ChartAreaInteractive 
-              title={role === "architect" ? "Mes Soumissions" : "Activité de la Plateforme"}
-              description="Volume de dossiers déposés"
-              data={areaChartData}
-              config={areaChartConfig}
-              dataKeys={["building", "economic"]}
-            />
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+              <div className="lg:col-span-2">
+                <ChartAreaInteractive
+                  title={role === "architect" ? "Mes Soumissions" : "Activité de la Plateforme"}
+                  description="Volume de dossiers déposés"
+                  data={areaChartData}
+                  config={areaChartConfig}
+                  dataKeys={["building", "economic"]}
+                />
+              </div>
+              <div className="lg:col-span-1">
+                <ChartPieInteractive
+                  title="État des Dossiers"
+                  description="Répartition par statut"
+                  data={pieData}
+                  config={pieConfig}
+                  dataKey="value"
+                  nameKey="name"
+                />
+              </div>
+            </div>
           </div>
         )}
 
-        <div className="grid grid-cols-1 gap-4 px-4 md:grid-cols-2 lg:grid-cols-3 lg:px-6 items-start">
-          {/* Pie Chart is useful for everyone */}
-          <ChartPieInteractive 
-            title="État des Dossiers"
-            description="Répartition par statut"
-            data={pieData}
-            config={pieConfig}
-            dataKey="value"
-            nameKey="name"
-          />
-
-          {/* Bar Chart for categories (Authority/Architect) */}
-          {(role === "architect" || role === "authority") && categoriesData.length > 0 && (
-            <ChartBarMultiple 
-              title="Distribution par Catégorie"
-              description="Types de projets dominants"
-              data={categoriesData}
-              config={barChartConfig}
-              dataKeys={["value"]}
-              xAxisKey="name"
-            />
-          )}
-
-          {/* Citizen gets a focused view */}
-          {role === "citizen" && (
-            <div className="md:col-span-2 space-y-4">
-              <div className="bg-primary/5 rounded-2xl p-8 border border-primary/10 flex flex-col items-center justify-center text-center">
-                <h3 className="text-xl font-bold mb-2">Bienvenue sur Rokhas</h3>
-                <p className="text-muted-foreground text-sm max-w-md">
-                  Vous pouvez suivre l'état de vos demandes en temps réel et consulter les analyses de conformité IA.
-                </p>
-              </div>
+        {role === "citizen" && (
+          <div className="px-4 lg:px-6">
+            <div className="bg-card rounded-2xl p-8 border border-border/40 flex flex-col items-center justify-center text-center h-full min-h-[300px]">
+              <h3 className="text-xl font-bold mb-2">Bienvenue sur Rokhas</h3>
+              <p className="text-muted-foreground text-sm max-w-md">
+                Gérez vos demandes d'urbanisme et d'autorisations économiques en toute simplicité.
+              </p>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
-        {/* Project Table */}
         <div className="px-4 lg:px-6">
-          <div className="bg-white rounded-2xl border border-border/40 p-4">
-            <div className="flex items-center justify-between mb-4 px-2">
-              <h3 className="text-lg font-bold">
-                {role === "authority" ? "Tous les Dossiers" : "Mes Dossiers Récents"}
-              </h3>
-            </div>
+          <div className="bg-card rounded-2xl border border-border/40 p-4 shadow-sm">
+            <h3 className="text-lg font-bold mb-4 px-2">
+              {role === "authority" ? "Tous les Dossiers" : "Mes Dossiers Récents"}
+            </h3>
             <ProjectTable data={projects} />
           </div>
         </div>

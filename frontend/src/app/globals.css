@@ -7,7 +7,7 @@
 @theme {
   --color-primary: #1A1A1A;
   --color-primary-hover: #000000;
-  --color-background: #FDFCFB; /* Warm off-white/cream */
+  --color-background: #FDFCFB;
   --color-surface: #FFFFFF;
   --color-text: #1A1A1A;
   --color-text-muted: #4A4A4A;
@@ -15,21 +15,17 @@
   --animate-marquee: marquee 30s linear infinite;
 }
 
-/* Marquee animation block */
 @keyframes marquee {
   from { transform: translateX(0); }
   to { transform: translateX(-50%); }
 }
 
-/* Base resets and topography aesthetics */
 @layer base {
   body {
     background-color: var(--color-background);
     color: var(--color-text);
     @apply bg-background text-foreground;
   }
-
-  /* Smooth scrolling */
   html[data-scroll-behavior="smooth"] {
     scroll-behavior: smooth;
   }
@@ -41,7 +37,6 @@
   }
 }
 
-/* Topographic background utility */
 @layer utilities {
   .bg-topography {
     background-image: url("data:image/svg+xml,%3Csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cpattern id='topography' width='100' height='100' patternUnits='userSpaceOnUse'%3E%3Cpath d='M10 10c20 0 40 20 60 20s40-20 60-20 40 20 60 20 40-20 60-20' fill='none' stroke='%23334155' stroke-width='1' stroke-opacity='0.2'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23topography)'/%3E%3C/svg%3E");
@@ -92,75 +87,78 @@
 }
 
 :root {
-  --background: #ffffff;
-  --foreground: #111111;
-  --card: #f8f8f8;
-  --card-foreground: #111111;
+  --background: #fdfcfb;
+  --foreground: #1a1a1a;
+  --card: #ffffff;
+  --card-foreground: #1a1a1a;
   --popover: #ffffff;
-  --popover-foreground: #111111;
-  --primary: #000000;
+  --popover-foreground: #1a1a1a;
+  --primary: #1a1a1a;
   --primary-foreground: #ffffff;
-  --secondary: #6b7280;
-  --secondary-foreground: #111111;
-  --muted: #e5e7eb;
-  --muted-foreground: #4b5563;
-  --accent: #9ca3af;
-  --accent-foreground: #111111;
-  --destructive: #c92a2a;
-  --border: #d1d5db;
+  --secondary: #64748b;
+  --secondary-foreground: #1a1a1a;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --accent: #f1f5f9;
+  --accent-foreground: #1a1a1a;
+  --destructive: #ef4444;
+  --border: #e2e8f0;
   --input: #f8fafc;
-  --ring: #9ca3af;
-  --chart-1: #111111;
-  --chart-2: #4b5563;
-  --chart-3: #6b7280;
-  --chart-4: #9ca3af;
-  --chart-5: #d1d5db;
-  --radius: 0.625rem;
-  --sidebar: #f3f4f6;
-  --sidebar-foreground: #111111;
-  --sidebar-primary: #000000;
+  --ring: #3b82f6;
+  
+  /* Vibrant Chart Palette */
+  --chart-1: #3b82f6; /* Azure Blue */
+  --chart-2: #10b981; /* Emerald Green */
+  --chart-3: #f59e0b; /* Amber Gold */
+  --chart-4: #8b5cf6; /* Royal Purple */
+  --chart-5: #ec4899; /* Deep Pink */
+  
+  --radius: 0.75rem;
+  --sidebar: #f8fafc;
+  --sidebar-foreground: #1a1a1a;
+  --sidebar-primary: #1a1a1a;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #e5e7eb;
-  --sidebar-accent-foreground: #111111;
-  --sidebar-border: #d1d5db;
-  --sidebar-ring: #9ca3af;
+  --sidebar-accent: #f1f5f9;
+  --sidebar-accent-foreground: #1a1a1a;
+  --sidebar-border: #e2e8f0;
+  --sidebar-ring: #3b82f6;
 }
 
 .dark {
-  --background: #111111;
+  --background: #0f172a;
   --foreground: #f8fafc;
-  --card: #1f1f1f;
+  --card: #1e293b;
   --card-foreground: #f8fafc;
-  --popover: #171717;
+  --popover: #0f172a;
   --popover-foreground: #f8fafc;
   --primary: #f8fafc;
-  --primary-foreground: #111111;
-  --secondary: #9ca3af;
+  --primary-foreground: #0f172a;
+  --secondary: #94a3b8;
   --secondary-foreground: #f8fafc;
-  --muted: #2b2b2b;
-  --muted-foreground: #d1d5db;
-  --accent: #f8fafc;
-  --accent-foreground: #111111;
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+  --accent: #334155;
+  --accent-foreground: #f8fafc;
   --destructive: #f87171;
-  --border: rgba(255, 255, 255, 0.1);
-  --input: rgba(255, 255, 255, 0.1);
-  --ring: #9ca3af;
-  --chart-1: #f8fafc;
-  --chart-2: #d1d5db;
-  --chart-3: #9ca3af;
-  --chart-4: #6b7280;
-  --chart-5: #4b5563;
-  --sidebar: #111111;
+  --border: #334155;
+  --input: #1e293b;
+  --ring: #3b82f6;
+  --chart-1: #3b82f6;
+  --chart-2: #10b981;
+  --chart-3: #f59e0b;
+  --chart-4: #8b5cf6;
+  --chart-5: #ec4899;
+  --sidebar: #0f172a;
   --sidebar-foreground: #f8fafc;
   --sidebar-primary: #f8fafc;
-  --sidebar-primary-foreground: #111111;
-  --sidebar-accent: #d1d5db;
-  --sidebar-accent-foreground: #111111;
-  --sidebar-border: rgba(255, 255, 255, 0.1);
-  --sidebar-ring: #9ca3af;
+  --sidebar-primary-foreground: #0f172a;
+  --sidebar-accent: #334155;
+  --sidebar-accent-foreground: #f8fafc;
+  --sidebar-border: #334155;
+  --sidebar-ring: #3b82f6;
 }
 
-/* Dashboard-only polish. Uses existing theme tokens and does not alter homepage/global colors. */
+/* Dashboard-only polish. */
 .dashboard-shell {
   background: var(--background);
   color: var(--foreground);
@@ -179,8 +177,7 @@
 .dashboard-shell [data-slot="card"] {
   border: 1px solid var(--border);
   border-radius: 0.875rem;
-  box-shadow: none;
-  --tw-ring-color: transparent;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.1);
 }
 
 .dashboard-shell [data-slot="card-header"],
@@ -189,7 +186,7 @@
 }
 
 .dashboard-shell table thead {
-  background: color-mix(in srgb, var(--muted) 42%, transparent);
+  background: var(--muted);
 }
 
 .dashboard-shell table tbody tr {
@@ -197,32 +194,11 @@
 }
 
 .dashboard-shell table tbody tr:hover {
-  background: color-mix(in srgb, var(--muted) 26%, transparent);
+  background: color-mix(in srgb, var(--muted) 40%, transparent);
 }
 
 .dashboard-shell input,
 .dashboard-shell [data-slot="button"][data-variant="outline"] {
   background: var(--background);
   border-color: var(--border);
-}
-
-.dashboard-shell .rounded-xl,
-.dashboard-shell .rounded-2xl {
-  border-radius: 0.75rem;
-}
-
-.dashboard-shell .rounded-full {
-  border-radius: 9999px;
-}
-
-.dashboard-shell .bg-muted\/10,
-.dashboard-shell .bg-muted\/20,
-.dashboard-shell .bg-muted\/30,
-.dashboard-shell .bg-muted\/50 {
-  background-color: color-mix(in srgb, var(--muted) 46%, transparent) !important;
-}
-
-.dashboard-shell .text-primary\/50,
-.dashboard-shell .text-primary\/70 {
-  color: var(--muted-foreground) !important;
 }
