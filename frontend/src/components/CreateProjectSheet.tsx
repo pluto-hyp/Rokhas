@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Loader2, UploadCloud, FileText, UserIcon, Building2 } from "lucide-react";
+import { Loader2, UploadCloud, FileText, UserIcon, Building2, ShieldCheck, CreditCard, Briefcase } from "lucide-react";
 
 interface CreateProjectSheetProps {
   open: boolean;
@@ -39,7 +39,7 @@ export function CreateProjectSheet({
   const { token, user } = useAuth();
   const role = user?.role || "citizen";
   const [loading, setLoading] = React.useState(false);
-  const [formData, setFormData] = React.useState<ProjectCreate & { citizen_name?: string }>({
+  const [formData, setFormData] = React.useState<ProjectCreate & { citizen_name?: string; citizen_cin?: string; land_reference?: string }>({
     title: "",
     description: "",
     type: role === "architect" ? "Building Permit" : "Economic Authorization",
@@ -49,6 +49,8 @@ export function CreateProjectSheet({
     surface_terrain: 0,
     zone: "Zone Urbaine",
     citizen_name: "",
+    citizen_cin: "",
+    land_reference: "",
   });
 
   const [files, setFiles] = React.useState<{ [key: string]: boolean }>({});
@@ -57,24 +59,28 @@ export function CreateProjectSheet({
     e.preventDefault();
     if (!token) return;
 
-    // Simulation of file validation
-    if (role === "architect" && (!files.plan || !files.arch || !files.prop)) {
-      toast.error("Veuillez télécharger tous les documents obligatoires (Plans, Architecture, Propriété).");
-      return;
+    // Strict validation for Architects: Legal, Technical, and Identity docs
+    if (role === "architect") {
+      const requiredFiles = ["plan", "arch", "prop", "cin", "agency"];
+      const missingFiles = requiredFiles.filter(f => !files[f]);
+      
+      if (missingFiles.length > 0) {
+        toast.error("Veuillez télécharger TOUS les documents: Plans, Dossier Architecture, CIN, Propriété, et Mandat.");
+        return;
+      }
     }
 
     setLoading(true);
     try {
-      // Append citizen name to description for now as our API doesn't have a specific field
       const finalData = {
         ...formData,
         description: role === "architect" 
-          ? `[CITIZEN: ${formData.citizen_name}] ${formData.description}` 
+          ? `[REF: ${formData.land_reference}] [CITIZEN: ${formData.citizen_name}] [CIN: ${formData.citizen_cin}] ${formData.description}` 
           : formData.description
       };
       
       await createProject(finalData, token);
-      toast.success("Dossier soumis avec succès !");
+      toast.success("Dossier soumis ! L'Agent IA vérifie actuellement la conformité des plans et documents.");
       onOpenChange(false);
       if (onSuccess) onSuccess();
       resetForm();
@@ -97,6 +103,8 @@ export function CreateProjectSheet({
       surface_terrain: 0,
       zone: "Zone Urbaine",
       citizen_name: "",
+      citizen_cin: "",
+      land_reference: "",
     });
     setFiles({});
   };
@@ -134,15 +142,15 @@ export function CreateProjectSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-[550px] overflow-y-auto">
+      <SheetContent className="sm:max-w-[600px] overflow-y-auto">
         <SheetHeader className="mb-6">
           <SheetTitle className="text-2xl font-serif">
             {role === "architect" ? "Soumission de Projet Urbain" : "Nouvelle Demande Économique"}
           </SheetTitle>
           <SheetDescription>
             {role === "architect" 
-              ? "En tant qu'architecte, vous soumettez ce projet au nom d'un citoyen. Tous les documents d'urbanisme sont requis."
-              : "Soumettez votre demande d'autorisation commerciale ou économique directement."}
+              ? "L'Agent IA vérifie la conformité technique des plans et la validité légale des procurations."
+              : "Soumettez votre demande d'autorisation commerciale directement."}
           </SheetDescription>
         </SheetHeader>
 
@@ -165,19 +173,49 @@ export function CreateProjectSheet({
             </div>
 
             {role === "architect" && (
-              <div className="space-y-2">
-                <Label htmlFor="citizen_name" className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                  <UserIcon size={14} /> Identité du Bénéficiaire (Citoyen)
-                </Label>
-                <Input
-                  id="citizen_name"
-                  name="citizen_name"
-                  placeholder="Nom complet du citoyen propriétaire"
-                  value={formData.citizen_name}
-                  onChange={handleChange}
-                  required
-                  className="rounded-xl h-10 border-primary/20"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="citizen_name" className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                    <UserIcon size={14} /> Nom du Propriétaire
+                  </Label>
+                  <Input
+                    id="citizen_name"
+                    name="citizen_name"
+                    placeholder="Nom complet"
+                    value={formData.citizen_name}
+                    onChange={handleChange}
+                    required
+                    className="rounded-xl h-10 border-primary/20"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="citizen_cin" className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                    <CreditCard size={14} /> N° CIN
+                  </Label>
+                  <Input
+                    id="citizen_cin"
+                    name="citizen_cin"
+                    placeholder="Ex: AB123456"
+                    value={formData.citizen_cin}
+                    onChange={handleChange}
+                    required
+                    className="rounded-xl h-10 border-primary/20"
+                  />
+                </div>
+                <div className="space-y-2 col-span-2">
+                  <Label htmlFor="land_reference" className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                    <FileText size={14} /> Référence Foncière (Titre de Propriété)
+                  </Label>
+                  <Input
+                    id="land_reference"
+                    name="land_reference"
+                    placeholder="Ex: 12345/R - Titre Foncier"
+                    value={formData.land_reference}
+                    onChange={handleChange}
+                    required
+                    className="rounded-xl h-10 border-primary/20"
+                  />
+                </div>
               </div>
             )}
           </div>
@@ -190,7 +228,7 @@ export function CreateProjectSheet({
               </Label>
               <Select
                 value={formData.type}
-                onValueChange={(value) => handleSelectChange("type", value)}
+                onValueChange={(value) => handleSelectChange("type", value || "")}
               >
                 <SelectTrigger id="type" className="rounded-xl h-10 border-primary/20">
                   <SelectValue placeholder="Select type" />
@@ -217,7 +255,7 @@ export function CreateProjectSheet({
               </Label>
               <Select
                 value={formData.zone}
-                onValueChange={(value) => handleSelectChange("zone", value)}
+                onValueChange={(value) => handleSelectChange("zone", value || "")}
               >
                 <SelectTrigger id="zone" className="rounded-xl h-10 border-primary/20">
                   <SelectValue placeholder="Select zone" />
@@ -232,28 +270,30 @@ export function CreateProjectSheet({
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="description" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-              Description / Notes
-            </Label>
-            <Textarea
-              id="description"
-              name="description"
-              placeholder="Précisions sur le projet..."
-              value={formData.description}
-              onChange={handleChange}
-              className="rounded-xl min-h-[80px] resize-none border-primary/20"
-            />
-          </div>
-
           {/* Document Upload Section */}
           <div className="space-y-4">
-            <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-              Documents Requis
+            <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+              Documents Requis <span className="text-[10px] text-amber-600 border border-amber-600/30 px-1 rounded">Validation Agent IA</span>
             </Label>
             <div className="grid gap-3">
               {role === "architect" ? (
                 <>
+                  <div 
+                    onClick={() => simulateUpload("agency")}
+                    className={`flex items-center justify-between p-3 rounded-xl border-2 border-dashed transition-all cursor-pointer ${files.agency ? "border-emerald-500/50 bg-emerald-50/50" : "border-border/40 hover:border-primary/40 hover:bg-muted/50"}`}
+                  >
+                    <div className="flex items-center gap-3 text-sm">
+                      <div className={`p-2 rounded-lg ${files.agency ? "bg-emerald-500 text-white" : "bg-muted text-muted-foreground"}`}>
+                        <Briefcase size={18} />
+                      </div>
+                      <div>
+                        <p className="font-bold">Procuration / Mandat</p>
+                        <p className="text-xs text-muted-foreground">Preuve légale obligatoire</p>
+                      </div>
+                    </div>
+                    {files.agency ? <ShieldCheck className="text-emerald-500" /> : <UploadCloud size={20} className="text-muted-foreground" />}
+                  </div>
+
                   <div 
                     onClick={() => simulateUpload("plan")}
                     className={`flex items-center justify-between p-3 rounded-xl border-2 border-dashed transition-all cursor-pointer ${files.plan ? "border-emerald-500/50 bg-emerald-50/50" : "border-border/40 hover:border-primary/40 hover:bg-muted/50"}`}
@@ -263,11 +303,11 @@ export function CreateProjectSheet({
                         <Building2 size={18} />
                       </div>
                       <div>
-                        <p className="font-bold">Plan de Construction</p>
-                        <p className="text-xs text-muted-foreground">Plans d'architecte détaillés (PDF/DWG)</p>
+                        <p className="font-bold">Plans de Construction</p>
+                        <p className="text-xs text-muted-foreground text-amber-600 font-bold italic">REQUIS: Nom du citoyen sur le plan</p>
                       </div>
                     </div>
-                    {files.plan ? <FileText className="text-emerald-500" /> : <UploadCloud size={20} className="text-muted-foreground" />}
+                    {files.plan ? <ShieldCheck className="text-emerald-500" /> : <UploadCloud size={20} className="text-muted-foreground" />}
                   </div>
 
                   <div 
@@ -279,27 +319,41 @@ export function CreateProjectSheet({
                         <FileText size={18} />
                       </div>
                       <div>
-                        <p className="font-bold">Dossier Architectural</p>
-                        <p className="text-xs text-muted-foreground">Documents techniques et calculs</p>
+                        <p className="font-bold">Dossier Architecture</p>
+                        <p className="text-xs text-muted-foreground">Notes techniques obligatoires</p>
                       </div>
                     </div>
-                    {files.arch ? <FileText className="text-emerald-500" /> : <UploadCloud size={20} className="text-muted-foreground" />}
+                    {files.arch ? <ShieldCheck className="text-emerald-500" /> : <UploadCloud size={20} className="text-muted-foreground" />}
                   </div>
 
-                  <div 
-                    onClick={() => simulateUpload("prop")}
-                    className={`flex items-center justify-between p-3 rounded-xl border-2 border-dashed transition-all cursor-pointer ${files.prop ? "border-emerald-500/50 bg-emerald-50/50" : "border-border/40 hover:border-primary/40 hover:bg-muted/50"}`}
-                  >
-                    <div className="flex items-center gap-3 text-sm">
-                      <div className={`p-2 rounded-lg ${files.prop ? "bg-emerald-500 text-white" : "bg-muted text-muted-foreground"}`}>
-                        <UserIcon size={18} />
+                  <div className="grid grid-cols-2 gap-3">
+                    <div 
+                      onClick={() => simulateUpload("cin")}
+                      className={`flex flex-col gap-2 p-3 rounded-xl border-2 border-dashed transition-all cursor-pointer ${files.cin ? "border-emerald-500/50 bg-emerald-50/50" : "border-border/40 hover:border-primary/40 hover:bg-muted/50"}`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <CreditCard size={18} className={files.cin ? "text-emerald-500" : "text-muted-foreground"} />
+                        {files.cin && <ShieldCheck size={14} className="text-emerald-500" />}
                       </div>
                       <div>
-                        <p className="font-bold">Preuve de Propriété</p>
-                        <p className="text-xs text-muted-foreground">Titre foncier du citoyen</p>
+                        <p className="text-xs font-bold">CIN du Citoyen</p>
+                        <p className="text-[10px] text-muted-foreground text-amber-600">Vérifié par IA</p>
                       </div>
                     </div>
-                    {files.prop ? <FileText className="text-emerald-500" /> : <UploadCloud size={20} className="text-muted-foreground" />}
+
+                    <div 
+                      onClick={() => simulateUpload("prop")}
+                      className={`flex flex-col gap-2 p-3 rounded-xl border-2 border-dashed transition-all cursor-pointer ${files.prop ? "border-emerald-500/50 bg-emerald-50/50" : "border-border/40 hover:border-primary/40 hover:bg-muted/50"}`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <FileText size={18} className={files.prop ? "text-emerald-500" : "text-muted-foreground"} />
+                        {files.prop && <ShieldCheck size={14} className="text-emerald-500" />}
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold">Titre Foncier</p>
+                        <p className="text-[10px] text-muted-foreground text-emerald-600">Preuve Propriété</p>
+                      </div>
+                    </div>
                   </div>
                 </>
               ) : (
@@ -316,72 +370,9 @@ export function CreateProjectSheet({
                       <p className="text-xs text-muted-foreground">RC, Statuts, IF, etc.</p>
                     </div>
                   </div>
-                  {files.business ? <FileText className="text-emerald-500" /> : <UploadCloud size={20} className="text-muted-foreground" />}
+                  {files.business ? <ShieldCheck className="text-emerald-500" /> : <UploadCloud size={20} className="text-muted-foreground" />}
                 </div>
               )}
-            </div>
-          </div>
-
-          {/* Technical Specs (Always shown but prioritized for Architect) */}
-          <div className="bg-muted/30 p-4 rounded-2xl border border-border/40 space-y-4">
-            <h4 className="text-xs font-black uppercase tracking-tighter text-primary flex items-center gap-2">
-              Spécifications d'Urbanisme
-            </h4>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="hauteur" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                  Hauteur Max (m)
-                </Label>
-                <Input
-                  id="hauteur"
-                  name="hauteur"
-                  type="number"
-                  step="0.1"
-                  value={formData.hauteur}
-                  onChange={handleChange}
-                  className="rounded-lg h-9 bg-white border-primary/10"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="recul" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                  Recul (m)
-                </Label>
-                <Input
-                  id="recul"
-                  name="recul"
-                  type="number"
-                  step="0.1"
-                  value={formData.recul}
-                  onChange={handleChange}
-                  className="rounded-lg h-9 bg-white border-primary/10"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="emprise" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                  Emprise au sol (%)
-                </Label>
-                <Input
-                  id="emprise"
-                  name="emprise"
-                  type="number"
-                  value={formData.emprise}
-                  onChange={handleChange}
-                  className="rounded-lg h-9 bg-white border-primary/10"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="surface_terrain" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                  Surface Terrain (m²)
-                </Label>
-                <Input
-                  id="surface_terrain"
-                  name="surface_terrain"
-                  type="number"
-                  value={formData.surface_terrain}
-                  onChange={handleChange}
-                  className="rounded-lg h-9 bg-white border-primary/10"
-                />
-              </div>
             </div>
           </div>
 
