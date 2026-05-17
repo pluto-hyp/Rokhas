@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import {
   SidebarGroup,
@@ -10,7 +11,6 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import { CirclePlusIcon, MailIcon } from "lucide-react"
-import { CreateProjectSheet } from "@/components/CreateProjectSheet"
 import { useAuth } from "@/contexts/AuthContext"
 
 export function NavMain({
@@ -24,12 +24,11 @@ export function NavMain({
 }) {
   const { user } = useAuth();
   const role = user?.role || "citizen";
-  const [isCreateSheetOpen, setIsCreateSheetOpen] = React.useState(false)
 
   const getCreateButtonLabel = () => {
-    if (role === "architect") return "Soumettre Projet Urbain";
-    if (role === "citizen") return "Demande Économique";
-    return "Gérer Dossiers";
+    if (role === "architect") return "Submit Urban Project";
+    if (role === "citizen") return "New Economic Request";
+    return "Manage Dossiers";
   };
 
   const showCreateButton = role === "architect" || role === "citizen";
@@ -42,7 +41,7 @@ export function NavMain({
             <SidebarMenuItem className="flex items-center gap-2">
               <SidebarMenuButton
                 tooltip={getCreateButtonLabel()}
-                onClick={() => setIsCreateSheetOpen(true)}
+                render={<Link href="/dashboard/projects/create" />}
                 className="min-w-8 bg-primary text-primary-foreground duration-200 ease-linear hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground"
               >
                 <CirclePlusIcon />
@@ -70,11 +69,6 @@ export function NavMain({
           ))}
         </SidebarMenu>
       </SidebarGroupContent>
-
-      <CreateProjectSheet 
-        open={isCreateSheetOpen} 
-        onOpenChange={setIsCreateSheetOpen} 
-      />
     </SidebarGroup>
   )
 }
