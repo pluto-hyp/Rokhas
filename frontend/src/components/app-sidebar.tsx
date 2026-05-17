@@ -118,7 +118,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   };
 
   const getIntelligence = () => {
-    return [
+    const items = [
       {
         name: "Rokhas AI Assistant",
         url: "/dashboard/agent",
@@ -130,6 +130,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         icon: <BarChart3Icon />,
       },
     ];
+
+    if (role === "authority") {
+      items.push({
+        name: "Compliance & Audits",
+        url: "/dashboard/compliance",
+        icon: <ShieldCheckIcon />,
+      });
+    }
+
+    return items;
   };
 
   const getSecondary = () => {

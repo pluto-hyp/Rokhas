@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import Link from "next/link";
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -40,7 +41,7 @@ export default function ProjectsPage() {
   }, [isLoading, token, logout]);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 px-4 py-4">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-foreground">Permit Requests</h1>
@@ -51,10 +52,12 @@ export default function ProjectsPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input placeholder="Search requests..." className="pl-10 rounded-xl" />
           </div>
-          <Button className="rounded-xl bg-primary text-primary-foreground gap-2">
-            <Plus className="w-4 h-4" />
-            Submit New
-          </Button>
+          <Link href="/dashboard/projects/create">
+            <Button className="rounded-xl bg-primary text-primary-foreground gap-2">
+              <Plus className="w-4 h-4" />
+              Submit New
+            </Button>
+          </Link>
         </div>
       </div>
 

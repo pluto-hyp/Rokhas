@@ -21,8 +21,6 @@ export default function TrackPage() {
     if (!ref || !token) return;
     setLoading(true);
     try {
-      // Assuming dossier ID is extracted from ref or ref is the ID for now
-      // RKH-2026-0841 -> extract 841
       const id = ref.split('-').pop();
       const response = await fetch(`${API_URL}/api/v1/dossiers/${id}`, {
         headers: { "Authorization": `Bearer ${token}` }
@@ -41,7 +39,7 @@ export default function TrackPage() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-8">
+    <div className="max-w-3xl mx-auto space-y-8 py-40">
       <div className="text-center space-y-4">
         <h1 className="text-4xl font-bold tracking-tight">Track Application</h1>
         <p className="text-muted-foreground">Enter your permit reference number to check the current status.</p>

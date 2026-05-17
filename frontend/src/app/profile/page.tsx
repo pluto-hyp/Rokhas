@@ -193,3 +193,4 @@ const SettingsProfile1 = ({
 };
 
 export { SettingsProfile1 };
+export default SettingsProfile1;
