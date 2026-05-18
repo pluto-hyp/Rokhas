@@ -59,11 +59,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           url: "/dashboard/track",
           icon: <SearchIcon />,
         },
-        {
-          title: "Payments",
-          url: "#",
-          icon: <CreditCardIcon />,
-        },
       ];
     }
 
@@ -79,6 +74,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           title: "Technical Tracking",
           url: "/dashboard/track",
           icon: <SearchIcon />,
+        },
+        {
+          title: "Payments",
+          url: "/dashboard/payments",
+          icon: <CreditCardIcon />,
         },
         {
           title: "Mapping",
