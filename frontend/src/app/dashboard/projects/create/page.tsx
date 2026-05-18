@@ -15,6 +15,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter
 } from "@/components/ui/card";
 import {
   Select,
@@ -36,7 +37,9 @@ import {
   Briefcase, 
   ArrowLeft,
   Sparkles,
-  CheckCircle2
+  CheckCircle2,
+  Lock,
+  Receipt
 } from "lucide-react";
 
 export default function CreateProjectPage() {
@@ -60,6 +63,42 @@ export default function CreateProjectPage() {
   });
 
   const [files, setFiles] = React.useState<{ [key: string]: boolean }>({});
+  
+  // Architect payment simulation states
+  const [isPaid, setIsPaid] = React.useState(false);
+  const [payingFee, setPayingFee] = React.useState(false);
+  const [receiptId, setReceiptId] = React.useState("");
+
+  // Calculate simulated Moroccan Planning Tax fee
+  const calculatedFee = React.useMemo(() => {
+    const terrain = formData.surface_terrain || 0;
+    return terrain > 0 ? Math.floor(terrain * 120 + 4500) : 4500;
+  }, [formData.surface_terrain]);
+
+  const handleSimulatePayment = () => {
+    if (formData.surface_terrain <= 0) {
+      toast.error("Please enter a valid Surface Terrain (m²) to calculate municipal taxes first.");
+      return;
+    }
+    setPayingFee(true);
+    toast.promise(
+      new Promise((resolve) => setTimeout(resolve, 1500)),
+      {
+        loading: 'Connecting to Moroccan CMI Secure Gate...',
+        success: () => {
+          setIsPaid(true);
+          const generatedRef = `REC-2026-MA-${Math.floor(100000 + Math.random() * 900000)}`;
+          setReceiptId(generatedRef);
+          setPayingFee(false);
+          return 'Municipal Permit Tax Settled! Cryptographic Receipt attached.';
+        },
+        error: () => {
+          setPayingFee(false);
+          return 'CMI gateway timeout';
+        }
+      }
+    );
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,13 +107,18 @@ export default function CreateProjectPage() {
       return;
     }
 
-    // Strict validation for Architects: Legal, Technical, and Identity docs
+    // Strict validation for Architects
     if (role === "architect") {
       const requiredFiles = ["plan", "arch", "prop", "cin", "agency"];
       const missingFiles = requiredFiles.filter(f => !files[f]);
       
       if (missingFiles.length > 0) {
         toast.error("Please upload ALL documents: Plans, Architecture Dossier, CIN, Property, and Proxy.");
+        return;
+      }
+
+      if (!isPaid) {
+        toast.error("COMMUNE PAYMENT REQUIRED: Please settle municipal permit tax fees at the bottom of the form before submitting.");
         return;
       }
     } else {
@@ -86,15 +130,16 @@ export default function CreateProjectPage() {
 
     setLoading(true);
     try {
+      // Append the official transaction bill and receipt reference into project description
       const finalData = {
         ...formData,
         description: role === "architect" 
-          ? `[REF: ${formData.land_reference}] [CITIZEN: ${formData.citizen_name}] [CIN: ${formData.citizen_cin}] ${formData.description}` 
+          ? `[REF: ${formData.land_reference}] [CITIZEN: ${formData.citizen_name}] [CIN: ${formData.citizen_cin}] [COMMUNE FEE PAID: ${calculatedFee} DH] [RECEIPT: ${receiptId}] ${formData.description}` 
           : formData.description
       };
       
       await createProject(finalData, token);
-      toast.success("Dossier submitted! The AI Agent is currently verifying plan compliance and document validity.");
+      toast.success("Dossier submitted! Transaction bill linked. AI and municipal desks will verify the file.");
       router.push("/dashboard/projects");
     } catch (error) {
       console.error("Failed to create project:", error);
@@ -136,17 +181,19 @@ export default function CreateProjectPage() {
   };
 
   return (
-    <main className="min-h-screen bg-background px-4 py-6 text-foreground sm:px-6 lg:px-8 max-w-5xl mx-auto w-full">
+    <main className="min-h-screen bg-background px-4 py-6 text-foreground sm:px-6 lg:px-8 max-w-5xl mx-auto w-full relative">
+      <div className="absolute top-0 right-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
+
       <div className="flex flex-col gap-6">
-        {/* Header with back button */}
+        {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1.5">
-            <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
+            <h1 className="text-3xl font-extrabold tracking-tight flex items-center gap-3">
               {role === "architect" ? "Urban Project Submission" : "New Economic Request"}
             </h1>
-            <p className="text-base text-muted-foreground">
+            <p className="text-base text-muted-foreground font-medium">
               {role === "architect" 
-                ? "The AI Agent automatically verifies technical plan compliance and legal proxy validity."
+                ? "Moroccan administrative desk: simulated planning tax payment and validation flow."
                 : "Submit your commercial authorization request directly to the administrative desk."}
             </p>
           </div>
@@ -161,7 +208,8 @@ export default function CreateProjectPage() {
         <Separator className="mt-2" />
 
         <form onSubmit={handleSubmit} className="grid gap-8 lg:grid-cols-3 pt-4">
-          {/* Main Info Section */}
+          
+          {/* Main Form Fields */}
           <div className="lg:col-span-2 space-y-6">
             <Card className="rounded-2xl border-border/40 bg-card shadow-sm overflow-hidden">
               <CardHeader className="p-6 pb-2">
@@ -182,7 +230,7 @@ export default function CreateProjectPage() {
                     value={formData.title}
                     onChange={handleChange}
                     required
-                    className="rounded-xl h-11 border-border/40 bg-background focus:ring-primary/20"
+                    className="rounded-xl h-11 border-border/40 bg-background focus:ring-primary/20 font-semibold"
                   />
                 </div>
 
@@ -194,77 +242,80 @@ export default function CreateProjectPage() {
                     id="description"
                     name="description"
                     rows={4}
-                    placeholder="Provide relevant context, objectives, or extra notes..."
+                    placeholder="Provide relevant context, architectural notes..."
                     value={formData.description}
                     onChange={handleChange}
-                    className="rounded-xl border-border/40 bg-background focus:ring-primary/20 resize-none"
+                    className="rounded-xl border-border/40 bg-background focus:ring-primary/20 resize-none leading-relaxed"
                   />
                 </div>
               </CardContent>
             </Card>
 
             {role === "architect" && (
-              <Card className="rounded-2xl border-border/40 bg-card shadow-sm overflow-hidden">
-                <CardHeader className="p-6 pb-2">
-                  <CardTitle className="text-xl font-bold font-serif">Legal & Ownership Identifiers</CardTitle>
-                  <CardDescription className="text-sm">
-                    Enter details exactly as verified on official identity documents and title deeds.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="p-6 space-y-6">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <>
+                {/* Legal & Ownership */}
+                <Card className="rounded-2xl border-border/40 bg-card shadow-sm overflow-hidden">
+                  <CardHeader className="p-6 pb-2">
+                    <CardTitle className="text-xl font-bold">Legal & Ownership Identifiers</CardTitle>
+                    <CardDescription className="text-sm">
+                      Details must match the official Moroccan national records.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-6 space-y-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="citizen_name" className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                          <UserIcon size={14} /> Owner Full Name (Citizen)
+                        </Label>
+                        <Input
+                          id="citizen_name"
+                          name="citizen_name"
+                          placeholder="Mohamed Alami"
+                          value={formData.citizen_name}
+                          onChange={handleChange}
+                          required
+                          className="rounded-xl h-11 border-border/40 bg-background focus:ring-primary/20"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="citizen_cin" className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                          <CreditCard size={14} /> Owner CIN Number
+                        </Label>
+                        <Input
+                          id="citizen_cin"
+                          name="citizen_cin"
+                          placeholder="AB123456"
+                          value={formData.citizen_cin}
+                          onChange={handleChange}
+                          required
+                          className="rounded-xl h-11 border-border/40 bg-background focus:ring-primary/20"
+                        />
+                      </div>
+                    </div>
                     <div className="space-y-2">
-                      <Label htmlFor="citizen_name" className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                        <UserIcon size={14} /> Owner Full Name
+                      <Label htmlFor="land_reference" className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                        <FileText size={14} /> Land Reference (Titre Foncier Number)
                       </Label>
                       <Input
-                        id="citizen_name"
-                        name="citizen_name"
-                        placeholder="Ex: Mohamed Alami"
-                        value={formData.citizen_name}
+                        id="land_reference"
+                        name="land_reference"
+                        placeholder="Ex: 54932/45 - Conservation Foncière"
+                        value={formData.land_reference}
                         onChange={handleChange}
                         required
                         className="rounded-xl h-11 border-border/40 bg-background focus:ring-primary/20"
                       />
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="citizen_cin" className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                        <CreditCard size={14} /> Owner CIN Number
-                      </Label>
-                      <Input
-                        id="citizen_cin"
-                        name="citizen_cin"
-                        placeholder="Ex: AB123456"
-                        value={formData.citizen_cin}
-                        onChange={handleChange}
-                        required
-                        className="rounded-xl h-11 border-border/40 bg-background focus:ring-primary/20"
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="land_reference" className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                      <FileText size={14} /> Land Reference (Title Deed Number)
-                    </Label>
-                    <Input
-                      id="land_reference"
-                      name="land_reference"
-                      placeholder="Ex: 12345/R - Title Registry"
-                      value={formData.land_reference}
-                      onChange={handleChange}
-                      required
-                      className="rounded-xl h-11 border-border/40 bg-background focus:ring-primary/20"
-                    />
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </>
             )}
 
             <Card className="rounded-2xl border-border/40 bg-card shadow-sm overflow-hidden">
               <CardHeader className="p-6 pb-2">
-                <CardTitle className="text-xl font-bold">Dossier Classification</CardTitle>
+                <CardTitle className="text-xl font-bold">Dossier Classification & Terrain</CardTitle>
                 <CardDescription className="text-sm">
-                  Select the appropriate administrative type and zoning details.
+                  Specify physical zoning attributes used for municipal permit fee assessments.
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-6 space-y-6">
@@ -277,7 +328,7 @@ export default function CreateProjectPage() {
                       value={formData.type}
                       onValueChange={(value) => handleSelectChange("type", value || "")}
                     >
-                      <SelectTrigger id="type" className="rounded-xl h-11 border-border/40 bg-background">
+                      <SelectTrigger id="type" className="rounded-xl h-11 border-border/40 bg-background font-semibold">
                         <SelectValue placeholder="Select type" />
                       </SelectTrigger>
                       <SelectContent className="rounded-xl">
@@ -297,30 +348,85 @@ export default function CreateProjectPage() {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="zone" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                      Urban Planning Zone
+                    <Label htmlFor="surface_terrain" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                      Surface Terrain (m²)
                     </Label>
-                    <Select
-                      value={formData.zone}
-                      onValueChange={(value) => handleSelectChange("zone", value || "")}
-                    >
-                      <SelectTrigger id="zone" className="rounded-xl h-11 border-border/40 bg-background">
-                        <SelectValue placeholder="Select zone" />
-                      </SelectTrigger>
-                      <SelectContent className="rounded-xl">
-                        <SelectItem value="Urban Zone">Urban Zone (U)</SelectItem>
-                        <SelectItem value="Industrial Zone">Industrial Zone (I)</SelectItem>
-                        <SelectItem value="Rural Zone">Rural Zone (R)</SelectItem>
-                        <SelectItem value="Tourist Zone">Tourist Zone (T)</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Input
+                      id="surface_terrain"
+                      name="surface_terrain"
+                      type="number"
+                      placeholder="e.g. 150"
+                      value={formData.surface_terrain || ""}
+                      onChange={handleChange}
+                      required
+                      className="rounded-xl h-11 border-border/40 bg-background focus:ring-primary/20 font-semibold"
+                    />
                   </div>
                 </div>
               </CardContent>
             </Card>
+
+            {/* MANDATORY ARCHITECT PAYMENTS BLOCK (Dirham simulation) */}
+            {role === "architect" && (
+              <Card className="rounded-2xl border-border/40 bg-card shadow-sm overflow-hidden border-primary/20 relative">
+                <CardHeader className="p-6 pb-2">
+                  <CardTitle className="text-xl font-bold flex items-center gap-2">
+                    <CreditCard className="size-5 text-primary" />
+                    Simulated Municipal Permit Tax (MAD)
+                  </CardTitle>
+                  <CardDescription className="text-xs text-muted-foreground">
+                    In Moroccan central communes, planning fees are automatically settled by the filing architect before validation by municipal desks.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-6 space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-muted/10 rounded-2xl border border-border/40">
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Calculated Planning Tax Fee</p>
+                      <p className="text-2xl font-black text-foreground mt-1">
+                        {calculatedFee.toLocaleString()} DH
+                      </p>
+                      <p className="text-[9px] text-muted-foreground mt-0.5">Calculated: 4,500 DH base + 120 DH/m²</p>
+                    </div>
+
+                    {isPaid ? (
+                      <span className="flex items-center gap-1.5 bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 px-3.5 py-1.5 rounded-full text-xs font-bold shrink-0 self-start sm:self-auto">
+                        <CheckCircle2 className="size-4" /> Paid & Settled
+                      </span>
+                    ) : (
+                      <Button
+                        type="button"
+                        onClick={handleSimulatePayment}
+                        disabled={payingFee || formData.surface_terrain <= 0}
+                        className="h-11 rounded-xl bg-primary text-primary-foreground font-bold hover:scale-[1.02] active:scale-[0.98] transition-all shrink-0 self-start sm:self-auto shadow-md shadow-primary/10"
+                      >
+                        {payingFee ? "Connecting CMI..." : "Pay via CMI Gate"}
+                      </Button>
+                    )}
+                  </div>
+
+                  {isPaid && receiptId && (
+                    <div className="p-4 bg-emerald-500/5 border border-emerald-500/20 rounded-2xl space-y-3">
+                      <p className="text-xs font-bold text-emerald-600 flex items-center gap-1.5">
+                        <ShieldCheck className="size-4" /> Transaction Bill Attached to Dossier File
+                      </p>
+                      <div className="grid grid-cols-2 gap-4 text-[10px] text-muted-foreground">
+                        <div>
+                          <strong>Grievance Vault Ref:</strong>
+                          <p className="text-foreground font-semibold mt-0.5">{receiptId}</p>
+                        </div>
+                        <div>
+                          <strong>Settlement Account:</strong>
+                          <p className="text-foreground font-semibold mt-0.5">Trésorerie Générale du Royaume</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
           </div>
 
-          {/* Right Sidebar - Required Documents & Action */}
+          {/* Right Sidebar - Docs & Submit */}
           <div className="space-y-6">
             <Card className="rounded-2xl border-border/40 bg-card shadow-sm overflow-hidden sticky top-6">
               <CardHeader className="p-6 pb-2">
@@ -331,7 +437,7 @@ export default function CreateProjectPage() {
                   </span>
                 </CardTitle>
                 <CardDescription className="text-sm">
-                  Upload files to start instant automated regulation compliance checks.
+                  Upload files to start instant compliance checks.
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-6 space-y-4">
@@ -347,8 +453,8 @@ export default function CreateProjectPage() {
                             <Briefcase size={18} />
                           </div>
                           <div className="text-left">
-                            <p className="font-bold text-foreground">Proxy / Mandate</p>
-                            <p className="text-xs text-muted-foreground">Mandatory legal proof</p>
+                            <p className="font-bold text-foreground text-xs">Proxy / Mandate</p>
+                            <p className="text-[10px] text-muted-foreground">Mandatory legal proof</p>
                           </div>
                         </div>
                         {files.agency ? <ShieldCheck className="text-emerald-500 shrink-0" /> : <UploadCloud size={20} className="text-muted-foreground shrink-0" />}
@@ -363,8 +469,8 @@ export default function CreateProjectPage() {
                             <Building2 size={18} />
                           </div>
                           <div className="text-left">
-                            <p className="font-bold text-foreground">Construction Plans</p>
-                            <p className="text-xs text-amber-600 font-bold">Owner name required on plan</p>
+                            <p className="font-bold text-foreground text-xs">Construction Plans</p>
+                            <p className="text-[10px] text-amber-600 font-bold">Owner name check</p>
                           </div>
                         </div>
                         {files.plan ? <ShieldCheck className="text-emerald-500 shrink-0" /> : <UploadCloud size={20} className="text-muted-foreground shrink-0" />}
@@ -379,8 +485,8 @@ export default function CreateProjectPage() {
                             <FileText size={18} />
                           </div>
                           <div className="text-left">
-                            <p className="font-bold text-foreground">Architecture Dossier</p>
-                            <p className="text-xs text-muted-foreground">Technical specifications</p>
+                            <p className="font-bold text-foreground text-xs">Architecture Dossier</p>
+                            <p className="text-[10px] text-muted-foreground">Technical sheets</p>
                           </div>
                         </div>
                         {files.arch ? <ShieldCheck className="text-emerald-500 shrink-0" /> : <UploadCloud size={20} className="text-muted-foreground shrink-0" />}
@@ -397,7 +503,7 @@ export default function CreateProjectPage() {
                           </div>
                           <div className="text-left">
                             <p className="text-xs font-bold text-foreground">Owner CIN</p>
-                            <p className="text-[10px] text-amber-600 font-medium">AI Verified</p>
+                            <p className="text-[10px] text-amber-600 font-medium">AI Checked</p>
                           </div>
                         </div>
 
@@ -411,7 +517,7 @@ export default function CreateProjectPage() {
                           </div>
                           <div className="text-left">
                             <p className="text-xs font-bold text-foreground">Land Title</p>
-                            <p className="text-[10px] text-emerald-600 font-medium">Property Proof</p>
+                            <p className="text-[10px] text-emerald-600 font-medium">Property</p>
                           </div>
                         </div>
                       </div>
@@ -426,8 +532,8 @@ export default function CreateProjectPage() {
                           <Building2 size={20} />
                         </div>
                         <div className="text-left">
-                          <p className="font-bold text-foreground">Business Documents</p>
-                          <p className="text-xs text-muted-foreground">Upload RC, Articles, or IF</p>
+                          <p className="font-bold text-foreground text-xs">Business Documents</p>
+                          <p className="text-[10px] text-muted-foreground">Upload RC or IF</p>
                         </div>
                       </div>
                       {files.business ? <ShieldCheck className="text-emerald-500 shrink-0" /> : <UploadCloud size={20} className="text-muted-foreground shrink-0" />}
@@ -457,6 +563,7 @@ export default function CreateProjectPage() {
               </CardContent>
             </Card>
           </div>
+
         </form>
       </div>
     </main>

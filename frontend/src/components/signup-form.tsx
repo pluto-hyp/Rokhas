@@ -53,7 +53,7 @@ export function SignupForm({
       formData.append("password", password)
       const response = await loginApi(formData)
       await login(response.access_token)
-      router.push("/onboarding")
+      router.push("/dashboard")
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Failed to create account. Please try again."
       setError(message)
@@ -147,6 +147,17 @@ export function SignupForm({
             Already have an account? <Link href="/login">Sign in</Link>
           </FieldDescription>
         </Field>
+        
+        <div className="mt-4 border-t border-border/60 pt-4 text-center text-xs text-muted-foreground space-y-1">
+          <p className="font-semibold text-foreground">Are you a professional Architect?</p>
+          <p>Architect profiles require vetting by our municipal department.</p>
+          <a 
+            href="mailto:support@rokhas.ma?subject=Architect Account Verification Request&body=Dear Rokhas Support team,%0D%0A%0D%0AI would like to request a certified Architect account on the Rokhas platform.%0D%0A%0D%0APlease find my professional details below:%0D%0A- Full Name:%0D%0A- National Architect Ordre Number (Ordre des Architectes du Maroc):%0D%0A- Contact Number:%0D%0A- Regional Council Area (e.g. Rabat-Salé-Kénitra):%0D%0A%0D%0AThank you."
+            className="inline-block font-bold text-primary hover:underline"
+          >
+            Contact Support to Request Account
+          </a>
+        </div>
       </FieldGroup>
     </form>
   )

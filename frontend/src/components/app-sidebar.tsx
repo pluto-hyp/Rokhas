@@ -30,7 +30,8 @@ import {
   Settings2Icon, 
   CircleHelpIcon,
   FolderIcon,
-  ShieldCheckIcon
+  ShieldCheckIcon,
+  WalletIcon
 } from "lucide-react"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -59,11 +60,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           url: "/dashboard/track",
           icon: <SearchIcon />,
         },
-        {
-          title: "Payments",
-          url: "#",
-          icon: <CreditCardIcon />,
-        },
       ];
     }
 
@@ -79,6 +75,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           title: "Technical Tracking",
           url: "/dashboard/track",
           icon: <SearchIcon />,
+        },
+        {
+          title: "Payments",
+          url: "/dashboard/payments",
+          icon: <CreditCardIcon />,
+        },
+        {
+          title: "Billing Methods",
+          url: "/dashboard/payments/methods",
+          icon: <WalletIcon />,
         },
         {
           title: "Mapping",
@@ -156,7 +162,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       },
       {
         title: "Complaints",
-        url: "#",
+        url: "/complaints",
         icon: <MessageSquareIcon />,
       },
     ];
