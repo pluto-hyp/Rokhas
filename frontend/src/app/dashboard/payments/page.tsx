@@ -1,20 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { 
-  CreditCard, 
-  CheckCircle2, 
-  AlertCircle, 
-  Clock, 
-  Download, 
-  Plus, 
-  ShieldCheck, 
-  Building,
-  ArrowRight,
-  Receipt,
-  X,
-  Lock
-} from "lucide-react";
+import { Download, X } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -45,8 +32,17 @@ export default function PaymentsPage() {
 
   const [invoices, setInvoices] = useState<Invoice[]>([
     {
+      id: "INV-2026-0901",
+      dossierTitle: "Restaurant - Commercial License",
+      category: "Commercial License",
+      amount: 4500.00,
+      dueDate: "2026-03-01",
+      status: "Overdue",
+      ref: "RKH-2026-0193"
+    },
+    {
       id: "INV-2026-0811",
-      dossierTitle: "Villa Oasis - Structural Expansion (Rabat)",
+      dossierTitle: "Villa Oasis - Structural Expansion",
       category: "Construction Tax",
       amount: 14500.00,
       dueDate: "2026-06-05",
@@ -55,7 +51,7 @@ export default function PaymentsPage() {
     },
     {
       id: "INV-2026-0792",
-      dossierTitle: "Commercial Bakery Plot 4 (Casablanca)",
+      dossierTitle: "Commercial Bakery Plot 4",
       category: "Commercial License",
       amount: 3800.00,
       dueDate: "2026-05-28",
@@ -87,7 +83,6 @@ export default function PaymentsPage() {
     { id: "pm_2", brand: "Mastercard / Attijari", last4: "9876", expiry: "08/27", isDefault: false }
   ]);
 
-  // Calculate stats
   const totalPending = invoices
     .filter(inv => inv.status !== "Paid")
     .reduce((sum, inv) => sum + inv.amount, 0);
@@ -114,216 +109,152 @@ export default function PaymentsPage() {
       setIsProcessing(false);
       setIsPayModalOpen(false);
       setSelectedInvoice(null);
-      toast.success("Payment completed successfully via CMI Gate! Official transaction bill linked.");
-    }, 1500);
+      toast.success("Payment completed successfully! Transaction logged.");
+    }, 1200);
   };
 
   const handleDownloadReceipt = (invoice: Invoice) => {
-    toast.success(`Receipt for invoice ${invoice.id} exported successfully.`);
+    toast.success(`Receipt for invoice ${invoice.id} downloaded.`);
   };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "Paid":
         return (
-          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold text-emerald-500 bg-emerald-500/10 border border-emerald-500/20">
-            <CheckCircle2 className="size-3.5" /> Paid & Logged
+          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400">
+            Paid
           </span>
         );
       case "Overdue":
         return (
-          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold text-destructive bg-destructive/10 border border-destructive/20 animate-pulse">
-            <AlertCircle className="size-3.5" /> Overdue
+          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400">
+            Overdue
           </span>
         );
       default:
         return (
-          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold text-amber-500 bg-amber-500/10 border border-amber-500/20">
-            <Clock className="size-3.5" /> Pending Fee
+          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
+            Pending
           </span>
         );
     }
   };
 
   return (
-    <div className="space-y-8 px-4 py-4 relative">
-      <div className="absolute top-0 right-10 w-96 h-96 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
-
+    <div className="space-y-6 px-4 py-4 max-w-6xl mx-auto">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-foreground flex items-center gap-2.5">
-            <CreditCard className="size-8 text-primary" />
-            Architect Billing Center
-          </h1>
-          <p className="text-muted-foreground mt-1 font-medium">
-            Monitor state construction planning taxes and environmental safety audit fee settlements (Moroccan Dirham).
-          </p>
-        </div>
+      <div className="space-y-1">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+          Payments & Billing
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          View active municipal taxes, manage transactions, and track structural permit fees.
+        </p>
       </div>
 
       {/* Overview Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="border-border/40 shadow-sm bg-card hover:border-border/80 transition-all">
-          <CardContent className="p-6">
-            <div className="flex justify-between items-start">
-              <div className="space-y-1">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Pending MAD Balance</p>
-                <p className="text-3xl font-black text-foreground">{totalPending.toLocaleString()} DH</p>
-                <p className="text-[10px] font-bold text-amber-500">
-                  Required before validation
-                </p>
-              </div>
-              <div className="p-3 rounded-xl bg-amber-500/10 text-amber-500">
-                <Clock className="w-5 h-5" />
-              </div>
-            </div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <Card className="rounded-lg border bg-card">
+          <CardContent className="p-5">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Pending Balance</p>
+            <p className="text-2xl font-bold text-foreground mt-1">{totalPending.toLocaleString()} DH</p>
           </CardContent>
         </Card>
 
-        <Card className="border-border/40 shadow-sm bg-card hover:border-border/80 transition-all">
-          <CardContent className="p-6">
-            <div className="flex justify-between items-start">
-              <div className="space-y-1">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Settled Planning Taxes</p>
-                <p className="text-3xl font-black text-foreground">{totalPaid.toLocaleString()} DH</p>
-                <p className="text-[10px] font-semibold text-muted-foreground">Transmitted to Commune Ledger</p>
-              </div>
-              <div className="p-3 rounded-xl bg-emerald-500/10 text-emerald-500">
-                <CheckCircle2 className="w-5 h-5" />
-              </div>
-            </div>
+        <Card className="rounded-lg border bg-card">
+          <CardContent className="p-5">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Settled Taxes</p>
+            <p className="text-2xl font-bold text-foreground mt-1">{totalPaid.toLocaleString()} DH</p>
           </CardContent>
         </Card>
 
-        <Card className="border-border/40 shadow-sm bg-card hover:border-border/80 transition-all">
-          <CardContent className="p-6">
-            <div className="flex justify-between items-start">
-              <div className="space-y-1">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Dossiers Invoiced</p>
-                <p className="text-3xl font-black text-foreground">{invoices.length}</p>
-                <p className="text-[10px] font-semibold text-muted-foreground">Municipal tax assessments</p>
-              </div>
-              <div className="p-3 rounded-xl bg-primary/10 text-primary">
-                <Receipt className="w-5 h-5" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border/40 shadow-sm bg-card hover:border-border/80 transition-all">
-          <CardContent className="p-6">
-            <div className="flex justify-between items-start">
-              <div className="space-y-1">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Payment Gate</p>
-                <p className="text-3xl font-black text-emerald-500">
-                  CMI Secure
-                </p>
-                <p className="text-[10px] font-bold text-emerald-500 flex items-center gap-0.5">
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                  National Portal Certified
-                </p>
-              </div>
-              <div className="p-3 rounded-xl bg-primary/10 text-primary">
-                <ShieldCheck className="w-5 h-5 text-emerald-500" />
-              </div>
-            </div>
+        <Card className="rounded-lg border bg-card">
+          <CardContent className="p-5">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Total Invoiced</p>
+            <p className="text-2xl font-bold text-foreground mt-1">{invoices.length}</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Main Billing Tables & Methods section */}
+      {/* Main Billing Table & Methods */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* Outstanding & Settled Invoices List */}
-        <Card className="lg:col-span-2 border-border/40 shadow-sm bg-card">
-          <CardHeader>
-            <CardTitle className="text-lg font-bold">Municipal Billing Ledger</CardTitle>
+        {/* Ledger List */}
+        <Card className="lg:col-span-2 rounded-lg border bg-card">
+          <CardHeader className="px-6 border-b">
+            <CardTitle className="text-base font-semibold">Ledger</CardTitle>
+            <CardDescription className="text-xs">
+              History of municipal taxes and safety audit fee invoices.
+            </CardDescription>
           </CardHeader>
-          <CardContent className="p-6 pt-0">
-            <div className="space-y-4">
-              {invoices.map((inv) => (
-                <div 
-                  key={inv.id} 
-                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 border border-border/40 bg-muted/10 rounded-2xl hover:border-border/80 transition-all group"
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="p-3 rounded-xl bg-primary/10 text-primary shrink-0">
-                      <Building className="size-5" />
-                    </div>
-                    <div className="min-w-0">
-                      <h4 className="text-sm font-bold text-foreground truncate">{inv.dossierTitle}</h4>
-                      <p className="text-xs text-muted-foreground font-medium mt-0.5">{inv.category}</p>
-                      <div className="flex items-center gap-3 text-[10px] text-muted-foreground/80 mt-1">
-                        <span><strong>Ref:</strong> {inv.ref}</span>
-                        <span>•</span>
-                        <span><strong>Due:</strong> {inv.dueDate}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between sm:justify-end gap-6 shrink-0 border-t sm:border-t-0 pt-3 sm:pt-0 border-border/20">
-                    <div className="text-right">
-                      <p className="text-base font-black text-foreground">{inv.amount.toLocaleString()} DH</p>
-                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-0.5">{inv.id}</p>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      {getStatusBadge(inv.status)}
-
-                      {inv.status === "Pending" ? (
-                        <Button 
-                          onClick={() => handlePayClick(inv)}
-                          size="sm"
-                          className="rounded-lg h-9 bg-primary text-primary-foreground font-bold hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-1 shadow-md shadow-primary/10"
-                        >
-                          Settle
-                          <ArrowRight className="size-3.5" />
-                        </Button>
-                      ) : (
-                        <Button 
-                          onClick={() => handleDownloadReceipt(inv)}
-                          variant="outline"
-                          size="icon"
-                          className="rounded-lg h-9 w-9 border-border/40"
-                          title="Download Receipt"
-                        >
-                          <Download className="size-4" />
-                        </Button>
-                      )}
-                    </div>
+          <CardContent className="p-0 divide-y divide-border">
+            {invoices.map((inv) => (
+              <div 
+                key={inv.id} 
+                className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
+              >
+                <div className="space-y-1 min-w-0">
+                  <h4 className="text-sm font-medium text-foreground truncate">{inv.dossierTitle}</h4>
+                  <p className="text-xs text-muted-foreground">{inv.category}</p>
+                  <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                    <span>Ref: {inv.ref}</span>
+                    <span>•</span>
+                    <span>Due: {inv.dueDate}</span>
                   </div>
                 </div>
-              ))}
-            </div>
+
+                <div className="flex items-center gap-4 shrink-0">
+                  <div className="text-right">
+                    <p className="text-sm font-semibold text-foreground">{inv.amount.toLocaleString()} DH</p>
+                    <p className="text-[10px] text-muted-foreground font-mono">{inv.id}</p>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {getStatusBadge(inv.status)}
+
+                    {inv.status === "Pending" ? (
+                      <Button 
+                        onClick={() => handlePayClick(inv)}
+                        size="sm"
+                        className="h-8 rounded"
+                      >
+                        Settle
+                      </Button>
+                    ) : (
+                      <Button 
+                        onClick={() => handleDownloadReceipt(inv)}
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8 rounded border"
+                      >
+                        <Download className="size-3.5" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
           </CardContent>
         </Card>
 
-        {/* Card Management Sidebar */}
-        <div className="lg:col-span-1 space-y-6">
-          <Card className="border-border/40 shadow-sm bg-card">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0">
-              <div>
-                <CardTitle className="text-lg font-bold">Saved Card Profiles</CardTitle>
-              </div>
-              <Button size="icon" variant="outline" className="size-8 rounded-lg border-border/40" onClick={() => toast.success("Securely linkingAttijari / Banque Populaire profiles")}>
-                <Plus className="size-4" />
-              </Button>
+        {/* Card Management */}
+        <div className="space-y-4">
+          <Card className="rounded-lg border bg-card">
+            <CardHeader className="px-6 border-b">
+              <CardTitle className="text-base font-semibold">Saved Cards</CardTitle>
             </CardHeader>
-            <CardContent className="p-6 pt-0 space-y-4">
+            <CardContent className="p-4 space-y-3">
               {paymentMethods.map((method) => (
-                <div key={method.id} className="p-4 rounded-xl border border-border/40 bg-muted/10 flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-lg bg-card border border-border/40 text-foreground shrink-0 font-black text-[10px] uppercase">
-                      {method.brand}
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold text-foreground">•••• •••• •••• {method.last4}</p>
-                      <p className="text-[10px] text-muted-foreground font-medium mt-0.5">Expires {method.expiry}</p>
-                    </div>
+                <div 
+                  key={method.id} 
+                  className="p-3 rounded border bg-muted/20 flex items-center justify-between gap-3 text-xs"
+                >
+                  <div>
+                    <p className="font-medium text-foreground">•••• •••• •••• {method.last4}</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">{method.brand} • Exp {method.expiry}</p>
                   </div>
                   {method.isDefault && (
-                    <span className="text-[9px] font-extrabold uppercase bg-primary/10 text-primary px-2 py-0.5 rounded-md border border-primary/20">
+                    <span className="text-[9px] font-semibold bg-primary/10 text-primary px-1.5 py-0.5 rounded border border-primary/20">
                       Default
                     </span>
                   )}
@@ -332,102 +263,83 @@ export default function PaymentsPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-border/40 shadow-sm bg-primary/5 border-primary/10">
-            <CardContent className="p-6 flex gap-3 text-xs leading-relaxed">
-              <Lock className="size-5 text-primary shrink-0" />
-              <div>
-                <p className="font-bold text-foreground">Moroccan CMI Crypto Protocol</p>
-                <p className="text-muted-foreground mt-0.5">
-                  All transactions are routed via verified regional municipal vaults. Once paid, the system transmits an immutable digital receipt to the municipal desk for permit extraction.
-                </p>
-              </div>
+          <Card className="rounded-lg border bg-card/40">
+            <CardContent className="text-xs text-muted-foreground leading-relaxed">
+              <p className="font-semibold text-foreground mb-1">CMI Protocol Security</p>
+              Transactions are securely processed through regional government vaults. Once paid, the validation ledger automatically links receipt logs to your dossiers.
             </CardContent>
           </Card>
         </div>
 
       </div>
 
-      {/* Pay Invoice Backdrop Modal */}
+      {/* Pay Modal Dialog */}
       {isPayModalOpen && selectedInvoice && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-background/80 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="relative w-full max-w-md bg-card border border-border/40 rounded-3xl shadow-2xl p-6 overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col gap-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
+          <div className="relative w-full max-w-sm bg-card border rounded-lg shadow-lg p-5 flex flex-col gap-4 animate-in zoom-in-95 duration-150">
             
-            <div className="flex items-center justify-between border-b border-border/40 pb-4 relative">
-              <h3 className="text-xl font-bold flex items-center gap-2">
-                <Receipt className="size-5 text-primary" />
-                Settle Planning Tax
-              </h3>
+            <div className="flex items-center justify-between border-b pb-2">
+              <h3 className="text-sm font-semibold text-foreground">Settle Invoice</h3>
               <button 
-                type="button"
                 onClick={() => setIsPayModalOpen(false)}
-                className="size-8 rounded-full border border-border/40 hover:bg-muted flex items-center justify-center transition-all hover:scale-105 active:scale-95"
+                className="text-muted-foreground hover:text-foreground"
               >
                 <X className="size-4" />
               </button>
             </div>
 
-            <div className="bg-muted/20 border border-border/40 rounded-2xl p-4 space-y-3">
-              <div>
-                <p className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Invoice Reference</p>
-                <p className="text-sm font-bold text-foreground">{selectedInvoice.id}</p>
+            <div className="space-y-2 text-xs">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Reference:</span>
+                <span className="font-medium text-foreground">{selectedInvoice.id}</span>
               </div>
-
-              <div>
-                <p className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Dossier / Permit Name</p>
-                <p className="text-xs font-semibold text-foreground truncate">{selectedInvoice.dossierTitle}</p>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Permit Name:</span>
+                <span className="font-medium text-foreground truncate max-w-[180px]">{selectedInvoice.dossierTitle}</span>
               </div>
-
-              <div className="flex items-center justify-between border-t border-border/20 pt-2 mt-2">
-                <div>
-                  <p className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Type</p>
-                  <p className="text-xs font-semibold text-foreground">{selectedInvoice.category}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Due Amount</p>
-                  <p className="text-lg font-black text-foreground">{selectedInvoice.amount.toLocaleString()} DH</p>
-                </div>
+              <div className="flex justify-between border-t pt-2 font-medium">
+                <span className="text-muted-foreground">Due Amount:</span>
+                <span className="text-foreground">{selectedInvoice.amount.toLocaleString()} DH</span>
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Select Payment Card</Label>
-              <div className="space-y-2">
+            <div className="space-y-1.5">
+              <Label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Select Payment Card</Label>
+              <div className="space-y-1">
                 {paymentMethods.map((method) => (
                   <label 
                     key={method.id} 
-                    className="flex items-center justify-between p-3 rounded-xl border border-border/40 bg-muted/10 cursor-pointer hover:bg-muted/20 transition-all"
+                    className="flex items-center justify-between p-2 rounded border bg-muted/10 cursor-pointer text-xs"
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
                       <input 
                         type="radio" 
-                        name="payment_method" 
+                        name="payment_method_modal" 
                         defaultChecked={method.isDefault}
                         className="accent-primary"
                       />
-                      <span className="text-xs font-bold text-foreground">{method.brand} ending in {method.last4}</span>
+                      <span className="font-medium text-foreground">{method.brand} •••• {method.last4}</span>
                     </div>
-                    <span className="text-[10px] text-muted-foreground font-medium">Exp {method.expiry}</span>
                   </label>
                 ))}
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 pt-2">
-              <button
-                type="button"
+            <div className="grid grid-cols-2 gap-2 pt-2 text-xs">
+              <Button
+                variant="outline"
                 onClick={() => setIsPayModalOpen(false)}
-                className="h-11 rounded-xl border border-border/40 font-bold text-sm hover:bg-muted transition-all hover:scale-[1.02] active:scale-[0.98]"
+                className="h-9 rounded"
               >
                 Cancel
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
                 onClick={handleProcessPayment}
                 disabled={isProcessing}
-                className="h-11 rounded-xl bg-primary text-primary-foreground font-bold text-sm hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-primary/10"
+                className="h-9 rounded"
               >
-                {isProcessing ? "Processing..." : `Settle ${selectedInvoice.amount.toLocaleString()} DH`}
-              </button>
+                {isProcessing ? "Processing..." : "Confirm"}
+              </Button>
             </div>
 
           </div>

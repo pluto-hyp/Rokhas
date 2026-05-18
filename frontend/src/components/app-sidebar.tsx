@@ -30,7 +30,8 @@ import {
   Settings2Icon, 
   CircleHelpIcon,
   FolderIcon,
-  ShieldCheckIcon
+  ShieldCheckIcon,
+  WalletIcon
 } from "lucide-react"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -79,6 +80,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           title: "Payments",
           url: "/dashboard/payments",
           icon: <CreditCardIcon />,
+        },
+        {
+          title: "Billing Methods",
+          url: "/dashboard/payments/methods",
+          icon: <WalletIcon />,
         },
         {
           title: "Mapping",

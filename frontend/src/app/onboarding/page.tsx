@@ -39,7 +39,7 @@ export default function OnboardingPage() {
   const handleComplete = async (roleOverride?: string) => {
     const roleToSubmit = roleOverride || selectedRole;
     if (!roleToSubmit || !user || !token) return;
-    
+
     setIsSubmitting(true);
     try {
       await updateRole(roleToSubmit, token);
@@ -85,9 +85,9 @@ export default function OnboardingPage() {
           {roles.map((role) => {
             const Icon = role.icon;
             const isSelected = selectedRole === role.id;
-            
+
             return (
-              <Card 
+              <Card
                 key={role.id}
                 className={cn(
                   "cursor-pointer transition-all duration-300 border-2 hover:border-primary/50",
@@ -111,8 +111,8 @@ export default function OnboardingPage() {
         </div>
 
         <div className="flex justify-center pt-8">
-          <Button 
-            size="lg" 
+          <Button
+            size="lg"
             className="px-12 rounded-full font-bold uppercase tracking-widest text-xs h-12"
             disabled={!selectedRole || isSubmitting}
             onClick={() => handleComplete()}

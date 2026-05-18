@@ -53,7 +53,7 @@ def seed_users(db):
     architects = [
         get_or_create_user(db, email="nora.bekkali@studio.ma", full_name="Nora Bekkali", role="architect"),
         get_or_create_user(db, email="samir.haddad@atelier.ma", full_name="Samir Haddad", role="architect"),
-        get_or_create_user(db, email="meryem.lahlou@archi.ma", full_name="Meryem Lahlou", role="architect"),
+        get_or_create_user(db, email="moad.lahlou@archi.ma", full_name="Moad El Ouichouani", role="architect", password="moad123"),
     ]
 
     citizen_names = [
@@ -117,6 +117,13 @@ def seed_dossiers(db, users):
         "Community Hall Event Setup",
     ]
 
+    moroccan_names = [
+        "Youssef Bennani", "Fatima Zahra Idrissi", "Karim El Fassi", "Amine Mansouri",
+        "Sanaa Alami", "Mehdi Tazi", "Laila Chraibi", "Omar Gaddari", "Salma Filali",
+        "Anas Zaki", "Sara Cherkaoui", "Nabil Belhaj", "Hind Alaoui", "Rachid El Amrani",
+        "Imane Berrada"
+    ]
+
     existing_titles = {row.title for row in db.query(Dossier.title).all()}
     created = []
     for i in range(36):
@@ -131,11 +138,29 @@ def seed_dossiers(db, users):
         surface = round(random.uniform(120.0, 6200.0), 1)
         owner = users[i % len(users)]
 
+        citizen_name = owner.full_name if owner.role == "citizen" else random.choice(moroccan_names)
+        
+        cin_prefix = random.choice(["AB", "AY", "CD", "BK", "EE", "H", "G"])
+        cin_num = random.randint(100000, 999999)
+        cin = f"{cin_prefix}{cin_num}"
+        
+        fee_val = int(4500 + surface * 120)
+        fee_str = f"{fee_val:,} DH"
+        
+        rec_num = random.randint(100000, 999999)
+        receipt = f"REC-2026-MA-{rec_num}"
+        
+        land_prefix = random.choice(["AB", "AY", "CF", "LF", "RT"])
+        land_num = random.randint(100, 9999)
+        land_ref = f"Conservation Foncière {land_prefix}-{land_num}"
+        
+        meta_str = f" [REF: {land_ref}] [CITIZEN: {citizen_name}] [CIN: {cin}] [COMMUNE FEE PAID: {fee_str}] [RECEIPT: {receipt}]"
+
         dossier = Dossier(
             title=title,
             description=(
                 f"Seeded {dossier_types[i % len(dossier_types)].lower()} dossier for "
-                f"{owner.full_name}, including ownership, zoning, and technical review details."
+                f"{owner.full_name}, including ownership, zoning, and technical review details.{meta_str}"
             ),
             type=dossier_types[i % len(dossier_types)],
             status=status,
