@@ -156,7 +156,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       },
       {
         title: "Complaints",
-        url: "#",
+        url: "/complaints",
         icon: <MessageSquareIcon />,
       },
     ];
