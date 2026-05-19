@@ -10,12 +10,32 @@ from app.services.agent_client import verify_dossier_with_agent
 router = APIRouter()
 
 @router.post("", response_model=DossierResponse)
-def create_dossier(
+async def create_dossier(
     dossier: DossierCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
-    return crud_dossier.create_dossier(db=db, dossier=dossier, owner_id=current_user.id)
+    db_dossier = crud_dossier.create_dossier(db=db, dossier=dossier, owner_id=current_user.id)
+    
+    # Trigger automatic compliance check using the Rokhas agent
+    dossier_data = {
+        "type": db_dossier.type,
+        "hauteur": db_dossier.hauteur,
+        "recul": db_dossier.recul,
+        "emprise": db_dossier.emprise,
+        "surface_terrain": db_dossier.surface_terrain,
+        "zone": db_dossier.zone
+    }
+    
+    try:
+        agent_response = await verify_dossier_with_agent(dossier_data)
+        db_dossier.ai_analysis = agent_response.get("answer", "")
+        db.commit()
+        db.refresh(db_dossier)
+    except Exception as e:
+        print(f"Error during automatic compliance check: {e}")
+        
+    return db_dossier
 
 @router.get("", response_model=List[DossierResponse])
 def read_dossiers(

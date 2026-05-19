@@ -13,6 +13,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+@app.get("/")
+def root():
+    return {
+        "status": "ok",
+        "message": "Rokhas Agent API is running",
+        "endpoints": ["/health", "/chat", "/verify-dossier", "/analyze-file", "/docs", "/redoc"]
+    }
+
 class QuestionRequest(BaseModel):
     question: str
     history: list = []
@@ -25,6 +34,12 @@ class DossierRequest(BaseModel):
     surface_terrain: float
     zone: str = ""
 
+
+class FileAnalyzeRequest(BaseModel):
+    filename: str
+    preview: str = ""
+    content_base64: str = ""
+
 @app.post("/chat")
 def chat(req: QuestionRequest):
     return agent.query(req.question, req.history)
@@ -32,6 +47,13 @@ def chat(req: QuestionRequest):
 @app.post("/verify-dossier")
 def verify(req: DossierRequest):
     return agent.verify_dossier(req.dict())
+
+
+@app.post("/analyze-file")
+def analyze_file(req: FileAnalyzeRequest):
+    # prefer content_base64 if provided (image/text preview)
+    preview = req.content_base64 or req.preview
+    return agent.analyze_file(req.filename, preview)
 
 @app.get("/health")
 def health():

@@ -62,32 +62,129 @@ export default function CreateProjectPage() {
     land_reference: "",
   });
 
-  const [files, setFiles] = React.useState<{ [key: string]: boolean }>({});
+  const [files, setFiles] = React.useState<{ [key: string]: { name: string; size: string; approved?: boolean; notes?: string[] } | null }>({});
+  const fileInputRefs = React.useRef<{ [key: string]: HTMLInputElement | null }>({});
+
+  const triggerFileInput = (key: string) => {
+    fileInputRefs.current[key]?.click();
+  };
+
+  const handleFileChange = (key: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const sizeStr = file.size > 1024 * 1024 
+      ? `${(file.size / (1024 * 1024)).toFixed(1)} MB` 
+      : `${(file.size / 1024).toFixed(0)} KB`;
+
+    toast.promise(
+      new Promise<File>((resolve) => {
+        setTimeout(() => {
+          resolve(file);
+        }, 1200);
+      }),
+      {
+        loading: `AI parsing and uploading ${file.name}...`,
+        success: (parsedFile) => {
+          setFiles(prev => ({ ...prev, [key]: { name: parsedFile.name, size: sizeStr } }));
+          
+          // Auto-fill parsing logic from the selected file name!
+          const fileNameLower = parsedFile.name.toLowerCase();
+          
+          // Extract CIN (e.g. AB123456, CD908123)
+          const cinMatch = parsedFile.name.match(/\b([A-Z]{1,2}\d{5,6})\b/i);
+          if (cinMatch && !formData.citizen_cin) {
+            setFormData(prev => ({ ...prev, citizen_cin: cinMatch[1].toUpperCase() }));
+            toast.info(`AI Extracted CIN: ${cinMatch[1].toUpperCase()}`);
+          }
+          
+          // Extract Titre Foncier (e.g. 54932/45 or 12984/20)
+          const landMatch = parsedFile.name.match(/\b(\d{4,6}\/\d{2})\b/);
+          if (landMatch && !formData.land_reference) {
+            const parsedLand = `Titre Foncier ${landMatch[1]}`;
+            setFormData(prev => ({ ...prev, land_reference: parsedLand }));
+            toast.info(`AI Extracted Land Ref: ${parsedLand}`);
+          }
+
+          // Extract Surface Area (e.g. 120m2, 250m2, 300 m2)
+          const surfaceMatch = parsedFile.name.match(/\b(\d{2,4})\s*(m2|sqm|meters)\b/i);
+          if (surfaceMatch && !formData.surface_terrain) {
+            const parsedSurface = parseInt(surfaceMatch[1]);
+            setFormData(prev => ({ ...prev, surface_terrain: parsedSurface }));
+            toast.info(`AI Extracted Surface Area: ${parsedSurface} m²`);
+          }
+
+          // Extract Owner Name (e.g. by_mohamed_alami, owner_fatima_zahra)
+          const nameMatch = parsedFile.name.match(/(?:by|owner|client)_([a-zA-Z]+(?:_[a-zA-Z]+)+)/i);
+          if (nameMatch && !formData.citizen_name) {
+            const parsedName = nameMatch[1].replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+            setFormData(prev => ({ ...prev, citizen_name: parsedName }));
+            toast.info(`AI Extracted Owner Name: ${parsedName}`);
+          }
+
+          return `${parsedFile.name} uploaded and parsed successfully!`;
+        },
+        error: 'Upload and parsing failed',
+      }
+    );
+
+    (async () => {
+      const toDataURL = (f: File) => new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = (err) => reject(err);
+        reader.readAsDataURL(f);
+      });
+
+      try {
+        const dataUrl = await toDataURL(file);
+        const resp = await fetch('/api/v1/agent/analyze-file', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filename: file.name, content_base64: dataUrl })
+        });
+        if (resp.ok) {
+          const data = await resp.json();
+          setFiles(prev => ({
+            ...prev,
+            [key]: { name: file.name, size: sizeStr, approved: !!data.approved, notes: data.notes || [] }
+          }));
+          if (data.approved) {
+            toast.success(`${file.name} approved by AI agent.`);
+          } else {
+            toast.error(`${file.name} flagged: ${data.message || 'Further review required.'}`);
+          }
+        }
+      } catch (err) {
+        console.error('File analysis error', err);
+      }
+    })();
+  };
   
-  // Architect payment simulation states
   const [isPaid, setIsPaid] = React.useState(false);
   const [payingFee, setPayingFee] = React.useState(false);
   const [receiptId, setReceiptId] = React.useState("");
 
-  // Calculate simulated Moroccan Planning Tax fee
   const calculatedFee = React.useMemo(() => {
     const terrain = formData.surface_terrain || 0;
     return terrain > 0 ? Math.floor(terrain * 120 + 4500) : 4500;
   }, [formData.surface_terrain]);
 
   const handleSimulatePayment = () => {
-    if (formData.surface_terrain <= 0) {
+    if ((formData.surface_terrain || 0) <= 0) {
       toast.error("Please enter a valid Surface Terrain (m²) to calculate municipal taxes first.");
       return;
     }
     setPayingFee(true);
     toast.promise(
-      new Promise((resolve) => setTimeout(resolve, 1500)),
+      new Promise<string>((resolve) => setTimeout(() => {
+        const generatedRef = `REC-2026-MA-${Math.floor(100000 + Math.random() * 900000)}`;
+        resolve(generatedRef);
+      }, 1500)),
       {
         loading: 'Connecting to Moroccan CMI Secure Gate...',
-        success: () => {
+        success: (generatedRef) => {
           setIsPaid(true);
-          const generatedRef = `REC-2026-MA-${Math.floor(100000 + Math.random() * 900000)}`;
           setReceiptId(generatedRef);
           setPayingFee(false);
           return 'Municipal Permit Tax Settled! Cryptographic Receipt attached.';
@@ -107,13 +204,18 @@ export default function CreateProjectPage() {
       return;
     }
 
-    // Strict validation for Architects
     if (role === "architect") {
       const requiredFiles = ["plan", "arch", "prop", "cin", "agency"];
       const missingFiles = requiredFiles.filter(f => !files[f]);
-      
+      const notApproved = requiredFiles.filter(f => !files[f] || !files[f]?.approved);
+
       if (missingFiles.length > 0) {
         toast.error("Please upload ALL documents: Plans, Architecture Dossier, CIN, Property, and Proxy.");
+        return;
+      }
+
+      if (notApproved.length > 0) {
+        toast.error("Some uploaded documents failed the AI pre-check. Please review or re-upload files.");
         return;
       }
 
@@ -130,7 +232,6 @@ export default function CreateProjectPage() {
 
     setLoading(true);
     try {
-      // Append the official transaction bill and receipt reference into project description
       const finalData = {
         ...formData,
         description: role === "architect" 
@@ -166,19 +267,6 @@ export default function CreateProjectPage() {
     }));
   };
 
-  const simulateUpload = (key: string) => {
-    toast.promise(
-      new Promise((resolve) => setTimeout(resolve, 1000)),
-      {
-        loading: 'Uploading document securely...',
-        success: () => {
-          setFiles(prev => ({ ...prev, [key]: true }));
-          return 'Document uploaded and pre-verified!';
-        },
-        error: 'Upload failed',
-      }
-    );
-  };
 
   return (
     <main className="min-h-screen bg-background px-4 py-6 text-foreground sm:px-6 lg:px-8 max-w-5xl mx-auto w-full relative">
@@ -366,13 +454,13 @@ export default function CreateProjectPage() {
               </CardContent>
             </Card>
 
-            {/* MANDATORY ARCHITECT PAYMENTS BLOCK (Dirham simulation) */}
+            {/* MANDATORY ARCHITECT PAYMENTS BLOCK */}
             {role === "architect" && (
               <Card className="rounded-2xl border-border/40 bg-card shadow-sm overflow-hidden border-primary/20 relative">
                 <CardHeader className="p-6 pb-2">
                   <CardTitle className="text-xl font-bold flex items-center gap-2">
                     <CreditCard className="size-5 text-primary" />
-                    Simulated Municipal Permit Tax (MAD)
+                    Simulated Municipal Permit Tax
                   </CardTitle>
                   <CardDescription className="text-xs text-muted-foreground">
                     In Moroccan central communes, planning fees are automatically settled by the filing architect before validation by municipal desks.
@@ -396,7 +484,7 @@ export default function CreateProjectPage() {
                       <Button
                         type="button"
                         onClick={handleSimulatePayment}
-                        disabled={payingFee || formData.surface_terrain <= 0}
+                        disabled={payingFee || (formData.surface_terrain || 0) <= 0}
                         className="h-11 rounded-xl bg-primary text-primary-foreground font-bold hover:scale-[1.02] active:scale-[0.98] transition-all shrink-0 self-start sm:self-auto shadow-md shadow-primary/10"
                       >
                         {payingFee ? "Connecting CMI..." : "Pay via CMI Gate"}
@@ -445,48 +533,78 @@ export default function CreateProjectPage() {
                   {role === "architect" ? (
                     <>
                       <div 
-                        onClick={() => simulateUpload("agency")}
+                        onClick={() => triggerFileInput("agency")}
                         className={`flex items-center justify-between p-3.5 rounded-xl border-2 border-dashed transition-all cursor-pointer ${files.agency ? "border-emerald-500/40 bg-emerald-500/5 text-emerald-500" : "border-border/40 hover:border-primary/40 hover:bg-muted/30"}`}
                       >
-                        <div className="flex items-center gap-3 text-sm">
-                          <div className={`p-2 rounded-lg ${files.agency ? "bg-emerald-500 text-white" : "bg-muted text-muted-foreground"}`}>
+                        <input
+                          type="file"
+                          ref={(el) => { fileInputRefs.current["agency"] = el; }}
+                          className="hidden"
+                          onChange={(e) => handleFileChange("agency", e)}
+                        />
+                        <div className="flex items-center gap-3 text-sm min-w-0">
+                          <div className={`p-2 rounded-lg shrink-0 ${files.agency ? "bg-emerald-500 text-white" : "bg-muted text-muted-foreground"}`}>
                             <Briefcase size={18} />
                           </div>
-                          <div className="text-left">
-                            <p className="font-bold text-foreground text-xs">Proxy / Mandate</p>
-                            <p className="text-[10px] text-muted-foreground">Mandatory legal proof</p>
+                          <div className="text-left min-w-0">
+                            <p className="font-bold text-foreground text-xs truncate">
+                              {files.agency ? files.agency.name : "Proxy / Mandate"}
+                            </p>
+                            <p className="text-[10px] text-muted-foreground truncate">
+                              {files.agency ? `${files.agency.size} • Verified` : "Mandatory legal proof"}
+                            </p>
                           </div>
                         </div>
                         {files.agency ? <ShieldCheck className="text-emerald-500 shrink-0" /> : <UploadCloud size={20} className="text-muted-foreground shrink-0" />}
                       </div>
 
                       <div 
-                        onClick={() => simulateUpload("plan")}
+                        onClick={() => triggerFileInput("plan")}
                         className={`flex items-center justify-between p-3.5 rounded-xl border-2 border-dashed transition-all cursor-pointer ${files.plan ? "border-emerald-500/40 bg-emerald-500/5 text-emerald-500" : "border-border/40 hover:border-primary/40 hover:bg-muted/30"}`}
                       >
-                        <div className="flex items-center gap-3 text-sm">
-                          <div className={`p-2 rounded-lg ${files.plan ? "bg-emerald-500 text-white" : "bg-muted text-muted-foreground"}`}>
+                        <input
+                          type="file"
+                          ref={(el) => { fileInputRefs.current["plan"] = el; }}
+                          className="hidden"
+                          onChange={(e) => handleFileChange("plan", e)}
+                        />
+                        <div className="flex items-center gap-3 text-sm min-w-0">
+                          <div className={`p-2 rounded-lg shrink-0 ${files.plan ? "bg-emerald-500 text-white" : "bg-muted text-muted-foreground"}`}>
                             <Building2 size={18} />
                           </div>
-                          <div className="text-left">
-                            <p className="font-bold text-foreground text-xs">Construction Plans</p>
-                            <p className="text-[10px] text-amber-600 font-bold">Owner name check</p>
+                          <div className="text-left min-w-0">
+                            <p className="font-bold text-foreground text-xs truncate">
+                              {files.plan ? files.plan.name : "Construction Plans"}
+                            </p>
+                            <p className="text-[10px] text-amber-600 font-bold truncate">
+                              {files.plan ? `${files.plan.size} • Verified` : "Owner name check"}
+                            </p>
                           </div>
                         </div>
                         {files.plan ? <ShieldCheck className="text-emerald-500 shrink-0" /> : <UploadCloud size={20} className="text-muted-foreground shrink-0" />}
                       </div>
 
                       <div 
-                        onClick={() => simulateUpload("arch")}
+                        onClick={() => triggerFileInput("arch")}
                         className={`flex items-center justify-between p-3.5 rounded-xl border-2 border-dashed transition-all cursor-pointer ${files.arch ? "border-emerald-500/40 bg-emerald-500/5 text-emerald-500" : "border-border/40 hover:border-primary/40 hover:bg-muted/30"}`}
                       >
-                        <div className="flex items-center gap-3 text-sm">
-                          <div className={`p-2 rounded-lg ${files.arch ? "bg-emerald-500 text-white" : "bg-muted text-muted-foreground"}`}>
+                        <input
+                          type="file"
+                          ref={(el) => { fileInputRefs.current["arch"] = el; }}
+                          className="hidden"
+                          onChange={(e) => handleFileChange("arch", e)}
+                        />
+                        <div className="flex items-center gap-3 text-sm min-w-0">
+                          <div className={`p-2 rounded-lg shrink-0 ${files.arch ? "bg-emerald-500 text-white" : "bg-muted text-muted-foreground"}`}>
                             <FileText size={18} />
                           </div>
-                          <div className="text-left">
-                            <p className="font-bold text-foreground text-xs">Architecture Dossier</p>
-                            <p className="text-[10px] text-muted-foreground">Technical sheets</p>
+                          <div className="text-left min-w-0">
+                            <p className="font-bold text-foreground text-xs truncate">
+                              {files.arch ? files.arch.name : "Architecture Dossier"}
+                            </p>
+                            <p className="text-[10px] text-muted-foreground truncate">
+                              {files.arch ? `${files.arch.size} • Verified` : "Technical sheets"}
+                            </p>
                           </div>
                         </div>
                         {files.arch ? <ShieldCheck className="text-emerald-500 shrink-0" /> : <UploadCloud size={20} className="text-muted-foreground shrink-0" />}
@@ -494,46 +612,76 @@ export default function CreateProjectPage() {
 
                       <div className="grid grid-cols-2 gap-3">
                         <div 
-                          onClick={() => simulateUpload("cin")}
+                          onClick={() => triggerFileInput("cin")}
                           className={`flex flex-col gap-2 p-3 rounded-xl border-2 border-dashed transition-all cursor-pointer ${files.cin ? "border-emerald-500/40 bg-emerald-500/5 text-emerald-500" : "border-border/40 hover:border-primary/40 hover:bg-muted/30"}`}
                         >
+                          <input
+                            type="file"
+                            ref={(el) => { fileInputRefs.current["cin"] = el; }}
+                            className="hidden"
+                            onChange={(e) => handleFileChange("cin", e)}
+                          />
                           <div className="flex items-center justify-between">
                             <CreditCard size={18} className={files.cin ? "text-emerald-500" : "text-muted-foreground"} />
                             {files.cin && <ShieldCheck size={14} className="text-emerald-500" />}
                           </div>
-                          <div className="text-left">
-                            <p className="text-xs font-bold text-foreground">Owner CIN</p>
-                            <p className="text-[10px] text-amber-600 font-medium">AI Checked</p>
+                          <div className="text-left min-w-0">
+                            <p className="text-xs font-bold text-foreground truncate">
+                              {files.cin ? files.cin.name : "Owner CIN"}
+                            </p>
+                            <p className="text-[10px] text-amber-600 font-medium truncate">
+                              {files.cin ? files.cin.size : "AI Checked"}
+                            </p>
                           </div>
                         </div>
 
                         <div 
-                          onClick={() => simulateUpload("prop")}
+                          onClick={() => triggerFileInput("prop")}
                           className={`flex flex-col gap-2 p-3 rounded-xl border-2 border-dashed transition-all cursor-pointer ${files.prop ? "border-emerald-500/40 bg-emerald-500/5 text-emerald-500" : "border-border/40 hover:border-primary/40 hover:bg-muted/30"}`}
                         >
+                          <input
+                            type="file"
+                            ref={(el) => { fileInputRefs.current["prop"] = el; }}
+                            className="hidden"
+                            onChange={(e) => handleFileChange("prop", e)}
+                          />
                           <div className="flex items-center justify-between">
                             <FileText size={18} className={files.prop ? "text-emerald-500" : "text-muted-foreground"} />
                             {files.prop && <ShieldCheck size={14} className="text-emerald-500" />}
                           </div>
-                          <div className="text-left">
-                            <p className="text-xs font-bold text-foreground">Land Title</p>
-                            <p className="text-[10px] text-emerald-600 font-medium">Property</p>
+                          <div className="text-left min-w-0">
+                            <p className="text-xs font-bold text-foreground truncate">
+                              {files.prop ? files.prop.name : "Land Title"}
+                            </p>
+                            <p className="text-[10px] text-emerald-600 font-medium truncate">
+                              {files.prop ? files.prop.size : "Property"}
+                            </p>
                           </div>
                         </div>
                       </div>
                     </>
                   ) : (
                     <div 
-                      onClick={() => simulateUpload("business")}
+                      onClick={() => triggerFileInput("business")}
                       className={`flex items-center justify-between p-4 rounded-xl border-2 border-dashed transition-all cursor-pointer ${files.business ? "border-emerald-500/40 bg-emerald-500/5 text-emerald-500" : "border-border/40 hover:border-primary/40 hover:bg-muted/30"}`}
                     >
-                      <div className="flex items-center gap-3 text-sm">
-                        <div className={`p-2.5 rounded-xl ${files.business ? "bg-emerald-500 text-white" : "bg-muted text-muted-foreground"}`}>
+                      <input
+                        type="file"
+                        ref={(el) => { fileInputRefs.current["business"] = el; }}
+                        className="hidden"
+                        onChange={(e) => handleFileChange("business", e)}
+                      />
+                      <div className="flex items-center gap-3 text-sm min-w-0">
+                        <div className={`p-2.5 rounded-xl shrink-0 ${files.business ? "bg-emerald-500 text-white" : "bg-muted text-muted-foreground"}`}>
                           <Building2 size={20} />
                         </div>
-                        <div className="text-left">
-                          <p className="font-bold text-foreground text-xs">Business Documents</p>
-                          <p className="text-[10px] text-muted-foreground">Upload RC or IF</p>
+                        <div className="text-left min-w-0">
+                          <p className="font-bold text-foreground text-xs truncate">
+                            {files.business ? files.business.name : "Business Documents"}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground truncate">
+                            {files.business ? `${files.business.size} • Verified` : "Upload RC or IF"}
+                          </p>
                         </div>
                       </div>
                       {files.business ? <ShieldCheck className="text-emerald-500 shrink-0" /> : <UploadCloud size={20} className="text-muted-foreground shrink-0" />}

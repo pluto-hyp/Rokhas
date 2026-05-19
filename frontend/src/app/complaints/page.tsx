@@ -86,12 +86,11 @@ export default function ComplaintsPage() {
     setFormData(prev => ({ ...prev, [id]: value }));
   };
 
-  const handleSelectChange = (value: string) => {
-    setFormData(prev => ({ ...prev, category: value }));
+  const handleSelectChange = (value: string | null) => {
+    setFormData(prev => ({ ...prev, category: value || "" }));
   };
 
   const handleFileUpload = () => {
-    // Simulated upload
     const mockFiles = ["site_blueprint_v2.pdf", "delay_notice_commune.jpg", "land_deed_conflict.pdf"];
     const randomFile = mockFiles[Math.floor(Math.random() * mockFiles.length)];
     if (uploadedFiles.includes(randomFile)) {
