@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Text
+from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, JSON, String, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.core.database import Base
@@ -18,6 +18,14 @@ class Dossier(Base):
     emprise = Column(Float)
     surface_terrain = Column(Float)
     zone = Column(String)
+
+    owner_name = Column(String)
+    owner_cin = Column(String)
+    land_reference = Column(String)
+    municipal_fee_amount = Column(Float)
+    municipal_fee_receipt = Column(String)
+    municipal_fee_paid = Column(Boolean, default=False, nullable=False)
+    permit_documents = Column(JSON, default=list, nullable=False)
     
     ai_analysis = Column(Text, nullable=True)
 

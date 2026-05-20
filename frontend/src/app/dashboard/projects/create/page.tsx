@@ -4,7 +4,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { createProject, ProjectCreate } from "@/lib/api";
+import { createProject, PermitDocument, ProjectCreate } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,8 +14,7 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
-  CardFooter
+  CardTitle
 } from "@/components/ui/card";
 import {
   Select,
@@ -38,9 +37,32 @@ import {
   ArrowLeft,
   Sparkles,
   CheckCircle2,
-  Lock,
   Receipt
 } from "lucide-react";
+
+type RequiredDocument = {
+  key: string;
+  label: string;
+  helper: string;
+  required?: boolean;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+};
+
+const ARCHITECT_REQUIRED_DOCUMENTS: RequiredDocument[] = [
+  { key: "building_permit_application", label: "Building Permit Application Form", helper: "Authority form", icon: FileText },
+  { key: "owner_id_card", label: "Copy of Owner ID Card", helper: "CIN copy", icon: CreditCard },
+  { key: "land_title", label: "Land Ownership Certificate / Title Deed", helper: "Titre foncier", icon: FileText },
+  { key: "architectural_plans", label: "Architectural Plans Signed by Architect", helper: "Signed plans", icon: Building2 },
+  { key: "architect_contract", label: "Construction Study & Supervision Contract", helper: "Owner architect contract", icon: Briefcase },
+  { key: "owner_commitment", label: "Owner Commitment Declaration", helper: "Declaration", icon: ShieldCheck },
+  { key: "admin_fee_receipt", label: "Administrative Fees & Taxes Receipt", helper: "Payment proof", icon: Receipt },
+];
+
+const ARCHITECT_OPTIONAL_DOCUMENTS: RequiredDocument[] = [
+  { key: "structural_calculation_note", label: "Structural Calculation Note", helper: "For larger reinforced concrete projects", required: false, icon: FileText },
+  { key: "structural_engineering_study", label: "Structural Engineering Study", helper: "Required in some cases", required: false, icon: Building2 },
+  { key: "additional_authorizations", label: "Additional Authorizations", helper: "Villa zone, subdivision, agricultural land, protected area", required: false, icon: ShieldCheck },
+];
 
 export default function CreateProjectPage() {
   const { token, user } = useAuth();
@@ -48,7 +70,7 @@ export default function CreateProjectPage() {
   const router = useRouter();
   const [loading, setLoading] = React.useState(false);
   
-  const [formData, setFormData] = React.useState<ProjectCreate & { citizen_name?: string; citizen_cin?: string; land_reference?: string }>({
+  const [formData, setFormData] = React.useState<ProjectCreate>({
     title: "",
     description: "",
     type: role === "architect" ? "Building Permit" : "Economic Authorization",
@@ -57,12 +79,12 @@ export default function CreateProjectPage() {
     emprise: 0,
     surface_terrain: 0,
     zone: "Urban Zone",
-    citizen_name: "",
-    citizen_cin: "",
+    owner_name: "",
+    owner_cin: "",
     land_reference: "",
   });
 
-  const [files, setFiles] = React.useState<{ [key: string]: { name: string; size: string; approved?: boolean; notes?: string[] } | null }>({});
+  const [files, setFiles] = React.useState<{ [key: string]: { name: string; size: string; approved?: boolean; notes?: string[] } }>({});
   const fileInputRefs = React.useRef<{ [key: string]: HTMLInputElement | null }>({});
 
   const triggerFileInput = (key: string) => {
@@ -88,17 +110,12 @@ export default function CreateProjectPage() {
         success: (parsedFile) => {
           setFiles(prev => ({ ...prev, [key]: { name: parsedFile.name, size: sizeStr } }));
           
-          // Auto-fill parsing logic from the selected file name!
-          const fileNameLower = parsedFile.name.toLowerCase();
-          
-          // Extract CIN (e.g. AB123456, CD908123)
           const cinMatch = parsedFile.name.match(/\b([A-Z]{1,2}\d{5,6})\b/i);
-          if (cinMatch && !formData.citizen_cin) {
-            setFormData(prev => ({ ...prev, citizen_cin: cinMatch[1].toUpperCase() }));
+          if (cinMatch && !formData.owner_cin) {
+            setFormData(prev => ({ ...prev, owner_cin: cinMatch[1].toUpperCase() }));
             toast.info(`AI Extracted CIN: ${cinMatch[1].toUpperCase()}`);
           }
           
-          // Extract Titre Foncier (e.g. 54932/45 or 12984/20)
           const landMatch = parsedFile.name.match(/\b(\d{4,6}\/\d{2})\b/);
           if (landMatch && !formData.land_reference) {
             const parsedLand = `Titre Foncier ${landMatch[1]}`;
@@ -106,7 +123,6 @@ export default function CreateProjectPage() {
             toast.info(`AI Extracted Land Ref: ${parsedLand}`);
           }
 
-          // Extract Surface Area (e.g. 120m2, 250m2, 300 m2)
           const surfaceMatch = parsedFile.name.match(/\b(\d{2,4})\s*(m2|sqm|meters)\b/i);
           if (surfaceMatch && !formData.surface_terrain) {
             const parsedSurface = parseInt(surfaceMatch[1]);
@@ -114,11 +130,10 @@ export default function CreateProjectPage() {
             toast.info(`AI Extracted Surface Area: ${parsedSurface} m²`);
           }
 
-          // Extract Owner Name (e.g. by_mohamed_alami, owner_fatima_zahra)
           const nameMatch = parsedFile.name.match(/(?:by|owner|client)_([a-zA-Z]+(?:_[a-zA-Z]+)+)/i);
-          if (nameMatch && !formData.citizen_name) {
+          if (nameMatch && !formData.owner_name) {
             const parsedName = nameMatch[1].replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
-            setFormData(prev => ({ ...prev, citizen_name: parsedName }));
+            setFormData(prev => ({ ...prev, owner_name: parsedName }));
             toast.info(`AI Extracted Owner Name: ${parsedName}`);
           }
 
@@ -205,12 +220,12 @@ export default function CreateProjectPage() {
     }
 
     if (role === "architect") {
-      const requiredFiles = ["plan", "arch", "prop", "cin", "agency"];
+      const requiredFiles = ARCHITECT_REQUIRED_DOCUMENTS.map((doc) => doc.key);
       const missingFiles = requiredFiles.filter(f => !files[f]);
-      const notApproved = requiredFiles.filter(f => !files[f] || !files[f]?.approved);
+      const notApproved = requiredFiles.filter(f => files[f]?.approved === false);
 
       if (missingFiles.length > 0) {
-        toast.error("Please upload ALL documents: Plans, Architecture Dossier, CIN, Property, and Proxy.");
+        toast.error("Please upload all mandatory Moroccan building permit documents before submission.");
         return;
       }
 
@@ -232,10 +247,26 @@ export default function CreateProjectPage() {
 
     setLoading(true);
     try {
+      const permitDocuments: PermitDocument[] = [...ARCHITECT_REQUIRED_DOCUMENTS, ...ARCHITECT_OPTIONAL_DOCUMENTS]
+        .filter((doc) => files[doc.key])
+        .map((doc) => ({
+          key: doc.key,
+          label: doc.label,
+          filename: files[doc.key]?.name || "",
+          size: files[doc.key]?.size,
+          approved: files[doc.key]?.approved !== false,
+          required: doc.required !== false,
+          notes: files[doc.key]?.notes || [],
+        }));
+
       const finalData = {
         ...formData,
+        municipal_fee_amount: role === "architect" ? calculatedFee : undefined,
+        municipal_fee_receipt: role === "architect" ? receiptId : undefined,
+        municipal_fee_paid: role === "architect" ? isPaid : false,
+        permit_documents: role === "architect" ? permitDocuments : [],
         description: role === "architect" 
-          ? `[REF: ${formData.land_reference}] [CITIZEN: ${formData.citizen_name}] [CIN: ${formData.citizen_cin}] [COMMUNE FEE PAID: ${calculatedFee} DH] [RECEIPT: ${receiptId}] ${formData.description}` 
+          ? `[REF: ${formData.land_reference}] [CITIZEN: ${formData.owner_name}] [CIN: ${formData.owner_cin}] [COMMUNE FEE PAID: ${calculatedFee} DH] [RECEIPT: ${receiptId}] ${formData.description}` 
           : formData.description
       };
       
@@ -267,6 +298,40 @@ export default function CreateProjectPage() {
     }));
   };
 
+  const renderDocumentUpload = (doc: RequiredDocument) => {
+    const uploadedFile = files[doc.key];
+    const Icon = doc.icon;
+
+    return (
+      <div
+        key={doc.key}
+        onClick={() => triggerFileInput(doc.key)}
+        className={`flex w-full min-w-0 items-center justify-between gap-2 p-3 rounded-xl border-2 border-dashed transition-all cursor-pointer ${uploadedFile ? "border-emerald-500/40 bg-emerald-500/5 text-emerald-500" : "border-border/40 hover:border-primary/40 hover:bg-muted/30"}`}
+      >
+        <input
+          type="file"
+          ref={(el) => { fileInputRefs.current[doc.key] = el; }}
+          className="hidden"
+          onChange={(e) => handleFileChange(doc.key, e)}
+        />
+        <div className="flex min-w-0 flex-1 items-center gap-2 text-sm">
+          <div className={`p-2 rounded-lg shrink-0 ${uploadedFile ? "bg-emerald-500 text-white" : "bg-muted text-muted-foreground"}`}>
+            <Icon size={16} />
+          </div>
+          <div className="text-left min-w-0">
+            <p className="font-bold text-foreground text-xs truncate">
+              {uploadedFile ? uploadedFile.name : doc.label}
+            </p>
+            <p className={`text-[10px] truncate ${doc.required === false ? "text-muted-foreground" : "text-amber-600 font-bold"}`}>
+              {uploadedFile ? `${uploadedFile.size} • ${uploadedFile.approved ? "Verified" : "Checking"}` : doc.helper}
+            </p>
+          </div>
+        </div>
+        {uploadedFile ? <ShieldCheck className="size-5 text-emerald-500 shrink-0" /> : <UploadCloud size={18} className="text-muted-foreground shrink-0" />}
+      </div>
+    );
+  };
+
 
   return (
     <main className="min-h-screen bg-background px-4 py-6 text-foreground sm:px-6 lg:px-8 max-w-5xl mx-auto w-full relative">
@@ -295,10 +360,10 @@ export default function CreateProjectPage() {
 
         <Separator className="mt-2" />
 
-        <form onSubmit={handleSubmit} className="grid gap-8 lg:grid-cols-3 pt-4">
+        <form onSubmit={handleSubmit} className="grid gap-8 lg:grid-cols-7 pt-4">
           
           {/* Main Form Fields */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-4 space-y-6">
             <Card className="rounded-2xl border-border/40 bg-card shadow-sm overflow-hidden">
               <CardHeader className="p-6 pb-2">
                 <CardTitle className="text-xl font-bold">General Information</CardTitle>
@@ -352,28 +417,28 @@ export default function CreateProjectPage() {
                   <CardContent className="p-6 space-y-6">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <Label htmlFor="citizen_name" className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                        <Label htmlFor="owner_name" className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
                           <UserIcon size={14} /> Owner Full Name (Citizen)
                         </Label>
                         <Input
-                          id="citizen_name"
-                          name="citizen_name"
+                          id="owner_name"
+                          name="owner_name"
                           placeholder="Mohamed Alami"
-                          value={formData.citizen_name}
+                          value={formData.owner_name}
                           onChange={handleChange}
                           required
                           className="rounded-xl h-11 border-border/40 bg-background focus:ring-primary/20"
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="citizen_cin" className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                        <Label htmlFor="owner_cin" className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
                           <CreditCard size={14} /> Owner CIN Number
                         </Label>
                         <Input
-                          id="citizen_cin"
-                          name="citizen_cin"
+                          id="owner_cin"
+                          name="owner_cin"
                           placeholder="AB123456"
-                          value={formData.citizen_cin}
+                          value={formData.owner_cin}
                           onChange={handleChange}
                           required
                           className="rounded-xl h-11 border-border/40 bg-background focus:ring-primary/20"
@@ -515,12 +580,12 @@ export default function CreateProjectPage() {
           </div>
 
           {/* Right Sidebar - Docs & Submit */}
-          <div className="space-y-6">
-            <Card className="rounded-2xl border-border/40 bg-card shadow-sm overflow-hidden sticky top-6">
-              <CardHeader className="p-6 pb-2">
-                <CardTitle className="text-xl font-bold flex items-center justify-between">
-                  Required Documents
-                  <span className="text-[10px] flex items-center gap-1 bg-amber-500/10 text-amber-500 border border-amber-500/20 px-2 py-0.5 rounded-full uppercase tracking-wider font-bold">
+          <div className="lg:col-span-3 min-w-0 space-y-6">
+            <Card className="w-full max-w-sm lg:ml-auto rounded-2xl border-border/40 bg-card shadow-sm overflow-hidden sticky top-6">
+              <CardHeader className="p-4 pb-2">
+                <CardTitle className="text-lg font-bold flex min-w-0 flex-wrap items-center justify-between gap-2">
+                  <span className="min-w-0">Required Documents</span>
+                  <span className="text-[9px] flex shrink-0 items-center gap-1 bg-amber-500/10 text-amber-500 border border-amber-500/20 px-2 py-0.5 rounded-full uppercase tracking-wider font-bold">
                     <Sparkles className="size-3" /> AI Verification
                   </span>
                 </CardTitle>
@@ -528,142 +593,25 @@ export default function CreateProjectPage() {
                   Upload files to start instant compliance checks.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="p-6 space-y-4">
-                <div className="grid gap-3">
+              <CardContent className="p-4 space-y-4">
+                <div className="grid min-w-0 gap-3">
                   {role === "architect" ? (
                     <>
-                      <div 
-                        onClick={() => triggerFileInput("agency")}
-                        className={`flex items-center justify-between p-3.5 rounded-xl border-2 border-dashed transition-all cursor-pointer ${files.agency ? "border-emerald-500/40 bg-emerald-500/5 text-emerald-500" : "border-border/40 hover:border-primary/40 hover:bg-muted/30"}`}
-                      >
-                        <input
-                          type="file"
-                          ref={(el) => { fileInputRefs.current["agency"] = el; }}
-                          className="hidden"
-                          onChange={(e) => handleFileChange("agency", e)}
-                        />
-                        <div className="flex items-center gap-3 text-sm min-w-0">
-                          <div className={`p-2 rounded-lg shrink-0 ${files.agency ? "bg-emerald-500 text-white" : "bg-muted text-muted-foreground"}`}>
-                            <Briefcase size={18} />
-                          </div>
-                          <div className="text-left min-w-0">
-                            <p className="font-bold text-foreground text-xs truncate">
-                              {files.agency ? files.agency.name : "Proxy / Mandate"}
-                            </p>
-                            <p className="text-[10px] text-muted-foreground truncate">
-                              {files.agency ? `${files.agency.size} • Verified` : "Mandatory legal proof"}
-                            </p>
-                          </div>
-                        </div>
-                        {files.agency ? <ShieldCheck className="text-emerald-500 shrink-0" /> : <UploadCloud size={20} className="text-muted-foreground shrink-0" />}
+                      <div className="space-y-3">
+                        {ARCHITECT_REQUIRED_DOCUMENTS.map(renderDocumentUpload)}
                       </div>
 
-                      <div 
-                        onClick={() => triggerFileInput("plan")}
-                        className={`flex items-center justify-between p-3.5 rounded-xl border-2 border-dashed transition-all cursor-pointer ${files.plan ? "border-emerald-500/40 bg-emerald-500/5 text-emerald-500" : "border-border/40 hover:border-primary/40 hover:bg-muted/30"}`}
-                      >
-                        <input
-                          type="file"
-                          ref={(el) => { fileInputRefs.current["plan"] = el; }}
-                          className="hidden"
-                          onChange={(e) => handleFileChange("plan", e)}
-                        />
-                        <div className="flex items-center gap-3 text-sm min-w-0">
-                          <div className={`p-2 rounded-lg shrink-0 ${files.plan ? "bg-emerald-500 text-white" : "bg-muted text-muted-foreground"}`}>
-                            <Building2 size={18} />
-                          </div>
-                          <div className="text-left min-w-0">
-                            <p className="font-bold text-foreground text-xs truncate">
-                              {files.plan ? files.plan.name : "Construction Plans"}
-                            </p>
-                            <p className="text-[10px] text-amber-600 font-bold truncate">
-                              {files.plan ? `${files.plan.size} • Verified` : "Owner name check"}
-                            </p>
-                          </div>
-                        </div>
-                        {files.plan ? <ShieldCheck className="text-emerald-500 shrink-0" /> : <UploadCloud size={20} className="text-muted-foreground shrink-0" />}
-                      </div>
-
-                      <div 
-                        onClick={() => triggerFileInput("arch")}
-                        className={`flex items-center justify-between p-3.5 rounded-xl border-2 border-dashed transition-all cursor-pointer ${files.arch ? "border-emerald-500/40 bg-emerald-500/5 text-emerald-500" : "border-border/40 hover:border-primary/40 hover:bg-muted/30"}`}
-                      >
-                        <input
-                          type="file"
-                          ref={(el) => { fileInputRefs.current["arch"] = el; }}
-                          className="hidden"
-                          onChange={(e) => handleFileChange("arch", e)}
-                        />
-                        <div className="flex items-center gap-3 text-sm min-w-0">
-                          <div className={`p-2 rounded-lg shrink-0 ${files.arch ? "bg-emerald-500 text-white" : "bg-muted text-muted-foreground"}`}>
-                            <FileText size={18} />
-                          </div>
-                          <div className="text-left min-w-0">
-                            <p className="font-bold text-foreground text-xs truncate">
-                              {files.arch ? files.arch.name : "Architecture Dossier"}
-                            </p>
-                            <p className="text-[10px] text-muted-foreground truncate">
-                              {files.arch ? `${files.arch.size} • Verified` : "Technical sheets"}
-                            </p>
-                          </div>
-                        </div>
-                        {files.arch ? <ShieldCheck className="text-emerald-500 shrink-0" /> : <UploadCloud size={20} className="text-muted-foreground shrink-0" />}
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-3">
-                        <div 
-                          onClick={() => triggerFileInput("cin")}
-                          className={`flex flex-col gap-2 p-3 rounded-xl border-2 border-dashed transition-all cursor-pointer ${files.cin ? "border-emerald-500/40 bg-emerald-500/5 text-emerald-500" : "border-border/40 hover:border-primary/40 hover:bg-muted/30"}`}
-                        >
-                          <input
-                            type="file"
-                            ref={(el) => { fileInputRefs.current["cin"] = el; }}
-                            className="hidden"
-                            onChange={(e) => handleFileChange("cin", e)}
-                          />
-                          <div className="flex items-center justify-between">
-                            <CreditCard size={18} className={files.cin ? "text-emerald-500" : "text-muted-foreground"} />
-                            {files.cin && <ShieldCheck size={14} className="text-emerald-500" />}
-                          </div>
-                          <div className="text-left min-w-0">
-                            <p className="text-xs font-bold text-foreground truncate">
-                              {files.cin ? files.cin.name : "Owner CIN"}
-                            </p>
-                            <p className="text-[10px] text-amber-600 font-medium truncate">
-                              {files.cin ? files.cin.size : "AI Checked"}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div 
-                          onClick={() => triggerFileInput("prop")}
-                          className={`flex flex-col gap-2 p-3 rounded-xl border-2 border-dashed transition-all cursor-pointer ${files.prop ? "border-emerald-500/40 bg-emerald-500/5 text-emerald-500" : "border-border/40 hover:border-primary/40 hover:bg-muted/30"}`}
-                        >
-                          <input
-                            type="file"
-                            ref={(el) => { fileInputRefs.current["prop"] = el; }}
-                            className="hidden"
-                            onChange={(e) => handleFileChange("prop", e)}
-                          />
-                          <div className="flex items-center justify-between">
-                            <FileText size={18} className={files.prop ? "text-emerald-500" : "text-muted-foreground"} />
-                            {files.prop && <ShieldCheck size={14} className="text-emerald-500" />}
-                          </div>
-                          <div className="text-left min-w-0">
-                            <p className="text-xs font-bold text-foreground truncate">
-                              {files.prop ? files.prop.name : "Land Title"}
-                            </p>
-                            <p className="text-[10px] text-emerald-600 font-medium truncate">
-                              {files.prop ? files.prop.size : "Property"}
-                            </p>
-                          </div>
-                        </div>
+                      <div className="pt-2 space-y-2">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                          Conditional Documents
+                        </p>
+                        {ARCHITECT_OPTIONAL_DOCUMENTS.map(renderDocumentUpload)}
                       </div>
                     </>
                   ) : (
                     <div 
                       onClick={() => triggerFileInput("business")}
-                      className={`flex items-center justify-between p-4 rounded-xl border-2 border-dashed transition-all cursor-pointer ${files.business ? "border-emerald-500/40 bg-emerald-500/5 text-emerald-500" : "border-border/40 hover:border-primary/40 hover:bg-muted/30"}`}
+                      className={`flex w-full min-w-0 items-center justify-between gap-2 p-3 rounded-xl border-2 border-dashed transition-all cursor-pointer ${files.business ? "border-emerald-500/40 bg-emerald-500/5 text-emerald-500" : "border-border/40 hover:border-primary/40 hover:bg-muted/30"}`}
                     >
                       <input
                         type="file"
@@ -671,9 +619,9 @@ export default function CreateProjectPage() {
                         className="hidden"
                         onChange={(e) => handleFileChange("business", e)}
                       />
-                      <div className="flex items-center gap-3 text-sm min-w-0">
+                      <div className="flex min-w-0 flex-1 items-center gap-2 text-sm">
                         <div className={`p-2.5 rounded-xl shrink-0 ${files.business ? "bg-emerald-500 text-white" : "bg-muted text-muted-foreground"}`}>
-                          <Building2 size={20} />
+                          <Building2 size={16} />
                         </div>
                         <div className="text-left min-w-0">
                           <p className="font-bold text-foreground text-xs truncate">
@@ -684,7 +632,7 @@ export default function CreateProjectPage() {
                           </p>
                         </div>
                       </div>
-                      {files.business ? <ShieldCheck className="text-emerald-500 shrink-0" /> : <UploadCloud size={20} className="text-muted-foreground shrink-0" />}
+                      {files.business ? <ShieldCheck className="size-5 text-emerald-500 shrink-0" /> : <UploadCloud size={18} className="text-muted-foreground shrink-0" />}
                     </div>
                   )}
                 </div>

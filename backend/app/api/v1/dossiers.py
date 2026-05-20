@@ -9,12 +9,54 @@ from app.services.agent_client import verify_dossier_with_agent
 
 router = APIRouter()
 
+ARCHITECT_REQUIRED_DOCUMENTS = {
+    "building_permit_application",
+    "owner_id_card",
+    "land_title",
+    "architectural_plans",
+    "architect_contract",
+    "owner_commitment",
+    "admin_fee_receipt",
+}
+
+def validate_architect_dossier(dossier: DossierCreate):
+    provided_docs = {doc.key: doc for doc in dossier.permit_documents}
+    missing_docs = sorted(ARCHITECT_REQUIRED_DOCUMENTS - set(provided_docs))
+    unapproved_docs = sorted(
+        key for key in ARCHITECT_REQUIRED_DOCUMENTS
+        if key in provided_docs and not provided_docs[key].approved
+    )
+
+    missing_fields = []
+    if not dossier.owner_name:
+        missing_fields.append("owner_name")
+    if not dossier.owner_cin:
+        missing_fields.append("owner_cin")
+    if not dossier.land_reference:
+        missing_fields.append("land_reference")
+    if not dossier.municipal_fee_paid or not dossier.municipal_fee_receipt:
+        missing_fields.append("municipal_fee_receipt")
+
+    if missing_docs or unapproved_docs or missing_fields:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "message": "Architect building permit dossiers must include all mandatory authority documents before submission.",
+                "missing_documents": missing_docs,
+                "unapproved_documents": unapproved_docs,
+                "missing_fields": missing_fields,
+            },
+        )
+
 @router.post("", response_model=DossierResponse)
 async def create_dossier(
     dossier: DossierCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
+    if current_user.role == "architect" and dossier.type == "Building Permit":
+        validate_architect_dossier(dossier)
+
     db_dossier = crud_dossier.create_dossier(db=db, dossier=dossier, owner_id=current_user.id)
     
     # Trigger automatic compliance check using the Rokhas agent
@@ -98,7 +140,6 @@ async def verify_compliance(
     
     agent_response = await verify_dossier_with_agent(dossier_data)
     
-    # Save the AI response back to the dossier
     update_data = DossierUpdate(ai_analysis=agent_response.get("answer", ""))
     updated_dossier = crud_dossier.update_dossier(db, db_dossier, update_data)
     

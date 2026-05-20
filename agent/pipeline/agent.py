@@ -157,13 +157,13 @@ Question : {question}"""
             non_conformity_details.append(f"Emprise au sol non-conforme : {emprise}% dépasse le coefficient maximum autorisé pour la zone {zone} ({max_emprise}%).")
             
         report = []
-        report.append("### 📋 Rapport d'Évaluation Réglementaire RGC Marocain (AI Agent)")
+        report.append("### Rapport d'Évaluation Réglementaire RGC Marocain (AI Agent)")
         report.append(f"**Analyse de conformité automatisée pour : {type_const}**")
         report.append(f"- **Zone d'aménagement :** {zone}")
         report.append(f"- **Surface terrain déclarée :** {surface_terrain} m²")
         report.append("")
         
-        report.append("#### ✅ Éléments de Conformité Valides")
+        report.append("#### Éléments de Conformité Valides")
         if conformity_details:
             for item in conformity_details:
                 report.append(f"- {item}")
@@ -171,7 +171,7 @@ Question : {question}"""
             report.append("- Aucun élément conforme détecté.")
         report.append("")
         
-        report.append("#### ⚠️ Anomalies et Non-Conformités Détectées")
+        report.append("#### Anomalies et Non-Conformités Détectées")
         if non_conformity_details:
             for item in non_conformity_details:
                 report.append(f"- {item}")
@@ -179,7 +179,7 @@ Question : {question}"""
             report.append("- Félicitations ! Aucun écart par rapport au Règlement Général de Construction n'a été détecté.")
         report.append("")
         
-        report.append("#### 📂 Pièces Administratives Recommandées")
+        report.append("#### Pièces Administratives Recommandées")
         report.append("1. **Plan de situation** à l'échelle 1/2000ème.")
         report.append("2. **Certificat de propriété récent** délivré par la Conservation Foncière (ANCFCC).")
         report.append("3. **Plan de masse** signé par l'architecte du projet.")
@@ -202,17 +202,14 @@ Question : {question}"""
         }
 
         name = filename or ""
-        # CIN like AB123456 or A12345
         cin_match = re.search(r"\b([A-Z]{1,2}\d{5,6})\b", name, re.IGNORECASE)
         if cin_match:
             extracted["citizen_cin"] = cin_match.group(1).upper()
 
-        # Land ref like 54932/45
         land_match = re.search(r"\b(\d{4,6}\/\d{2})\b", name)
         if land_match:
             extracted["land_reference"] = f"Titre Foncier {land_match.group(1)}"
 
-        # Surface like 120m2 or 250 m2
         surface_match = re.search(r"\b(\d{2,4})\s*(m2|sqm|meters)\b", name, re.IGNORECASE)
         if surface_match:
             try:
@@ -220,14 +217,11 @@ Question : {question}"""
             except Exception:
                 pass
 
-        # Owner name patterns: by_name or owner_name
         name_match = re.search(r"(?:by|owner|client)_([a-zA-Z]+(?:_[a-zA-Z]+)+)", name, re.IGNORECASE)
         if name_match:
             parsed = name_match.group(1).replace("_", " ")
             extracted["owner_name"] = " ".join([p.capitalize() for p in parsed.split()])
 
-        # Also try to scan preview text for keywords
-        # If content_preview is a data URL or base64 blob, attempt OCR (images) or text extraction
         preview = content_preview or ""
         try:
             if preview and (preview.startswith("data:") or len(preview) > 200):
@@ -235,19 +229,15 @@ Question : {question}"""
                 try:
                     from PIL import Image
                     import pytesseract
-                    # Extract base64 payload
                     b64 = preview.split(",", 1)[1] if preview.startswith("data:") else preview
                     img_bytes = base64.b64decode(b64)
                     img = Image.open(io.BytesIO(img_bytes))
                     try:
-                        # Try French language first, fallback to default
                         text_from_image = pytesseract.image_to_string(img, lang='fra')
                     except Exception:
                         text_from_image = pytesseract.image_to_string(img)
-                    # append OCR text to preview for additional pattern matching
                     preview = (preview + "\n" + text_from_image) if preview else text_from_image
                 except Exception:
-                    # If PIL/pytesseract not available or image parsing fails, leave preview as-is
                     preview = content_preview
         except Exception:
             preview = content_preview
@@ -257,7 +247,6 @@ Question : {question}"""
                 extracted["citizen_cin"] = cin_match2.group(1).upper()
 
         notes = []
-        # Basic approval rules: require at least land_reference and owner_name
         if extracted["land_reference"]:
             notes.append("Land reference detected.")
         else:
