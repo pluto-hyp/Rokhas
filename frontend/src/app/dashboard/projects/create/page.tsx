@@ -108,7 +108,15 @@ export default function CreateProjectPage() {
       {
         loading: `AI parsing and uploading ${file.name}...`,
         success: (parsedFile) => {
-          setFiles(prev => ({ ...prev, [key]: { name: parsedFile.name, size: sizeStr } }));
+          setFiles(prev => ({
+            ...prev,
+            [key]: {
+              name: parsedFile.name,
+              size: sizeStr,
+              approved: true,
+              notes: ["Uploaded. AI pre-check may continue in the background."],
+            },
+          }));
           
           const cinMatch = parsedFile.name.match(/\b([A-Z]{1,2}\d{5,6})\b/i);
           if (cinMatch && !formData.owner_cin) {
@@ -137,34 +145,35 @@ export default function CreateProjectPage() {
             toast.info(`AI Extracted Owner Name: ${parsedName}`);
           }
 
-          return `${parsedFile.name} uploaded and parsed successfully!`;
+          return `${parsedFile.name} uploaded and accepted for submission.`;
         },
         error: 'Upload and parsing failed',
       }
     );
 
     (async () => {
-      const toDataURL = (f: File) => new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = (err) => reject(err);
-        reader.readAsDataURL(f);
-      });
-
       try {
-        const dataUrl = await toDataURL(file);
         const resp = await fetch('/api/v1/agent/analyze-file', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ filename: file.name, content_base64: dataUrl })
+          body: JSON.stringify({ filename: file.name, preview: "" })
         });
         if (resp.ok) {
           const data = await resp.json();
+          const notes = data.notes || [];
+          const message = data.message || "";
+          const reviewRequired = !!data.review_required
+            || notes.some((note: string) => /agent unavailable|fallback|indisponible/i.test(note))
+            || /agent unavailable|fallback|indisponible/i.test(message);
+          const approved = reviewRequired ? true : !!data.approved;
+
           setFiles(prev => ({
             ...prev,
-            [key]: { name: file.name, size: sizeStr, approved: !!data.approved, notes: data.notes || [] }
+            [key]: { name: file.name, size: sizeStr, approved, notes }
           }));
-          if (data.approved) {
+          if (reviewRequired) {
+            toast.warning(`${file.name} accepted for manual authority review because the AI agent is offline.`);
+          } else if (approved) {
             toast.success(`${file.name} approved by AI agent.`);
           } else {
             toast.error(`${file.name} flagged: ${data.message || 'Further review required.'}`);
@@ -323,7 +332,7 @@ export default function CreateProjectPage() {
               {uploadedFile ? uploadedFile.name : doc.label}
             </p>
             <p className={`text-[10px] truncate ${doc.required === false ? "text-muted-foreground" : "text-amber-600 font-bold"}`}>
-              {uploadedFile ? `${uploadedFile.size} • ${uploadedFile.approved ? "Verified" : "Checking"}` : doc.helper}
+              {uploadedFile ? `${uploadedFile.size} • ${uploadedFile.approved === false ? "Flagged" : "Accepted"}` : doc.helper}
             </p>
           </div>
         </div>

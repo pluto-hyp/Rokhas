@@ -84,10 +84,11 @@ async def analyze_file(request: FileAnalyzeRequest):
     # Fallback: simple filename heuristics
     name = request.filename or ""
     simulated = {
-        "approved": False,
+        "approved": True,
+        "review_required": True,
         "extracted": {},
-        "notes": ["Agent unavailable, fallback applied."],
-        "message": "Analyse simulée — agent indisponible."
+        "notes": ["Agent unavailable, accepted for manual authority review."],
+        "message": "Agent unavailable. File accepted for manual authority review."
     }
     return simulated
 

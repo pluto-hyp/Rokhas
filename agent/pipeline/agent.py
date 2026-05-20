@@ -23,7 +23,11 @@ Règles importantes :
 
 class RokhasAgent:
     def __init__(self):
-        self.store = VectorStore()
+        self.store = None
+        try:
+            self.store = VectorStore()
+        except Exception as e:
+            print(f"Vector store unavailable: {e}. Agent will use rule-based fallback without document search.")
         
         # Options: "ollama", "gemini"
         self.provider = os.getenv("LLM_PROVIDER", "ollama").lower()
@@ -34,7 +38,12 @@ class RokhasAgent:
             self.gemini_model = genai.GenerativeModel('gemini-1.5-flash', system_instruction=SYSTEM_PROMPT)
 
     def query(self, question: str, conversation_history: list = []) -> dict:
-        relevant_chunks = self.store.search(question, n_results=5)
+        relevant_chunks = []
+        if self.store:
+            try:
+                relevant_chunks = self.store.search(question, n_results=5)
+            except Exception as e:
+                print(f"Vector search unavailable: {e}. Continuing without retrieved context.")
 
         context = "\n\n---\n\n".join([
             f"[Source: {c['source']}]\n{c['content']}"
