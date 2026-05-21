@@ -33,9 +33,21 @@ async def chat_with_agent(
     current_user: User = Depends(get_current_active_user)
 ):
     """
-    Send a conversational message to the real AI agent.
+    Send a conversational message to the real AI agent (POST).
     """
     return await get_agent_response(request.message, current_user.full_name)
+
+@router.get("/chat", response_model=ChatResponse)
+async def chat_with_agent_get(
+    message: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Send a conversational message to the real AI agent (GET).
+    Query parameter: message
+    """
+    return await get_agent_response(message, current_user.full_name)
 
 @router.post("/public-chat", response_model=ChatResponse)
 async def public_chat_with_agent(

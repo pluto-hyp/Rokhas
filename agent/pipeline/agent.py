@@ -35,7 +35,9 @@ class RokhasAgent:
         if self.provider == "gemini":
             import google.generativeai as genai
             genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-            self.gemini_model = genai.GenerativeModel('gemini-1.5-flash', system_instruction=SYSTEM_PROMPT)
+            self.gemini_model_name = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+            self.gemini_fallback_model_name = os.getenv("GEMINI_FALLBACK_MODEL", "gemini-2.0-flash")
+            self.gemini_model = genai.GenerativeModel(self.gemini_model_name, system_instruction=SYSTEM_PROMPT)
 
     def query(self, question: str, conversation_history: list = []) -> dict:
         relevant_chunks = []
@@ -82,7 +84,7 @@ Question : {question}"""
                 except Exception as ex:
                     print(f"Primary Gemini generation failed: {ex}. Attempting fallback...")
                     import google.generativeai as genai
-                    fallback_model = genai.GenerativeModel('gemini-pro')
+                    fallback_model = genai.GenerativeModel(self.gemini_fallback_model_name)
                     response = fallback_model.generate_content(messages[-1]["content"])
                     answer = response.text
                 
