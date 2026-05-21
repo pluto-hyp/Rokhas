@@ -18,6 +18,13 @@ class ChatResponse(BaseModel):
     timestamp: str
 
 AGENT_API_URL = os.getenv("AGENT_API_URL", "http://127.0.0.1:8001/chat")
+AGENT_BASE = os.getenv("AGENT_API_URL", "http://127.0.0.1:8001")
+
+
+class FileAnalyzeRequest(BaseModel):
+    filename: str
+    preview: str = ""
+    content_base64: str = ""
 
 @router.post("/chat", response_model=ChatResponse)
 async def chat_with_agent(
@@ -26,9 +33,21 @@ async def chat_with_agent(
     current_user: User = Depends(get_current_active_user)
 ):
     """
-    Send a conversational message to the real AI agent.
+    Send a conversational message to the real AI agent (POST).
     """
     return await get_agent_response(request.message, current_user.full_name)
+
+@router.get("/chat", response_model=ChatResponse)
+async def chat_with_agent_get(
+    message: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Send a conversational message to the real AI agent (GET).
+    Query parameter: message
+    """
+    return await get_agent_response(message, current_user.full_name)
 
 @router.post("/public-chat", response_model=ChatResponse)
 async def public_chat_with_agent(
@@ -60,6 +79,30 @@ async def get_agent_response(message: str, user_name: str):
     
     # Fallback to simulation if Agent API is down
     return simulate_agent_response(message, user_name)
+
+
+@router.post("/analyze-file")
+async def analyze_file(request: FileAnalyzeRequest):
+    """Public endpoint: analyze a file (by filename/preview) via the Agent microservice."""
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            payload = {"filename": request.filename, "preview": request.preview, "content_base64": request.content_base64}
+            resp = await client.post(f"{AGENT_BASE}/analyze-file", json=payload)
+            if resp.ok:
+                return resp.json()
+    except Exception as e:
+        print(f"Agent analyze-file error: {e}")
+
+    # Fallback: simple filename heuristics
+    name = request.filename or ""
+    simulated = {
+        "approved": True,
+        "review_required": True,
+        "extracted": {},
+        "notes": ["Agent unavailable, accepted for manual authority review."],
+        "message": "Agent unavailable. File accepted for manual authority review."
+    }
+    return simulated
 
 def simulate_agent_response(message: str, user_name: str):
     import datetime

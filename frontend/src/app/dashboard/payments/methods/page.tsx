@@ -136,7 +136,7 @@ export default function BillingMethodsPage() {
           
           {/* Saved Cards */}
           <Card className="rounded-lg border bg-card">
-            <CardHeader className="px-6 py-4 border-b">
+            <CardHeader className="px-6 border-b">
               <CardTitle className="text-base font-semibold">Active Cards & Profiles</CardTitle>
               <CardDescription className="text-xs">
                 Saved card profiles used for instant construction tax clearances.
@@ -154,7 +154,7 @@ export default function BillingMethodsPage() {
                           {card.brand} •••• {card.last4}
                         </span>
                         {card.isDefault && (
-                          <span className="text-[9px] font-semibold bg-primary/10 text-primary px-1.5 py-0.5 rounded border border-primary/20">
+                          <span className="text-[9px] font-semibold bg-primary/10 text-primary px-1.5 rounded border border-primary/20">
                             Primary
                           </span>
                         )}
@@ -192,7 +192,7 @@ export default function BillingMethodsPage() {
 
           {/* Add Card Form */}
           <Card className="rounded-lg border bg-card">
-            <CardHeader className="px-6 py-4 border-b">
+            <CardHeader className="px-6 border-b">
               <CardTitle className="text-base font-semibold">Add Card Profile</CardTitle>
             </CardHeader>
             <form onSubmit={handleAddCard}>
@@ -269,7 +269,7 @@ export default function BillingMethodsPage() {
                 </div>
               </CardContent>
               <CardFooter className="p-4 border-t bg-muted/5 flex justify-end">
-                <Button type="submit" disabled={addingCard} className="h-9 rounded font-medium">
+                <Button type="submit" disabled={addingCard} className="h-9 rounded-md font-medium">
                   {addingCard ? "Saving Card..." : "Save Card Profile"}
                 </Button>
               </CardFooter>
@@ -283,7 +283,7 @@ export default function BillingMethodsPage() {
           
           {/* Corporate Invoice Settings */}
           <Card className="rounded-lg border bg-card">
-            <CardHeader className="px-6 py-4 border-b">
+            <CardHeader className="px-6 border-b">
               <CardTitle className="text-base font-semibold">Corporate Invoice Info</CardTitle>
               <CardDescription className="text-xs">
                 These settings will be dynamically printed on municipal tax bills.
@@ -348,7 +348,7 @@ export default function BillingMethodsPage() {
                 </div>
               </CardContent>
               <CardFooter className="p-3 border-t bg-muted/5 flex justify-end">
-                <Button type="submit" className="h-8 rounded text-xs font-medium">
+                <Button type="submit" className="h-8 rounded-md text-xs font-medium">
                   Save Settings
                 </Button>
               </CardFooter>

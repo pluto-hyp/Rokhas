@@ -1,6 +1,15 @@
-from typing import Optional
-from pydantic import BaseModel
+from typing import List, Optional
+from pydantic import BaseModel, Field
 from datetime import datetime
+
+class PermitDocument(BaseModel):
+    key: str
+    label: str
+    filename: str
+    size: Optional[str] = None
+    approved: bool = False
+    required: bool = True
+    notes: List[str] = Field(default_factory=list)
 
 class DossierBase(BaseModel):
     title: str
@@ -11,6 +20,13 @@ class DossierBase(BaseModel):
     emprise: Optional[float] = None
     surface_terrain: Optional[float] = None
     zone: Optional[str] = None
+    owner_name: Optional[str] = None
+    owner_cin: Optional[str] = None
+    land_reference: Optional[str] = None
+    municipal_fee_amount: Optional[float] = None
+    municipal_fee_receipt: Optional[str] = None
+    municipal_fee_paid: bool = False
+    permit_documents: List[PermitDocument] = Field(default_factory=list)
 
 class DossierCreate(DossierBase):
     pass

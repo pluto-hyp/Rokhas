@@ -26,6 +26,8 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
 import { toast } from "sonner";
+import { Separator } from "@/components/ui/separator";
+import { Label } from "@/components/ui/label";
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -33,7 +35,6 @@ export default function ProjectsPage() {
   const { token, isLoading, logout, user: authUser } = useAuth();
   const role = authUser?.role || "citizen";
 
-  // Selected project for details / validation drawer
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [showPermitModal, setShowPermitModal] = useState(false);
   const [extracting, setExtracting] = useState(false);
@@ -62,15 +63,15 @@ export default function ProjectsPage() {
     loadProjects();
   }, [isLoading, token, logout]);
 
-  // Parse transaction bill and legal identifiers from project description if formatted
-  const parseProjectMeta = (desc: string) => {
-    const refMatch = desc.match(/\[REF:\s*([^\]]+)\]/);
-    const citizenMatch = desc.match(/\[CITIZEN:\s*([^\]]+)\]/);
-    const cinMatch = desc.match(/\[CIN:\s*([^\]]+)\]/);
-    const feeMatch = desc.match(/\[COMMUNE FEE PAID:\s*([^\]]+)\]/);
-    const receiptMatch = desc.match(/\[RECEIPT:\s*([^\]]+)\]/);
+  const parseProjectMeta = (desc?: string) => {
+    const text = desc || "";
+    const refMatch = text.match(/\[REF:\s*([^\]]+)\]/);
+    const citizenMatch = text.match(/\[CITIZEN:\s*([^\]]+)\]/);
+    const cinMatch = text.match(/\[CIN:\s*([^\]]+)\]/);
+    const feeMatch = text.match(/\[COMMUNE FEE PAID:\s*([^\]]+)\]/);
+    const receiptMatch = text.match(/\[RECEIPT:\s*([^\]]+)\]/);
 
-    const cleanDesc = desc
+    const cleanDesc = text
       .replace(/\[REF:\s*[^\]]+\]/g, "")
       .replace(/\[CITIZEN:\s*[^\]]+\]/g, "")
       .replace(/\[CIN:\s*[^\]]+\]/g, "")
@@ -92,7 +93,6 @@ export default function ProjectsPage() {
     setSelectedProject(project);
   };
 
-  // Authority validates payment and extracts permit paper
   const handleExtractPermit = () => {
     if (!selectedProject) return;
     setExtracting(true);
@@ -102,13 +102,12 @@ export default function ProjectsPage() {
       {
         loading: 'Verifying digital CMI payment ledger and stamping permit...',
         success: () => {
-          // Update status in frontend list for real-time simulation feedback
           setProjects(prev => 
             prev.map(p => p.id === selectedProject.id ? { ...p, status: "Approved" } : p)
           );
           setSelectedProject(prev => prev ? { ...prev, status: "Approved" } : null);
           setExtracting(false);
-          setShowPermitModal(true); // Open the official printable permit sheet!
+          setShowPermitModal(true);
           return 'Official Construction Permit Paper extracted successfully!';
         },
         error: 'Validation failed'
