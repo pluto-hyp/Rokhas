@@ -63,6 +63,19 @@ export default function ProjectsPage() {
     loadProjects();
   }, [isLoading, token, logout]);
 
+  useEffect(() => {
+    if (typeof window !== "undefined" && projects.length > 0) {
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get("project_id") || params.get("id");
+      if (id) {
+        const proj = projects.find(p => p.id === parseInt(id));
+        if (proj) {
+          setSelectedProject(proj);
+        }
+      }
+    }
+  }, [projects]);
+
   const parseProjectMeta = (desc?: string) => {
     const text = desc || "";
     const refMatch = text.match(/\[REF:\s*([^\]]+)\]/);

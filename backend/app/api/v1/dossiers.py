@@ -5,6 +5,7 @@ from app.api.dependencies import get_db, get_current_active_user, get_current_ad
 from app.models.user import User
 from app.schemas.dossier import DossierCreate, DossierResponse, DossierUpdate
 from app.crud import dossier as crud_dossier
+from app.crud import notification as crud_notification
 from app.services.agent_client import verify_dossier_with_agent
 
 router = APIRouter()
@@ -76,6 +77,20 @@ async def create_dossier(
         db.refresh(db_dossier)
     except Exception as e:
         print(f"Error during automatic compliance check: {e}")
+
+    # Trigger notifications for all administrative users (admins and authorities)
+    try:
+        admin_users = db.query(User).filter(User.role.in_(["admin", "authority"])).all()
+        for admin in admin_users:
+            crud_notification.create_notification(
+                db=db,
+                user_id=admin.id,
+                title="New Dossier Submitted",
+                message=f"A new dossier '{db_dossier.title}' has been submitted for review by {current_user.full_name or current_user.email}.",
+                dossier_id=db_dossier.id
+            )
+    except Exception as notif_err:
+        print(f"Error creating admin notifications: {notif_err}")
         
     return db_dossier
 

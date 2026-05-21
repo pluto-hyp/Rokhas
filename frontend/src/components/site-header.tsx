@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import Link from "next/link"
 import { useAuth } from "@/contexts/AuthContext"
 import {
@@ -33,6 +33,13 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
+import { cn } from "@/lib/utils"
+import {
+  getNotifications,
+  markNotificationAsRead,
+  markAllNotificationsAsRead,
+  Notification,
+} from "@/lib/api"
 
 const languages = [
   { code: "en", label: "English" },
@@ -45,8 +52,58 @@ export function SiteHeader() {
   const selectedLanguage = languages.find((item) => item.code === language)
   
   const pathname = usePathname()
-  const { user } = useAuth()
+  const router = useRouter()
+  const { user, token } = useAuth()
   const role = user?.role || "citizen"
+
+  const [notifications, setNotifications] = React.useState<Notification[]>([])
+
+  const loadNotifications = React.useCallback(async () => {
+    if (!token) return
+    try {
+      const data = await getNotifications(token)
+      setNotifications(data)
+    } catch (error) {
+      console.error("Failed to load notifications:", error)
+    }
+  }, [token])
+
+  React.useEffect(() => {
+    loadNotifications()
+
+    // Poll for notifications every 10 seconds if user has admin/authority roles
+    if (role === "admin" || role === "authority") {
+      const interval = setInterval(loadNotifications, 10000)
+      return () => clearInterval(interval)
+    }
+  }, [loadNotifications, role])
+
+  const handleMarkAsRead = async (notif: Notification) => {
+    if (!token) return
+    try {
+      await markNotificationAsRead(notif.id, token)
+      setNotifications(prev =>
+        prev.map(n => (n.id === notif.id ? { ...n, read: true } : n))
+      )
+      if (notif.dossier_id) {
+        router.push(`/dashboard/projects?id=${notif.dossier_id}`)
+      }
+    } catch (error) {
+      console.error("Failed to mark notification as read:", error)
+    }
+  }
+
+  const handleMarkAllAsRead = async () => {
+    if (!token) return
+    try {
+      await markAllNotificationsAsRead(token)
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })))
+    } catch (error) {
+      console.error("Failed to mark all as read:", error)
+    }
+  }
+
+  const unreadCount = notifications.filter(n => !n.read).length
 
   const getBreadcrumbs = () => {
     const breadcrumbs: { label: string; href?: string; active: boolean }[] = []
@@ -166,22 +223,65 @@ export function SiteHeader() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="rounded-full"
+                  className="rounded-full relative hover:bg-muted/60 transition-colors"
                   title="Notifications"
                 >
-                  <BellIcon />
-                  <span className="sr-only">Open notifications</span>
+                  <BellIcon className="size-5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute top-1.5 right-1.5 flex h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-background animate-ping" />
+                  )}
+                  {unreadCount > 0 && (
+                    <span className="absolute top-1.5 right-1.5 flex h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-background" />
+                  )}
+                  <span className="sr-only">Open notifications ({unreadCount} unread)</span>
                 </Button>
               }
             />
-            <DropdownMenuContent align="end" className="w-72 rounded-xl">
-              <DropdownMenuGroup>
-                <DropdownMenuLabel>Notifications</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <div className="px-2 py-3 text-sm text-muted-foreground">
-                  No new notifications.
-                </div>
-              </DropdownMenuGroup>
+            <DropdownMenuContent align="end" className="w-80 rounded-xl p-0 border border-border/40 shadow-xl bg-background/95 backdrop-blur-md overflow-hidden">
+              <div className="p-3 border-b border-border/40 flex items-center justify-between bg-muted/20">
+                <span className="text-xs font-bold text-foreground">Notifications</span>
+                {unreadCount > 0 && (
+                  <button
+                    onClick={handleMarkAllAsRead}
+                    className="text-[10px] font-bold text-primary hover:underline hover:scale-[1.02] active:scale-[0.98] transition-all"
+                  >
+                    Mark all as read
+                  </button>
+                )}
+              </div>
+              <div className="max-h-72 overflow-y-auto divide-y divide-border/20">
+                {notifications.length === 0 ? (
+                  <div className="px-4 py-8 text-center text-xs text-muted-foreground">
+                    No notifications yet.
+                  </div>
+                ) : (
+                  notifications.map((notif) => (
+                    <div
+                      key={notif.id}
+                      onClick={() => handleMarkAsRead(notif)}
+                      className={cn(
+                        "p-3 text-xs cursor-pointer transition-all duration-200 hover:bg-muted/40 relative flex gap-2.5 items-start",
+                        !notif.read && "bg-muted/10 font-medium"
+                      )}
+                    >
+                      {!notif.read && (
+                        <span className="absolute left-2.5 top-4.5 size-1.5 rounded-full bg-red-500" />
+                      )}
+                      <div className={cn("space-y-1 w-full pl-3.5", !notif.read && "font-medium")}>
+                        <p className={cn("text-foreground font-bold leading-tight", !notif.read && "text-primary")}>
+                          {notif.title}
+                        </p>
+                        <p className="text-muted-foreground text-[11px] leading-relaxed">
+                          {notif.message}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground font-semibold mt-1">
+                          {new Date(notif.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {new Date(notif.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
             </DropdownMenuContent>
           </DropdownMenu>
 
