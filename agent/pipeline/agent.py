@@ -168,13 +168,13 @@ Question : {question}"""
             non_conformity_details.append(f"Emprise au sol non-conforme : {emprise}% dépasse le coefficient maximum autorisé pour la zone {zone} ({max_emprise}%).")
             
         report = []
-        report.append("### Rapport d'Évaluation Réglementaire RGC Marocain (AI Agent)")
-        report.append(f"**Analyse de conformité automatisée pour : {type_const}**")
-        report.append(f"- **Zone d'aménagement :** {zone}")
-        report.append(f"- **Surface terrain déclarée :** {surface_terrain} m²")
+        report.append("* Rapport d'Évaluation Réglementaire RGC Marocain (AI Agent)")
+        report.append(f"* Analyse de conformité automatisée pour : {type_const} *")
+        report.append(f"- * Zone d'aménagement : * {zone}")
+        report.append(f"- * Surface terrain déclarée : * {surface_terrain} m²")
         report.append("")
         
-        report.append("#### Éléments de Conformité Valides")
+        report.append("* Éléments de Conformité Valides")
         if conformity_details:
             for item in conformity_details:
                 report.append(f"- {item}")
@@ -182,7 +182,7 @@ Question : {question}"""
             report.append("- Aucun élément conforme détecté.")
         report.append("")
         
-        report.append("#### Anomalies et Non-Conformités Détectées")
+        report.append("* Anomalies et Non-Conformités Détectées")
         if non_conformity_details:
             for item in non_conformity_details:
                 report.append(f"- {item}")
@@ -190,11 +190,11 @@ Question : {question}"""
             report.append("- Félicitations ! Aucun écart par rapport au Règlement Général de Construction n'a été détecté.")
         report.append("")
         
-        report.append("#### Pièces Administratives Recommandées")
-        report.append("1. **Plan de situation** à l'échelle 1/2000ème.")
-        report.append("2. **Certificat de propriété récent** délivré par la Conservation Foncière (ANCFCC).")
-        report.append("3. **Plan de masse** signé par l'architecte du projet.")
-        report.append("4. **Plans de coupes et de façades** détaillant les hauteurs déclarées.")
+        report.append("* Pièces Administratives Recommandées")
+        report.append("1. *Plan de situation* à l'échelle 1/2000ème.")
+        report.append("2. *Certificat de propriété récent* délivré par la Conservation Foncière (ANCFCC).")
+        report.append("3. *Plan de masse* signé par l'architecte du projet.")
+        report.append("4. *Plans de coupes et de façades* détaillant les hauteurs déclarées.")
         
         return "\n".join(report)
 
@@ -286,16 +286,16 @@ Question : {question}"""
     def verify_dossier(self, dossier_info: dict) -> dict:
         """Vérifie la conformité d'un dossier de permis de construire"""
         question = f"""
-Vérifie la conformité de ce projet avec le RGC :
-- Type de construction : {dossier_info.get('type')}
-- Hauteur : {dossier_info.get('hauteur')} m
-- Recul par rapport à la voie publique : {dossier_info.get('recul')} m
-- Emprise au sol : {dossier_info.get('emprise')}%
-- Surface terrain : {dossier_info.get('surface_terrain')} m²
-- Zone : {dossier_info.get('zone', 'non spécifiée')}
+        Vérifie la conformité de ce projet avec le RGC :
+        - Type de construction : {dossier_info.get('type')}
+        - Hauteur : {dossier_info.get('hauteur')} m
+        - Recul par rapport à la voie publique : {dossier_info.get('recul')} m
+        - Emprise au sol : {dossier_info.get('emprise')}%
+        - Surface terrain : {dossier_info.get('surface_terrain')} m²
+        - Zone : {dossier_info.get('zone', 'non spécifiée')}
 
-Liste les points conformes, les non-conformités, et les pièces manquantes.
-"""
+        Liste les points conformes, les non-conformités, et les pièces manquantes.
+        """
         return self.query(question)
 
 

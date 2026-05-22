@@ -6,6 +6,7 @@ class PermitDocument(BaseModel):
     key: str
     label: str
     filename: str
+    url: Optional[str] = None
     size: Optional[str] = None
     approved: bool = False
     required: bool = True
