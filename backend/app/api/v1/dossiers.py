@@ -1,11 +1,17 @@
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException
+import os
+import shutil
+from pathlib import Path
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from app.api.dependencies import get_db, get_current_active_user, get_current_admin_user
 from app.models.user import User
 from app.schemas.dossier import DossierCreate, DossierResponse, DossierUpdate
 from app.crud import dossier as crud_dossier
+from app.crud import notification as crud_notification
 from app.services.agent_client import verify_dossier_with_agent
+from app.core.config import settings
 
 router = APIRouter()
 
@@ -76,6 +82,20 @@ async def create_dossier(
         db.refresh(db_dossier)
     except Exception as e:
         print(f"Error during automatic compliance check: {e}")
+
+    # Trigger notifications for all administrative users (admins and authorities)
+    try:
+        admin_users = db.query(User).filter(User.role.in_(["admin", "authority"])).all()
+        for admin in admin_users:
+            crud_notification.create_notification(
+                db=db,
+                user_id=admin.id,
+                title="New Dossier Submitted",
+                message=f"A new dossier '{db_dossier.title}' has been submitted for review by {current_user.full_name or current_user.email}.",
+                dossier_id=db_dossier.id
+            )
+    except Exception as notif_err:
+        print(f"Error creating admin notifications: {notif_err}")
         
     return db_dossier
 
@@ -144,3 +164,196 @@ async def verify_compliance(
     updated_dossier = crud_dossier.update_dossier(db, db_dossier, update_data)
     
     return {"message": "Compliance verified", "dossier": updated_dossier, "agent_sources": agent_response.get("sources", [])}
+
+@router.post("/{dossier_id}/upload-document")
+async def upload_document(
+    dossier_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Upload a document file for a specific dossier.
+    Returns the file URL to be stored in document metadata.
+    """
+    # Verify dossier ownership/access
+    db_dossier = crud_dossier.get_dossier(db, dossier_id=dossier_id)
+    if db_dossier is None:
+        raise HTTPException(status_code=404, detail="Dossier not found")
+    
+    if current_user.role not in {"admin", "authority"} and db_dossier.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to upload documents to this dossier")
+    
+    # Validate file size
+    if file.size and file.size > settings.MAX_UPLOAD_SIZE:
+        raise HTTPException(status_code=413, detail="File too large")
+    
+    try:
+        # Create dossier-specific directory
+        dossier_dir = Path(settings.UPLOADS_DIR) / f"dossier_{dossier_id}"
+        dossier_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Sanitize filename
+        filename = file.filename or "document"
+        # Remove potentially dangerous characters
+        filename = "".join(c for c in filename if c.isalnum() or c in "._- ").rstrip()
+        if not filename:
+            filename = "document"
+        
+        # Save file
+        file_path = dossier_dir / filename
+        
+        # If file exists, append counter
+        if file_path.exists():
+            name, ext = filename.rsplit(".", 1) if "." in filename else (filename, "")
+            counter = 1
+            while file_path.exists():
+                new_name = f"{name}_{counter}.{ext}" if ext else f"{name}_{counter}"
+                file_path = dossier_dir / new_name
+                counter += 1
+        
+        # Write file
+        with open(file_path, "wb") as f:
+            content = await file.read()
+            f.write(content)
+        
+        # Generate URL for the document
+        file_url = f"/api/v1/dossiers/{dossier_id}/documents/{file_path.name}"
+        
+        return {
+            "filename": file_path.name,
+            "url": file_url,
+            "size": len(content)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"File upload failed: {str(e)}")
+
+@router.post("/{dossier_id}/documents/{filename}")
+async def download_document(
+    dossier_id: int,
+    filename: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Download or preview a document from a dossier.
+    Accessible by dossier owner, admins, and authorities.
+    """
+    # Verify dossier exists and user has access
+    db_dossier = crud_dossier.get_dossier(db, dossier_id=dossier_id)
+    if db_dossier is None:
+        raise HTTPException(status_code=404, detail="Dossier not found")
+    
+    if current_user.role not in {"admin", "authority"} and db_dossier.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to access this document")
+    
+    # Construct safe file path
+    dossier_dir = Path(settings.UPLOADS_DIR) / f"dossier_{dossier_id}"
+    file_path = dossier_dir / filename
+    
+    # Security: verify file is within dossier directory
+    try:
+        file_path = file_path.resolve()
+        dossier_dir = dossier_dir.resolve()
+        if not str(file_path).startswith(str(dossier_dir)):
+            raise HTTPException(status_code=403, detail="Invalid file path")
+    except Exception as e:
+        raise HTTPException(status_code=403, detail="Invalid file path")
+    
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="Document not found")
+    
+    return FileResponse(
+        path=file_path,
+        filename=file_path.name,
+        media_type="application/octet-stream"
+    )
+
+@router.post("/upload-temporary-document")
+async def upload_temporary_document(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Upload a document file temporarily before dossier creation.
+    Used for file uploads during form creation.
+    Returns the file URL to be stored in document metadata.
+    """
+    # Validate file size
+    if file.size and file.size > settings.MAX_UPLOAD_SIZE:
+        raise HTTPException(status_code=413, detail="File too large")
+    
+    try:
+        # Create temporary directory for user
+        temp_dir = Path(settings.UPLOADS_DIR) / "temporary" / f"user_{current_user.id}"
+        temp_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Sanitize filename
+        filename = file.filename or "document"
+        # Remove potentially dangerous characters
+        filename = "".join(c for c in filename if c.isalnum() or c in "._- ").rstrip()
+        if not filename:
+            filename = "document"
+        
+        # Save file
+        file_path = temp_dir / filename
+        
+        # If file exists, append counter
+        if file_path.exists():
+            name, ext = filename.rsplit(".", 1) if "." in filename else (filename, "")
+            counter = 1
+            while file_path.exists():
+                new_name = f"{name}_{counter}.{ext}" if ext else f"{name}_{counter}"
+                file_path = temp_dir / new_name
+                counter += 1
+        
+        # Write file
+        with open(file_path, "wb") as f:
+            content = await file.read()
+            f.write(content)
+        
+        # Generate URL for the document
+        file_url = f"/api/v1/temporary-documents/{file_path.name}?user_id={current_user.id}"
+        
+        return {
+            "filename": file_path.name,
+            "url": file_url,
+            "size": len(content)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"File upload failed: {str(e)}")
+
+@router.get("/temporary-documents/{filename}")
+async def download_temporary_document(
+    filename: str,
+    user_id: int,
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Download or preview a temporarily uploaded document.
+    """
+    # Security: only allow users to access their own temporary files
+    if current_user.id != user_id:
+        raise HTTPException(status_code=403, detail="Not authorized to access this document")
+    
+    # Construct safe file path
+    temp_dir = Path(settings.UPLOADS_DIR) / "temporary" / f"user_{user_id}"
+    file_path = temp_dir / filename
+    
+    # Security: verify file is within temp directory
+    try:
+        file_path = file_path.resolve()
+        temp_dir = temp_dir.resolve()
+        if not str(file_path).startswith(str(temp_dir)):
+            raise HTTPException(status_code=403, detail="Invalid file path")
+    except Exception as e:
+        raise HTTPException(status_code=403, detail="Invalid file path")
+    
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="Document not found")
+    
+    return FileResponse(
+        path=file_path,
+        filename=file_path.name,
+        media_type="application/octet-stream"
+    )

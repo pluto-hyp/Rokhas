@@ -85,10 +85,10 @@ export default function DashboardPage() {
   }
 
   const stats = {
-    totalPermits: summary?.permits.total || 0,
-    approvedRate: summary?.permits.approval_rate || 0,
-    activeUsers: summary?.entities.citizens || 0,
-    pendingEvaluations: summary?.entities.evaluations || 0
+    totalPermits: Math.floor(summary?.permits.total || 0),
+    approvedRate: Math.round(summary?.permits.approval_rate || 0),
+    activeUsers: Math.floor(summary?.entities.citizens || 0),
+    pendingEvaluations: Math.floor(summary?.entities.evaluations || 0)
   }
 
   return (

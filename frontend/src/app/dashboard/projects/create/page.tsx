@@ -4,7 +4,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { createProject, PermitDocument, ProjectCreate } from "@/lib/api";
+import { createProject, PermitDocument, ProjectCreate, uploadTemporaryDocument } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -84,7 +84,7 @@ export default function CreateProjectPage() {
     land_reference: "",
   });
 
-  const [files, setFiles] = React.useState<{ [key: string]: { name: string; size: string; approved?: boolean; notes?: string[] } }>({});
+  const [files, setFiles] = React.useState<{ [key: string]: { name: string; size: string; approved?: boolean; notes?: string[]; url?: string } }>({});
   const fileInputRefs = React.useRef<{ [key: string]: HTMLInputElement | null }>({});
 
   const triggerFileInput = (key: string) => {
@@ -93,64 +93,71 @@ export default function CreateProjectPage() {
 
   const handleFileChange = (key: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file || !token) return;
 
     const sizeStr = file.size > 1024 * 1024 
       ? `${(file.size / (1024 * 1024)).toFixed(1)} MB` 
       : `${(file.size / 1024).toFixed(0)} KB`;
 
     toast.promise(
-      new Promise<File>((resolve) => {
-        setTimeout(() => {
-          resolve(file);
-        }, 1200);
-      }),
+      (async () => {
+        // Upload file to backend
+        const uploadResult = await uploadTemporaryDocument(file, token);
+        
+        // Store in local state with URL
+        setFiles(prev => ({
+          ...prev,
+          [key]: {
+            name: file.name,
+            size: sizeStr,
+            url: uploadResult.url,
+            approved: true,
+            notes: ["File uploaded and stored."],
+          },
+        }));
+        
+        return uploadResult;
+      })(),
       {
-        loading: `AI parsing and uploading ${file.name}...`,
-        success: (parsedFile) => {
-          setFiles(prev => ({
-            ...prev,
-            [key]: {
-              name: parsedFile.name,
-              size: sizeStr,
-              approved: true,
-              notes: ["Uploaded. AI pre-check may continue in the background."],
-            },
-          }));
-          
-          const cinMatch = parsedFile.name.match(/\b([A-Z]{1,2}\d{5,6})\b/i);
+        loading: `Uploading ${file.name}...`,
+        success: (uploadResult) => {
+          // Extract metadata from filename if available
+          const cinMatch = file.name.match(/\b([A-Z]{1,2}\d{5,6})\b/i);
           if (cinMatch && !formData.owner_cin) {
             setFormData(prev => ({ ...prev, owner_cin: cinMatch[1].toUpperCase() }));
-            toast.info(`AI Extracted CIN: ${cinMatch[1].toUpperCase()}`);
+            toast.info(`Extracted CIN: ${cinMatch[1].toUpperCase()}`);
           }
           
-          const landMatch = parsedFile.name.match(/\b(\d{4,6}\/\d{2})\b/);
+          const landMatch = file.name.match(/\b(\d{4,6}\/\d{2})\b/);
           if (landMatch && !formData.land_reference) {
             const parsedLand = `Titre Foncier ${landMatch[1]}`;
             setFormData(prev => ({ ...prev, land_reference: parsedLand }));
-            toast.info(`AI Extracted Land Ref: ${parsedLand}`);
+            toast.info(`Extracted Land Ref: ${parsedLand}`);
           }
 
-          const surfaceMatch = parsedFile.name.match(/\b(\d{2,4})\s*(m2|sqm|meters)\b/i);
+          const surfaceMatch = file.name.match(/\b(\d{2,4})\s*(m2|sqm|meters)\b/i);
           if (surfaceMatch && !formData.surface_terrain) {
             const parsedSurface = parseInt(surfaceMatch[1]);
             setFormData(prev => ({ ...prev, surface_terrain: parsedSurface }));
-            toast.info(`AI Extracted Surface Area: ${parsedSurface} m²`);
+            toast.info(`Extracted Surface Area: ${parsedSurface} m²`);
           }
 
-          const nameMatch = parsedFile.name.match(/(?:by|owner|client)_([a-zA-Z]+(?:_[a-zA-Z]+)+)/i);
+          const nameMatch = file.name.match(/(?:by|owner|client)_([a-zA-Z]+(?:_[a-zA-Z]+)+)/i);
           if (nameMatch && !formData.owner_name) {
             const parsedName = nameMatch[1].replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
             setFormData(prev => ({ ...prev, owner_name: parsedName }));
-            toast.info(`AI Extracted Owner Name: ${parsedName}`);
+            toast.info(`Extracted Owner Name: ${parsedName}`);
           }
 
-          return `${parsedFile.name} uploaded and accepted for submission.`;
+          return `${file.name} uploaded successfully!`;
         },
-        error: 'Upload and parsing failed',
+        error: (err) => {
+          return err instanceof Error ? err.message : "Upload failed";
+        },
       }
     );
 
+    // Also run AI analysis on the filename
     (async () => {
       try {
         const resp = await fetch('/api/v1/agent/analyze-file', {
@@ -167,16 +174,17 @@ export default function CreateProjectPage() {
             || /agent unavailable|fallback|indisponible/i.test(message);
           const approved = reviewRequired ? true : !!data.approved;
 
-          setFiles(prev => ({
-            ...prev,
-            [key]: { name: file.name, size: sizeStr, approved, notes }
-          }));
+          setFiles(prev => {
+            const existing = prev[key];
+            return {
+              ...prev,
+              [key]: { ...existing, approved, notes: [...(existing?.notes || []), ...notes] }
+            };
+          });
           if (reviewRequired) {
-            toast.warning(`${file.name} accepted for manual authority review because the AI agent is offline.`);
-          } else if (approved) {
-            toast.success(`${file.name} approved by AI agent.`);
-          } else {
-            toast.error(`${file.name} flagged: ${data.message || 'Further review required.'}`);
+            toast.warning(`${file.name} accepted for manual authority review (AI agent offline).`);
+          } else if (!approved) {
+            toast.error(`${file.name} flagged: ${message || 'Further review required.'}`);
           }
         }
       } catch (err) {
@@ -262,6 +270,7 @@ export default function CreateProjectPage() {
           key: doc.key,
           label: doc.label,
           filename: files[doc.key]?.name || "",
+          url: files[doc.key]?.url,
           size: files[doc.key]?.size,
           approved: files[doc.key]?.approved !== false,
           required: doc.required !== false,

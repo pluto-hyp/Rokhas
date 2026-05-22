@@ -37,7 +37,7 @@ export default function BusinessesPage() {
   }, [token]);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 px-4 py-4">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-foreground">Businesses</h1>
@@ -67,7 +67,7 @@ export default function BusinessesPage() {
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left">
-            <thead className="bg-muted/30 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+            <thead className="bg-muted/10 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
               <tr>
                 <th className="px-6 py-4">Business Name</th>
                 <th className="px-6 py-4">Type</th>

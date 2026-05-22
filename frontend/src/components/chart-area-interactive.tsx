@@ -57,13 +57,11 @@ export function ChartAreaInteractive({
   const filteredData = React.useMemo(() => {
     if (!data.length) return [];
     
-    // In a real app, filtering would happen here based on timeRange
-    // For now, we return the data passed
     return data;
   }, [data, timeRange]);
 
   return (
-    <Card className="@container/card">
+    <Card className="@container/card py-2">
       <CardHeader>
         <CardTitle>{title}</CardTitle>
         <CardDescription>
