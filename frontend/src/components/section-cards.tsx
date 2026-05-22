@@ -30,7 +30,7 @@ export function SectionCards({ stats }: SectionCardsProps) {
 
   return (
     <div className="grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-linear-to-t *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4 dark:*:data-[slot=card]:bg-card">
-      <Card className="@container/card">
+      <Card className="@container/card py-2">
         <CardHeader>
           <CardDescription>Total Dossiers</CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
@@ -53,7 +53,7 @@ export function SectionCards({ stats }: SectionCardsProps) {
         </CardFooter>
       </Card>
 
-      <Card className="@container/card">
+      <Card className="@container/card py-2">
         <CardHeader>
           <CardDescription>Approval Rate</CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
@@ -76,7 +76,7 @@ export function SectionCards({ stats }: SectionCardsProps) {
         </CardFooter>
       </Card>
 
-      <Card className="@container/card">
+      <Card className="@container/card py-2">
         <CardHeader>
           <CardDescription>Active Citizens</CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
@@ -99,7 +99,7 @@ export function SectionCards({ stats }: SectionCardsProps) {
         </CardFooter>
       </Card>
 
-      <Card className="@container/card">
+      <Card className="@container/card py-2">
         <CardHeader>
           <CardDescription>Pending Review</CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">

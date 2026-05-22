@@ -19,6 +19,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { getReportSummary, getProjects, ReportSummary, Project } from "@/lib/api";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
+import Link from "next/link";
 import { 
   ComposedChart,
   Line,
@@ -314,7 +315,7 @@ export default function ReportsPage() {
       </div>
 
       {/* UNIQUE CHART SECTION: Processing Speed Composed Chart */}
-      <Card className="border-border/40 shadow-sm bg-card">
+      <Card className="border-border/40 shadow-sm bg-card py-2">
         <CardHeader>
           <CardTitle className="text-lg font-bold">Submission Velocity & Processing Duration</CardTitle>
           <CardDescription>Monthly comparison of active dossiers processed against mean response times (in days)</CardDescription>
@@ -339,7 +340,7 @@ export default function ReportsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* Category distribution */}
-        <Card className="lg:col-span-2 border-border/40 shadow-sm bg-card">
+        <Card className="lg:col-span-2 border-border/40 shadow-sm bg-card py-2">
           <CardHeader>
             <CardTitle className="text-lg font-bold">Sectors & Regulation Classes</CardTitle>
             <CardDescription>Visual ratio of urban permit applications currently processed by category</CardDescription>
@@ -369,7 +370,7 @@ export default function ReportsPage() {
         </Card>
 
         {/* Dynamic Helpful panel */}
-        <Card className="lg:col-span-1 border-border/40 shadow-sm bg-card flex flex-col justify-between">
+        <Card className="lg:col-span-1 border-border/40 shadow-sm bg-card flex flex-col justify-between py-2">
           <CardHeader>
             <CardTitle className="text-lg font-bold">Advisory & Guidelines</CardTitle>
             <CardDescription>Zoning regulations and compliance co-pilot feedback</CardDescription>
@@ -391,7 +392,7 @@ export default function ReportsPage() {
               </div>
             </div>
 
-            <div className="p-4 rounded-2xl bg-primary/5 border border-primary/10 flex items-center justify-between mt-4">
+            <Link href="/help" className="p-4 rounded-2xl bg-primary/5 border border-primary/10 flex items-center justify-between mt-4 hover:bg-primary/10 transition-colors cursor-pointer">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-xl bg-primary/10 text-primary">
                   <Star className="w-4 h-4" />
@@ -401,8 +402,8 @@ export default function ReportsPage() {
                   <p className="text-[10px] text-muted-foreground">Ask the compliance co-pilot</p>
                 </div>
               </div>
-              <ArrowUpRight className="w-4 h-4 text-muted-foreground/60 hover:text-foreground cursor-pointer transition-colors" />
-            </div>
+              <ArrowUpRight className="w-4 h-4 text-muted-foreground/60 hover:text-foreground transition-colors" />
+            </Link>
           </CardContent>
         </Card>
 

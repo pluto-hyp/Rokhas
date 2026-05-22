@@ -40,7 +40,6 @@ export default function CompliancePage() {
   const { token, user: authUser } = useAuth();
   const router = useRouter();
 
-  // Role gating: Only authority / admins can access this page
   useEffect(() => {
     if (!loading && authUser && authUser.role !== "authority") {
       toast.error("Access denied: Administrative clearance required");
@@ -65,7 +64,6 @@ export default function CompliancePage() {
     fetchReport();
   }, [token]);
 
-  // Real-time compliance exporter supporting both CSV & JSON
   const handleExportData = () => {
     if (!report) {
       toast.error("No active report data to export");
@@ -144,7 +142,6 @@ export default function CompliancePage() {
     );
   }
 
-  // AI Compliance Risk Radar Chart
   const radarData = [
     { subject: "Regulatory Accuracy", A: 96, B: 88, fullMark: 100 },
     { subject: "Parsing Velocity", A: 92, B: 82, fullMark: 100 },
@@ -154,7 +151,6 @@ export default function CompliancePage() {
     { subject: "Risk Mitigation", A: 90, B: 85, fullMark: 100 },
   ];
 
-  // Zonal Processing Radial Bar Chart
   const radialData = [
     { name: "Urban Zone A", uv: 94, fill: "var(--chart-2)" },
     { name: "Commercial Zone B", uv: 86, fill: "var(--chart-1)" },
@@ -162,7 +158,6 @@ export default function CompliancePage() {
     { name: "Rural / Peripheral", uv: 62, fill: "var(--chart-5)" },
   ];
 
-  // Compliance Stepper Funnel Pipeline
   const funnelStages = [
     { name: "Ingestion & Parse", count: report?.permits.total || 52, percent: 100, color: "bg-blue-500", text: "text-blue-500", desc: "Automated OCR & AI legal parsing of dossiers" },
     { name: "Compliance Check", count: Math.round((report?.permits.total || 52) * 0.75), percent: 75, color: "bg-purple-500", text: "text-purple-500", desc: "Interactive AI agent zoning validation" },
@@ -202,7 +197,7 @@ export default function CompliancePage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* Radar compliance chart */}
-        <Card className="lg:col-span-2 border-border/40 shadow-sm bg-card overflow-hidden flex flex-col justify-between">
+        <Card className="lg:col-span-2 border-border/40 shadow-sm bg-card overflow-hidden flex flex-col justify-between py-2">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
@@ -248,7 +243,7 @@ export default function CompliancePage() {
         </Card>
 
         {/* Zonal Radial Chart */}
-        <Card className="lg:col-span-1 border-border/40 shadow-sm bg-card overflow-hidden flex flex-col justify-between">
+        <Card className="lg:col-span-1 border-border/40 shadow-sm bg-card overflow-hidden flex flex-col justify-between py-2">
           <CardHeader>
             <CardTitle className="text-lg font-bold">Zonal Processing Integrity</CardTitle>
             <CardDescription>Success rate diagnostics mapped across regional municipal zones</CardDescription>
@@ -282,7 +277,7 @@ export default function CompliancePage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* FUNNEL STAGES */}
-        <Card className="lg:col-span-2 border-border/40 shadow-sm bg-card">
+        <Card className="lg:col-span-2 border-border/40 shadow-sm bg-card py-2">
           <CardHeader>
             <CardTitle className="text-lg font-bold">Zoning Dossier Processing Funnel</CardTitle>
             <CardDescription>Operational stage throughput analysis of current permit applications</CardDescription>
@@ -322,7 +317,7 @@ export default function CompliancePage() {
         </Card>
 
         {/* AI Compliance Panel */}
-        <Card className="lg:col-span-1 border-border/40 shadow-sm bg-card flex flex-col justify-between">
+        <Card className="lg:col-span-1 border-border/40 shadow-sm bg-card flex flex-col justify-between py-2">
           <CardHeader>
             <CardTitle className="text-lg font-bold flex items-center gap-2">
               <Zap className="w-4 h-4 text-primary animate-pulse" />

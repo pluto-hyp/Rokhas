@@ -78,7 +78,7 @@ export function ChartPieInteractive({
   if (!data.length) return null;
 
   return (
-    <Card data-chart={id} className="flex flex-col">
+    <Card data-chart={id} className="flex flex-col py-2">
       <ChartStyle id={id} config={config} />
       <CardHeader className="flex-row items-start space-y-0 pb-0">
         <div className="grid gap-1">

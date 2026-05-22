@@ -34,7 +34,7 @@ export default function CitizensPage() {
   }, [token]);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 px-4 py-4">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-foreground">Citizens Portal</h1>
