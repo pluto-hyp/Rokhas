@@ -22,6 +22,9 @@ def ensure_dossier_columns():
         "municipal_fee_receipt": "VARCHAR",
         "municipal_fee_paid": "BOOLEAN NOT NULL DEFAULT 0",
         "permit_documents": "JSON NOT NULL DEFAULT '[]'",
+        "signed_by": "VARCHAR",
+        "signature_hash": "VARCHAR",
+        "signed_at": "DATETIME",
     }
 
     if engine.dialect.name != "sqlite":

@@ -74,7 +74,6 @@ export default function AgentPage() {
         <div>
           <h2 className="text-3xl font-bold tracking-tight flex items-center gap-3">
             Rokhas Agent
-            <span className="text-[10px] bg-primary text-primary-foreground px-2 py-0.5 rounded-full uppercase tracking-widest font-bold">AI Power</span>
           </h2>
           <p className="text-muted-foreground text-sm mt-1">
             Precision guidance for urban planning and regulatory compliance.
