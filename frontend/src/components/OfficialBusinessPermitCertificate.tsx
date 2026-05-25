@@ -4,18 +4,16 @@ import React, { useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Printer } from 'lucide-react';
 
-export interface PermitCertificateData {
+export interface BusinessPermitCertificateData {
   dossier_id: number;
   applicant_name: string;
   applicant_cin: string;
-  project_title: string;
-  project_description: string;
+  business_name: string;
+  business_type: string;
+  business_description: string;
   location: string;
   land_reference: string;
-  dimensions: {
-    hauteur?: number;
-    recul?: number;
-    emprise?: number;
+  dimensions?: {
     surface_terrain?: number;
   };
   zone: string;
@@ -24,12 +22,12 @@ export interface PermitCertificateData {
   signed_at: string;
 }
 
-interface OfficialPermitCertificateProps {
-  data: PermitCertificateData;
+interface OfficialBusinessPermitCertificateProps {
+  data: BusinessPermitCertificateData;
   onClose?: () => void;
 }
 
-export const OfficialPermitCertificate: React.FC<OfficialPermitCertificateProps> = ({
+export const OfficialBusinessPermitCertificate: React.FC<OfficialBusinessPermitCertificateProps> = ({
   data,
   onClose,
 }) => {
@@ -58,7 +56,7 @@ export const OfficialPermitCertificate: React.FC<OfficialPermitCertificateProps>
     return `${day} ${monthNames[date.getMonth()]} ${year}`;
   };
 
-  const decisionNumber = `PC-${data.dossier_id}-${new Date(data.signed_at).getFullYear()}`;
+  const decisionNumber = `LEC-${data.dossier_id}-${new Date(data.signed_at).getFullYear()}`;
 
   return (
     <div className="w-full bg-white rounded-lg shadow-lg overflow-hidden">
@@ -120,139 +118,118 @@ export const OfficialPermitCertificate: React.FC<OfficialPermitCertificateProps>
               marginBottom: '12px'
             }}
           >
-            PERMIS DE CONSTRUIRE
+            LICENCE D'EXPLOITATION COMMERCIALE
           </h1>
           <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#2c2c2c', marginBottom: '8px' }}>
             Décision n° {decisionNumber}
           </div>
           <div style={{ fontSize: '11px', color: '#666', fontStyle: 'italic', letterSpacing: '0.05em' }}>
-            Arrêté Municipal
+            Permis d'Exploitation Professionnelle
           </div>
         </div>
 
         {/* Decision Body */}
         <div className="mb-6" style={{ textAlign: 'justify', fontSize: '12px', lineHeight: '1.8', color: '#2c2c2c' }}>
           <p style={{ marginBottom: '12px' }}>
-            Vu le Réglement Général de Construction (RGC) en vigueur,
+            Vu le Code de Commerce et les dispositions réglementaires en vigueur,
           </p>
           <p style={{ marginBottom: '12px' }}>
-            Vu le Code de l'Urbanisme et de la Construction,
+            Vu le Réglement Municipal relatif aux établissements commerciaux et d'exploitation,
           </p>
           <p style={{ marginBottom: '12px' }}>
-            Vu le dossier de demande de permis de construire enregistré sous la référence administrative :
+            Vu la demande de licence d'exploitation commerciale enregistrée sous la référence administrative :
           </p>
           <p style={{ fontWeight: 'bold', textAlign: 'center', marginBottom: '16px', padding: '12px', backgroundColor: '#f8f6f1', border: '1px solid #d4c5b9' }}>
             {data.land_reference}
           </p>
 
-          {/* Applicant & Project Information Box */}
+          {/* Business Information Box */}
           <div style={{ backgroundColor: '#faf8f5', padding: '16px', marginBottom: '16px', border: '2px solid #8B6F47' }}>
             <div style={{ fontSize: '12px', marginBottom: '10px' }}>
               <p style={{ marginBottom: '8px' }}>
-                <span style={{ fontWeight: 'bold', minWidth: '120px', display: 'inline-block' }}>Demandeur:</span> {data.applicant_name}
+                <span style={{ fontWeight: 'bold', minWidth: '150px', display: 'inline-block' }}>Gérant/Exploitant:</span> {data.applicant_name}
               </p>
               <p style={{ marginBottom: '8px' }}>
-                <span style={{ fontWeight: 'bold', minWidth: '120px', display: 'inline-block' }}>CIN:</span> {data.applicant_cin}
+                <span style={{ fontWeight: 'bold', minWidth: '150px', display: 'inline-block' }}>CIN/Passeport:</span> {data.applicant_cin}
               </p>
               <p style={{ marginBottom: '8px' }}>
-                <span style={{ fontWeight: 'bold', minWidth: '120px', display: 'inline-block' }}>Titre du Projet:</span> {data.project_title}
+                <span style={{ fontWeight: 'bold', minWidth: '150px', display: 'inline-block' }}>Dénomination Commerciale:</span> {data.business_name}
               </p>
               <p style={{ marginBottom: '8px' }}>
-                <span style={{ fontWeight: 'bold', minWidth: '120px', display: 'inline-block' }}>Description:</span> {data.project_description}
+                <span style={{ fontWeight: 'bold', minWidth: '150px', display: 'inline-block' }}>Type d'Activité:</span> {data.business_type}
               </p>
               <p style={{ marginBottom: '8px' }}>
-                <span style={{ fontWeight: 'bold', minWidth: '120px', display: 'inline-block' }}>Localisation:</span> {data.location}
+                <span style={{ fontWeight: 'bold', minWidth: '150px', display: 'inline-block' }}>Description:</span> {data.business_description}
               </p>
               <p style={{ marginBottom: '8px' }}>
-                <span style={{ fontWeight: 'bold', minWidth: '120px', display: 'inline-block' }}>Zone d'Urbanisme:</span> {data.zone}
+                <span style={{ fontWeight: 'bold', minWidth: '150px', display: 'inline-block' }}>Localisation:</span> {data.location}
+              </p>
+              <p style={{ marginBottom: '8px' }}>
+                <span style={{ fontWeight: 'bold', minWidth: '150px', display: 'inline-block' }}>Zone Commerciale:</span> {data.zone}
               </p>
             </div>
             
-            {(data.dimensions.hauteur || data.dimensions.surface_terrain) && (
+            {data.dimensions?.surface_terrain && (
               <div style={{ borderTop: '1px solid #d4c5b9', paddingTop: '10px', fontSize: '11px' }}>
-                <span style={{ fontWeight: 'bold', display: 'block', marginBottom: '6px' }}>Caractéristiques Techniques:</span>
+                <span style={{ fontWeight: 'bold', display: 'block', marginBottom: '6px' }}>Caractéristiques du Local:</span>
                 <ul style={{ marginLeft: '20px', color: '#4a4a4a' }}>
-                  {data.dimensions.hauteur && <li>Hauteur: {data.dimensions.hauteur} m</li>}
-                  {data.dimensions.recul && <li>Recul: {data.dimensions.recul} m</li>}
-                  {data.dimensions.emprise && <li>Emprise: {data.dimensions.emprise} %</li>}
-                  {data.dimensions.surface_terrain && <li>Surface du terrain: {data.dimensions.surface_terrain} m²</li>}
+                  <li>Surface utile: {data.dimensions.surface_terrain} m²</li>
                 </ul>
               </div>
             )}
           </div>
 
           <p style={{ marginBottom: '12px' }}>
-            Vu le rapport technique de conformité avec le Réglement Général de Construction,
+            Vu le respect des normes d'hygiène, de salubrité et de sécurité applicables,
           </p>
           <p style={{ marginBottom: '12px' }}>
-            Vu les frais d'enregistrement municipal acquittés par le demandeur,
+            Vu les frais d'enregistrement municipal et fiscal acquittés,
           </p>
           <p style={{ marginBottom: '16px' }}>
-            Après étude approfondie du dossier et vérification de la conformité totale du projet avec les dispositions légales et réglementaires en vigueur,
+            Après examen du dossier et constatation que l'établissement satisfait à toutes les conditions réglementaires requises,
           </p>
 
           <p style={{ fontWeight: 'bold', fontSize: '13px', marginBottom: '16px', textAlign: 'center' }}>
-            ARRÊTE:
+            AUTORISE:
           </p>
         </div>
 
         {/* Conditions & Legal Articles */}
         <div className="mb-6">
           <h3 style={{ fontWeight: 'bold', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '12px', paddingBottom: '8px', borderBottom: '2px solid #8B6F47', color: '#2c2c2c' }}>
-            ARTICLES ET CONDITIONS OBLIGATOIRES
+            ARTICLES ET CONDITIONS D'EXPLOITATION
           </h3>
 
           <ol style={{ fontSize: '11px', lineHeight: '1.8', color: '#2c2c2c' }}>
             <li style={{ marginBottom: '8px' }}>
-              <span style={{ fontWeight: 'bold' }}>Article 1.</span> Est accordé un permis de construire au demandeur susmentionné pour la réalisation du projet conforme aux conditions énumérées ci-après.
+              <span style={{ fontWeight: 'bold' }}>Article 1.</span> Est accordée au demandeur la licence d'exploitation commerciale pour l'activité susmentionnée à l'adresse indiquée.
             </li>
             <li style={{ marginBottom: '8px' }}>
-              <span style={{ fontWeight: 'bold' }}>Article 2.</span> Le bénéficiaire du permis doit commencer les travaux dans un délai de deux (2) années à partir de la date officielle d'octroi du présent permis.
+              <span style={{ fontWeight: 'bold' }}>Article 2.</span> L'exploitation ne peut débuter qu'après l'obtention officielle de la présente licence.
             </li>
             <li style={{ marginBottom: '8px' }}>
-              <span style={{ fontWeight: 'bold' }}>Article 3.</span> Les travaux doivent être exécutés en conformité stricte et totale avec les plans et tous documents approuvés par les autorités compétentes.
+              <span style={{ fontWeight: 'bold' }}>Article 3.</span> Le titulaire de la licence s'engage à respecter scrupuleusement les normes d'hygiène et de salubrité.
             </li>
             <li style={{ marginBottom: '8px' }}>
-              <span style={{ fontWeight: 'bold' }}>Article 4.</span> Le bénéficiaire doit respecter scrupuleusement les conditions de sécurité et de salubrité publiques selon la réglementation en vigueur.
+              <span style={{ fontWeight: 'bold' }}>Article 4.</span> La licence ne peut être cédée ou transférée sans autorisation préalable des autorités compétentes.
             </li>
             <li style={{ marginBottom: '8px' }}>
-              <span style={{ fontWeight: 'bold' }}>Article 5.</span> Tout changement ou modification du projet initial doit faire l'objet d'une demande d'autorisation préalable auprès des autorités compétentes.
+              <span style={{ fontWeight: 'bold' }}>Article 5.</span> Toute modification de l'activité ou de son lieu d'exercice nécessite une autorisation supplémentaire.
             </li>
             <li style={{ marginBottom: '8px' }}>
-              <span style={{ fontWeight: 'bold' }}>Article 6.</span> Les travaux doivent être exécutés dans le respect total de l'environnement et des normes acoustiques et de pollution applicables.
+              <span style={{ fontWeight: 'bold' }}>Article 6.</span> L'établissement doit être tenu dans un état constant de propreté et de conformité.
             </li>
             <li style={{ marginBottom: '8px' }}>
-              <span style={{ fontWeight: 'bold' }}>Article 7.</span> L'inspection du chantier sera effectuée par les services compétents à différentes étapes d'avancement du projet.
+              <span style={{ fontWeight: 'bold' }}>Article 7.</span> Les horaires d'exploitation doivent respecter la réglementation municipale en vigueur.
             </li>
             <li style={{ marginBottom: '8px' }}>
-              <span style={{ fontWeight: 'bold' }}>Article 8.</span> À la fin des travaux, une demande de certificat de conformité doit être présentée pour validation officielle par les autorités.
+              <span style={{ fontWeight: 'bold' }}>Article 8.</span> L'exploitant est responsable de la sécurité des clients et du personnel.
             </li>
             <li style={{ marginBottom: '8px' }}>
-              <span style={{ fontWeight: 'bold' }}>Article 9.</span> Le non-respect de toute condition stipulée peut entraîner la révocation immédiate du permis de construire.
-            </li>
-            <li style={{ marginBottom: '8px' }}>
-              <span style={{ fontWeight: 'bold' }}>Article 10.</span> La durée de validité du permis est de cinq (5) années à partir de sa date officielle d'octroi.
-            </li>
-            <li style={{ marginBottom: '8px' }}>
-              <span style={{ fontWeight: 'bold' }}>Article 11.</span> En cas de non-démarrage des travaux après le délai prescrit, le permis devient automatiquement nul et non avenu.
-            </li>
-            <li style={{ marginBottom: '8px' }}>
-              <span style={{ fontWeight: 'bold' }}>Article 12.</span> Tout recours contentieux doit être formé devant les autorités compétentes selon les voies légales et réglementaires prévues.
-            </li>
-            <li style={{ marginBottom: '8px' }}>
-              <span style={{ fontWeight: 'bold' }}>Article 13.</span> Le bénéficiaire s'engage formellement à préserver le site et ses alentours lors de l'exécution des travaux.
-            </li>
-            <li style={{ marginBottom: '8px' }}>
-              <span style={{ fontWeight: 'bold' }}>Article 14.</span> L'assurance responsabilité civile est obligatoire et doit être maintenue durant toute la durée des travaux.
-            </li>
-            <li style={{ marginBottom: '8px' }}>
-              <span style={{ fontWeight: 'bold' }}>Article 15.</span> Une clôture de sécurité conforme doit être mise en place autour du périmètre des travaux.
-            </li>
-            <li style={{ marginBottom: '8px' }}>
-              <span style={{ fontWeight: 'bold' }}>Article 16.</span> Les conditions d'urbanisme, de sécurité et d'hygiène doivent être respectées scrupuleusement à tout moment.
+              <span style={{ fontWeight: 'bold' }}>Article 9.</span> Le non-respect des conditions peut entraîner la suspension ou révocation de la licence.
             </li>
             <li>
-              <span style={{ fontWeight: 'bold' }}>Article 17.</span> Le présent arrêté municipal entre en vigueur à partir de sa date officielle d'approbation et de signature.
+              <span style={{ fontWeight: 'bold' }}>Article 10.</span> La présente licence est valable pour une durée de une (1) année, renouvelable annuellement.
             </li>
           </ol>
         </div>
@@ -280,7 +257,7 @@ export const OfficialPermitCertificate: React.FC<OfficialPermitCertificateProps>
                 <span style={{ fontWeight: 'bold' }}>Date d'Approbation:</span> {formatDate(data.signed_at)}
               </p>
               <p style={{ marginBottom: '8px', color: '#666' }}>
-                <span style={{ fontWeight: 'bold' }}>Signature Numérique Certifiée:</span>
+                <span style={{ fontWeight: 'bold' }}>Signature Numérique:</span>
               </p>
               <p
                 style={{
@@ -333,7 +310,7 @@ export const OfficialPermitCertificate: React.FC<OfficialPermitCertificateProps>
                 Fait à COMMUNE D'EL KSIBA, le {formatDate(data.signed_at)}
               </p>
               <p style={{ marginBottom: '8px', fontSize: '9px' }}>
-                Document généré numériquement - Certifié et valide avec authentification numérique SHA-256
+                Licence générée numériquement - Certifiée avec authentification numérique SHA-256
               </p>
               <p style={{ fontSize: '9px', color: '#999' }}>
                 Rokhas - Système d'Enregistrement des Demandes d'Autorisation pour la Construction au Maroc
@@ -359,7 +336,7 @@ export const OfficialPermitCertificate: React.FC<OfficialPermitCertificateProps>
             style={{ backgroundColor: '#8B6F47', color: 'white' }}
           >
             <Printer size={18} />
-            Imprimer le Permis Officiel
+            Imprimer la Licence Officielle
           </Button>
           {onClose && (
             <Button onClick={onClose} variant="outline" style={{ borderColor: '#8B6F47', color: '#8B6F47' }}>

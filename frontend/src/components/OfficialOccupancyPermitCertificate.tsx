@@ -4,7 +4,7 @@ import React, { useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Printer } from 'lucide-react';
 
-export interface PermitCertificateData {
+export interface OccupancyPermitCertificateData {
   dossier_id: number;
   applicant_name: string;
   applicant_cin: string;
@@ -24,12 +24,12 @@ export interface PermitCertificateData {
   signed_at: string;
 }
 
-interface OfficialPermitCertificateProps {
-  data: PermitCertificateData;
+interface OfficialOccupancyPermitCertificateProps {
+  data: OccupancyPermitCertificateData;
   onClose?: () => void;
 }
 
-export const OfficialPermitCertificate: React.FC<OfficialPermitCertificateProps> = ({
+export const OfficialOccupancyPermitCertificate: React.FC<OfficialOccupancyPermitCertificateProps> = ({
   data,
   onClose,
 }) => {
@@ -58,7 +58,7 @@ export const OfficialPermitCertificate: React.FC<OfficialPermitCertificateProps>
     return `${day} ${monthNames[date.getMonth()]} ${year}`;
   };
 
-  const decisionNumber = `PC-${data.dossier_id}-${new Date(data.signed_at).getFullYear()}`;
+  const decisionNumber = `PH-${data.dossier_id}-${new Date(data.signed_at).getFullYear()}`;
 
   return (
     <div className="w-full bg-white rounded-lg shadow-lg overflow-hidden">
@@ -120,75 +120,70 @@ export const OfficialPermitCertificate: React.FC<OfficialPermitCertificateProps>
               marginBottom: '12px'
             }}
           >
-            PERMIS DE CONSTRUIRE
+            PERMIS D'HABITER
           </h1>
           <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#2c2c2c', marginBottom: '8px' }}>
             Décision n° {decisionNumber}
           </div>
           <div style={{ fontSize: '11px', color: '#666', fontStyle: 'italic', letterSpacing: '0.05em' }}>
-            Arrêté Municipal
+            Certificat d'Occupation
           </div>
         </div>
 
         {/* Decision Body */}
         <div className="mb-6" style={{ textAlign: 'justify', fontSize: '12px', lineHeight: '1.8', color: '#2c2c2c' }}>
           <p style={{ marginBottom: '12px' }}>
-            Vu le Réglement Général de Construction (RGC) en vigueur,
+            Vu les dispositions du Code de l'Urbanisme et de la Construction en vigueur,
           </p>
           <p style={{ marginBottom: '12px' }}>
-            Vu le Code de l'Urbanisme et de la Construction,
+            Vu le Réglement Général de Construction (RGC) applicable,
           </p>
           <p style={{ marginBottom: '12px' }}>
-            Vu le dossier de demande de permis de construire enregistré sous la référence administrative :
+            Vu le dossier de demande de permis d'habiter enregistré sous la référence administrative :
           </p>
           <p style={{ fontWeight: 'bold', textAlign: 'center', marginBottom: '16px', padding: '12px', backgroundColor: '#f8f6f1', border: '1px solid #d4c5b9' }}>
             {data.land_reference}
           </p>
 
-          {/* Applicant & Project Information Box */}
+          {/* Applicant & Property Information Box */}
           <div style={{ backgroundColor: '#faf8f5', padding: '16px', marginBottom: '16px', border: '2px solid #8B6F47' }}>
             <div style={{ fontSize: '12px', marginBottom: '10px' }}>
               <p style={{ marginBottom: '8px' }}>
-                <span style={{ fontWeight: 'bold', minWidth: '120px', display: 'inline-block' }}>Demandeur:</span> {data.applicant_name}
+                <span style={{ fontWeight: 'bold', minWidth: '120px', display: 'inline-block' }}>Propriétaire:</span> {data.applicant_name}
               </p>
               <p style={{ marginBottom: '8px' }}>
                 <span style={{ fontWeight: 'bold', minWidth: '120px', display: 'inline-block' }}>CIN:</span> {data.applicant_cin}
               </p>
               <p style={{ marginBottom: '8px' }}>
-                <span style={{ fontWeight: 'bold', minWidth: '120px', display: 'inline-block' }}>Titre du Projet:</span> {data.project_title}
+                <span style={{ fontWeight: 'bold', minWidth: '120px', display: 'inline-block' }}>Adresse du Bien:</span> {data.location}
               </p>
               <p style={{ marginBottom: '8px' }}>
-                <span style={{ fontWeight: 'bold', minWidth: '120px', display: 'inline-block' }}>Description:</span> {data.project_description}
+                <span style={{ fontWeight: 'bold', minWidth: '120px', display: 'inline-block' }}>Description du Bien:</span> {data.project_description}
               </p>
               <p style={{ marginBottom: '8px' }}>
-                <span style={{ fontWeight: 'bold', minWidth: '120px', display: 'inline-block' }}>Localisation:</span> {data.location}
-              </p>
-              <p style={{ marginBottom: '8px' }}>
-                <span style={{ fontWeight: 'bold', minWidth: '120px', display: 'inline-block' }}>Zone d'Urbanisme:</span> {data.zone}
+                <span style={{ fontWeight: 'bold', minWidth: '120px', display: 'inline-block' }}>Zone:</span> {data.zone}
               </p>
             </div>
             
             {(data.dimensions.hauteur || data.dimensions.surface_terrain) && (
               <div style={{ borderTop: '1px solid #d4c5b9', paddingTop: '10px', fontSize: '11px' }}>
-                <span style={{ fontWeight: 'bold', display: 'block', marginBottom: '6px' }}>Caractéristiques Techniques:</span>
+                <span style={{ fontWeight: 'bold', display: 'block', marginBottom: '6px' }}>Caractéristiques du Bien:</span>
                 <ul style={{ marginLeft: '20px', color: '#4a4a4a' }}>
+                  {data.dimensions.surface_terrain && <li>Surface habitable: {data.dimensions.surface_terrain} m²</li>}
                   {data.dimensions.hauteur && <li>Hauteur: {data.dimensions.hauteur} m</li>}
-                  {data.dimensions.recul && <li>Recul: {data.dimensions.recul} m</li>}
-                  {data.dimensions.emprise && <li>Emprise: {data.dimensions.emprise} %</li>}
-                  {data.dimensions.surface_terrain && <li>Surface du terrain: {data.dimensions.surface_terrain} m²</li>}
                 </ul>
               </div>
             )}
           </div>
 
           <p style={{ marginBottom: '12px' }}>
-            Vu le rapport technique de conformité avec le Réglement Général de Construction,
+            Vu le rapport de conformité de l'ouvrage,
           </p>
           <p style={{ marginBottom: '12px' }}>
-            Vu les frais d'enregistrement municipal acquittés par le demandeur,
+            Vu les frais d'enregistrement municipal acquittés,
           </p>
           <p style={{ marginBottom: '16px' }}>
-            Après étude approfondie du dossier et vérification de la conformité totale du projet avec les dispositions légales et réglementaires en vigueur,
+            Après vérification que le bien immobilier est conforme aux normes de sécurité et de salubrité, et après constatation que l'ouvrage est exécuté conformément aux conditions d'obtention du permis de construire,
           </p>
 
           <p style={{ fontWeight: 'bold', fontSize: '13px', marginBottom: '16px', textAlign: 'center' }}>
@@ -199,60 +194,39 @@ export const OfficialPermitCertificate: React.FC<OfficialPermitCertificateProps>
         {/* Conditions & Legal Articles */}
         <div className="mb-6">
           <h3 style={{ fontWeight: 'bold', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '12px', paddingBottom: '8px', borderBottom: '2px solid #8B6F47', color: '#2c2c2c' }}>
-            ARTICLES ET CONDITIONS OBLIGATOIRES
+            ARTICLES ET CONDITIONS D'OCCUPATION
           </h3>
 
           <ol style={{ fontSize: '11px', lineHeight: '1.8', color: '#2c2c2c' }}>
             <li style={{ marginBottom: '8px' }}>
-              <span style={{ fontWeight: 'bold' }}>Article 1.</span> Est accordé un permis de construire au demandeur susmentionné pour la réalisation du projet conforme aux conditions énumérées ci-après.
+              <span style={{ fontWeight: 'bold' }}>Article 1.</span> Est accordé au propriétaire susmentionné le permis d'habiter pour l'immeuble ou le bien immobilier décrit ci-avant.
             </li>
             <li style={{ marginBottom: '8px' }}>
-              <span style={{ fontWeight: 'bold' }}>Article 2.</span> Le bénéficiaire du permis doit commencer les travaux dans un délai de deux (2) années à partir de la date officielle d'octroi du présent permis.
+              <span style={{ fontWeight: 'bold' }}>Article 2.</span> Le bien ne peut être occupé qu'après l'obtention officielle du présent permis d'habiter.
             </li>
             <li style={{ marginBottom: '8px' }}>
-              <span style={{ fontWeight: 'bold' }}>Article 3.</span> Les travaux doivent être exécutés en conformité stricte et totale avec les plans et tous documents approuvés par les autorités compétentes.
+              <span style={{ fontWeight: 'bold' }}>Article 3.</span> Le propriétaire est responsable de l'entretien et de la maintenance régulière du bien immobilier.
             </li>
             <li style={{ marginBottom: '8px' }}>
-              <span style={{ fontWeight: 'bold' }}>Article 4.</span> Le bénéficiaire doit respecter scrupuleusement les conditions de sécurité et de salubrité publiques selon la réglementation en vigueur.
+              <span style={{ fontWeight: 'bold' }}>Article 4.</span> Toute modification ou altération du bien doit faire l'objet d'une autorisation préalable auprès des autorités compétentes.
             </li>
             <li style={{ marginBottom: '8px' }}>
-              <span style={{ fontWeight: 'bold' }}>Article 5.</span> Tout changement ou modification du projet initial doit faire l'objet d'une demande d'autorisation préalable auprès des autorités compétentes.
+              <span style={{ fontWeight: 'bold' }}>Article 5.</span> Le propriétaire s'engage à maintenir les installations de sécurité et de salubrité en parfait état de fonctionnement.
             </li>
             <li style={{ marginBottom: '8px' }}>
-              <span style={{ fontWeight: 'bold' }}>Article 6.</span> Les travaux doivent être exécutés dans le respect total de l'environnement et des normes acoustiques et de pollution applicables.
+              <span style={{ fontWeight: 'bold' }}>Article 6.</span> L'occupant doit résider dans le bien ou justifier d'une occupation légale et régulière.
             </li>
             <li style={{ marginBottom: '8px' }}>
-              <span style={{ fontWeight: 'bold' }}>Article 7.</span> L'inspection du chantier sera effectuée par les services compétents à différentes étapes d'avancement du projet.
+              <span style={{ fontWeight: 'bold' }}>Article 7.</span> La durée de validité du permis d'habiter est illimitée à condition de satisfaire aux conditions d'entretien et de conformité.
             </li>
             <li style={{ marginBottom: '8px' }}>
-              <span style={{ fontWeight: 'bold' }}>Article 8.</span> À la fin des travaux, une demande de certificat de conformité doit être présentée pour validation officielle par les autorités.
+              <span style={{ fontWeight: 'bold' }}>Article 8.</span> Toute violation des conditions stipulées peut entraîner le retrait du permis d'habiter.
             </li>
             <li style={{ marginBottom: '8px' }}>
-              <span style={{ fontWeight: 'bold' }}>Article 9.</span> Le non-respect de toute condition stipulée peut entraîner la révocation immédiate du permis de construire.
-            </li>
-            <li style={{ marginBottom: '8px' }}>
-              <span style={{ fontWeight: 'bold' }}>Article 10.</span> La durée de validité du permis est de cinq (5) années à partir de sa date officielle d'octroi.
-            </li>
-            <li style={{ marginBottom: '8px' }}>
-              <span style={{ fontWeight: 'bold' }}>Article 11.</span> En cas de non-démarrage des travaux après le délai prescrit, le permis devient automatiquement nul et non avenu.
-            </li>
-            <li style={{ marginBottom: '8px' }}>
-              <span style={{ fontWeight: 'bold' }}>Article 12.</span> Tout recours contentieux doit être formé devant les autorités compétentes selon les voies légales et réglementaires prévues.
-            </li>
-            <li style={{ marginBottom: '8px' }}>
-              <span style={{ fontWeight: 'bold' }}>Article 13.</span> Le bénéficiaire s'engage formellement à préserver le site et ses alentours lors de l'exécution des travaux.
-            </li>
-            <li style={{ marginBottom: '8px' }}>
-              <span style={{ fontWeight: 'bold' }}>Article 14.</span> L'assurance responsabilité civile est obligatoire et doit être maintenue durant toute la durée des travaux.
-            </li>
-            <li style={{ marginBottom: '8px' }}>
-              <span style={{ fontWeight: 'bold' }}>Article 15.</span> Une clôture de sécurité conforme doit être mise en place autour du périmètre des travaux.
-            </li>
-            <li style={{ marginBottom: '8px' }}>
-              <span style={{ fontWeight: 'bold' }}>Article 16.</span> Les conditions d'urbanisme, de sécurité et d'hygiène doivent être respectées scrupuleusement à tout moment.
+              <span style={{ fontWeight: 'bold' }}>Article 9.</span> L'autorité municipale se réserve le droit d'effectuer des inspections périodiques du bien.
             </li>
             <li>
-              <span style={{ fontWeight: 'bold' }}>Article 17.</span> Le présent arrêté municipal entre en vigueur à partir de sa date officielle d'approbation et de signature.
+              <span style={{ fontWeight: 'bold' }}>Article 10.</span> Le présent arrêté entre en vigueur à partir de sa date officielle d'approbation.
             </li>
           </ol>
         </div>
@@ -274,13 +248,13 @@ export const OfficialPermitCertificate: React.FC<OfficialPermitCertificateProps>
             {/* Right: Digital Signature Info */}
             <div style={{ fontSize: '10px', color: '#2c2c2c' }}>
               <p style={{ marginBottom: '8px' }}>
-                <span style={{ fontWeight: 'bold' }}>Approuvé par:</span> {data.signed_by}
+                <span style={{ fontWeight: 'bold' }}>Certifié par:</span> {data.signed_by}
               </p>
               <p style={{ marginBottom: '8px' }}>
-                <span style={{ fontWeight: 'bold' }}>Date d'Approbation:</span> {formatDate(data.signed_at)}
+                <span style={{ fontWeight: 'bold' }}>Date de Certification:</span> {formatDate(data.signed_at)}
               </p>
               <p style={{ marginBottom: '8px', color: '#666' }}>
-                <span style={{ fontWeight: 'bold' }}>Signature Numérique Certifiée:</span>
+                <span style={{ fontWeight: 'bold' }}>Signature Numérique:</span>
               </p>
               <p
                 style={{
@@ -333,7 +307,7 @@ export const OfficialPermitCertificate: React.FC<OfficialPermitCertificateProps>
                 Fait à COMMUNE D'EL KSIBA, le {formatDate(data.signed_at)}
               </p>
               <p style={{ marginBottom: '8px', fontSize: '9px' }}>
-                Document généré numériquement - Certifié et valide avec authentification numérique SHA-256
+                Certificat généré numériquement - Certifié avec authentification numérique SHA-256
               </p>
               <p style={{ fontSize: '9px', color: '#999' }}>
                 Rokhas - Système d'Enregistrement des Demandes d'Autorisation pour la Construction au Maroc
@@ -359,7 +333,7 @@ export const OfficialPermitCertificate: React.FC<OfficialPermitCertificateProps>
             style={{ backgroundColor: '#8B6F47', color: 'white' }}
           >
             <Printer size={18} />
-            Imprimer le Permis Officiel
+            Imprimer le Certificat Officiel
           </Button>
           {onClose && (
             <Button onClick={onClose} variant="outline" style={{ borderColor: '#8B6F47', color: '#8B6F47' }}>
