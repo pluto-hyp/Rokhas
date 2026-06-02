@@ -89,6 +89,7 @@ def update_business_permit(
 def upload_document(
     permit_id: int,
     file: UploadFile = File(...),
+    key: str = Query("business_document"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
@@ -109,6 +110,25 @@ def upload_document(
     file_path = permit_dir / file.filename
     with open(file_path, "wb") as f:
         f.write(file.file.read())
+    
+    # Update permit_documents list
+    docs = list(permit.permit_documents or [])
+    # Remove any existing document with the same key
+    docs = [d for d in docs if d.get("key") != key]
+    
+    # Append new document info
+    docs.append({
+        "key": key,
+        "filename": file.filename,
+        "url": f"/api/v1/business-permits/{permit_id}/documents/{file.filename}",
+        "approved": True,
+        "required": True,
+        "notes": []
+    })
+    permit.permit_documents = docs
+    db.add(permit)
+    db.commit()
+    db.refresh(permit)
     
     # Return file URL
     return {

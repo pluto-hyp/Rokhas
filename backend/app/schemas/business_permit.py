@@ -21,7 +21,7 @@ class BusinessPermitBase(BaseModel):
     applicant_cin: str
 
 class BusinessPermitCreate(BusinessPermitBase):
-    pass
+    permit_documents: Optional[List[PermitDocumentSchema]] = []
 
 class BusinessPermitUpdate(BaseModel):
     status: Optional[str] = None
