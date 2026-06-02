@@ -37,6 +37,54 @@ def ensure_dossier_columns():
 
 ensure_dossier_columns()
 
+def ensure_business_columns():
+    """Ensure business table has signature columns for digital approval."""
+    inspector = inspect(engine)
+    if "businesses" not in inspector.get_table_names():
+        return
+
+    existing_columns = {column["name"] for column in inspector.get_columns("businesses")}
+    sqlite_columns = {
+        "signed_by": "VARCHAR",
+        "signature_hash": "VARCHAR",
+        "signed_at": "DATETIME",
+    }
+
+    if engine.dialect.name != "sqlite":
+        return
+
+    with engine.begin() as connection:
+        for column_name, column_type in sqlite_columns.items():
+            if column_name not in existing_columns:
+                connection.execute(text(f"ALTER TABLE businesses ADD COLUMN {column_name} {column_type}"))
+
+ensure_business_columns()
+
+def ensure_business_permit_columns():
+    """Ensure business_permits table exists and has required columns."""
+    inspector = inspect(engine)
+    if "business_permits" not in inspector.get_table_names():
+        # Table will be created by SQLAlchemy models
+        return
+
+    existing_columns = {column["name"] for column in inspector.get_columns("business_permits")}
+    sqlite_columns = {
+        "permit_documents": "JSON NOT NULL DEFAULT '[]'",
+        "signed_by": "VARCHAR",
+        "signature_hash": "VARCHAR",
+        "signed_at": "DATETIME",
+    }
+
+    if engine.dialect.name != "sqlite":
+        return
+
+    with engine.begin() as connection:
+        for column_name, column_type in sqlite_columns.items():
+            if column_name not in existing_columns:
+                connection.execute(text(f"ALTER TABLE business_permits ADD COLUMN {column_name} {column_type}"))
+
+ensure_business_permit_columns()
+
 app = FastAPI(
     title=settings.PROJECT_NAME,
     openapi_url=f"{settings.API_V1_STR}/openapi.json"
