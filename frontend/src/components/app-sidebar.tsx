@@ -56,6 +56,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           icon: <FileTextIcon />,
         },
         {
+          title: "Business Permits",
+          url: "/dashboard/business-permits",
+          icon: <Building2Icon />,
+        },
+        {
           title: "Track Dossier",
           url: "/dashboard/track",
           icon: <SearchIcon />,

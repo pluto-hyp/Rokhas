@@ -28,6 +28,11 @@ class Dossier(Base):
     permit_documents = Column(JSON, default=list, nullable=False)
     
     ai_analysis = Column(Text, nullable=True)
+    
+    # Digital signature fields
+    signed_by = Column(String, nullable=True)
+    signature_hash = Column(String, nullable=True)
+    signed_at = Column(DateTime(timezone=True), nullable=True)
 
     owner_id = Column(Integer, ForeignKey("users.id"))
     owner = relationship("User", back_populates="dossiers")

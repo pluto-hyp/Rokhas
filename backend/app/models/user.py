@@ -18,3 +18,4 @@ class User(Base):
 
     dossiers = relationship("Dossier", back_populates="owner")
     businesses = relationship("Business", back_populates="owner")
+    business_permits = relationship("BusinessPermit", back_populates="owner")

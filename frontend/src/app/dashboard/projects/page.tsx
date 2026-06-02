@@ -30,6 +30,7 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
+import { OfficialPermitCertificate, PermitCertificateData } from "@/components/OfficialPermitCertificate";
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -170,26 +171,33 @@ export default function ProjectsPage() {
     }
   };
 
-  const handleExtractPermit = () => {
-    if (!selectedProject) return;
+  const handleExtractPermit = async () => {
+    if (!selectedProject || !token) return;
     setExtracting(true);
 
-    toast.promise(
-      new Promise((resolve) => setTimeout(resolve, 2000)),
-      {
-        loading: 'Verifying digital CMI payment ledger and stamping permit...',
-        success: () => {
-          setProjects(prev => 
-            prev.map(p => p.id === selectedProject.id ? { ...p, status: "Approved" } : p)
-          );
-          setSelectedProject(prev => prev ? { ...prev, status: "Approved" } : null);
-          setExtracting(false);
-          setShowPermitModal(true);
-          return 'Official Construction Permit Paper extracted successfully!';
-        },
-        error: 'Validation failed'
-      }
-    );
+    try {
+      toast.loading('Verifying digital CMI payment ledger and stamping permit...', { id: "permit-extraction" });
+      
+      // Call the backend to approve and sign the dossier
+      const updatedProject = await updateProjectStatus(
+        selectedProject.id, 
+        { status: "Approved" }, 
+        token
+      );
+      
+      setProjects(prev => 
+        prev.map(p => p.id === updatedProject.id ? updatedProject : p)
+      );
+      setSelectedProject(updatedProject);
+      
+      toast.success('Official Construction Permit Paper extracted successfully!', { id: "permit-extraction" });
+      setShowPermitModal(true);
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Failed to extract permit';
+      toast.error(errorMsg, { id: "permit-extraction" });
+    } finally {
+      setExtracting(false);
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -673,109 +681,41 @@ export default function ProjectsPage() {
         </div>
       )}
 
-      {/* GOLDEN-BORDER PRINTABLE OFFICIAL CONSTRUCTION PERMIT MODAL */}
+      {/* OFFICIAL CONSTRUCTION PERMIT CERTIFICATE MODAL */}
       {showPermitModal && selectedProject && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-background/90 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="relative w-full max-w-2xl bg-white border-[12px] border-amber-800/20 rounded-3xl shadow-2xl p-8 overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col justify-between text-stone-900 font-serif min-h-[680px]">
-            
-            {/* Modal Exit */}
-            <button 
-              onClick={() => setShowPermitModal(false)}
-              className="absolute top-4 right-4 size-8 rounded-full border border-stone-200 hover:bg-stone-100 flex items-center justify-center shrink-0 transition-all font-sans text-stone-600 z-50"
-            >
-              <X className="size-4" />
-            </button>
-
-            {/* Kingdom Header */}
-            <div className="text-center space-y-1">
-              <h2 className="text-lg font-bold uppercase tracking-wider text-amber-900">المملكة المغربية</h2>
-              <h3 className="text-sm font-bold text-stone-700">ROYAUME DU MAROC</h3>
-              <p className="text-[10px] text-stone-500 uppercase tracking-widest font-sans font-bold">Ministère de l'Intérieur • Commune Urbaine</p>
-              <Separator className="bg-amber-900/30 max-w-xs mx-auto mt-2" />
-            </div>
-
-            {/* Title */}
-            <div className="text-center space-y-2 my-6">
-              <h1 className="text-3xl font-extrabold text-amber-900 tracking-wide font-serif">رخصة البناء الرسمية</h1>
-              <h2 className="text-base font-bold text-stone-800 uppercase tracking-widest font-sans">Official Construction & Planning Permit</h2>
-              <p className="text-[10px] font-sans text-stone-500 font-bold">REGISTRY NO: MA-RKH-2026-{selectedProject.id.toString().padStart(4, '0')}</p>
-            </div>
-
-            {/* Permit content */}
-            {(() => {
-              const meta = parseProjectMeta(selectedProject.description);
-              return (
-                <div className="space-y-5 text-sm leading-relaxed border-y border-stone-200 py-6 my-2 font-serif text-stone-800">
-                  <p>
-                    By mandate of the municipal council and in accordance with urban regulations of zoning plans, this official permit is hereby granted to 
-                    <strong className="text-stone-900 underline decoration-amber-900/40"> Mr. {meta.citizenName}</strong>, holding CIN 
-                    <strong className="text-stone-900"> {meta.citizenCin}</strong>, for the project titled 
-                    <strong className="text-stone-900"> "{selectedProject.title}"</strong>.
-                  </p>
-
-                  <div className="grid grid-cols-2 gap-6 text-xs bg-stone-50 p-4 rounded-2xl border border-stone-100 font-sans">
-                    <div className="space-y-1">
-                      <p className="text-stone-500 uppercase font-bold text-[9px]">Zoning & Land Reference</p>
-                      <p className="text-stone-800 font-bold">{meta.landRef}</p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-stone-500 uppercase font-bold text-[9px]">Classification Type</p>
-                      <p className="text-stone-800 font-bold">{selectedProject.type || "Building Permit"}</p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-stone-500 uppercase font-bold text-[9px]">Commune Ledger Fees</p>
-                      <p className="text-emerald-700 font-bold">{meta.fee} Settled</p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-stone-500 uppercase font-bold text-[9px]">Transaction Verification</p>
-                      <p className="text-stone-800 font-mono font-bold text-[10px]">{meta.receiptId}</p>
-                    </div>
-                  </div>
-
-                  <p className="text-xs text-stone-600 leading-relaxed leading-relaxed font-sans italic">
-                    NB: The municipal validation desk registers that all building calculations, safety guidelines, and architectural compliance rules verified by the AI Co-pilot are fully certified.
-                  </p>
-                </div>
-              );
-            })()}
-
-            {/* Golden Stamp & Signatures */}
-            <div className="flex justify-between items-end mt-4 pt-2">
-              {/* QR and Stamp */}
-              <div className="flex items-center gap-4 text-[10px] font-sans text-stone-500 font-bold">
-                <div className="w-16 h-16 border-2 border-stone-800/10 rounded-xl bg-stone-100 flex items-center justify-center text-xs shrink-0 select-none">
-                  [ QR Code ]
-                </div>
-                <div className="space-y-1">
-                  <p className="text-stone-800 font-black">Digital Certified Seal</p>
-                  <p>Trésorerie du Royaume</p>
-                  <p className="text-amber-900">ROKHAS VALIDATED</p>
-                </div>
-              </div>
-
-              {/* Sign stamp */}
-              <div className="text-right font-serif space-y-1">
-                <p className="text-[10px] font-sans text-stone-500 uppercase font-bold">President of Municipal Council</p>
-                <div className="py-2 opacity-80 h-10 select-none text-xs italic text-stone-600">
-                  [ Certified Signature ]
-                </div>
-                <p className="text-xs font-black text-amber-900">Commune de Rabat</p>
-              </div>
-            </div>
-
-            {/* Print Action button */}
-            <div className="mt-8 border-t border-stone-100 pt-4 flex justify-end font-sans">
-              <Button 
-                onClick={() => {
-                  window.print();
-                }}
-                className="h-10 rounded-xl bg-amber-900 hover:bg-stone-800 text-white font-bold px-6 flex items-center gap-2"
-              >
-                <Printer className="size-4" />
-                Print Certificate
-              </Button>
-            </div>
-
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-background/90 backdrop-blur-md animate-in fade-in duration-200 overflow-y-auto">
+          <div className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 my-8">
+            <OfficialPermitCertificate 
+              data={{
+                dossier_id: selectedProject.id,
+                applicant_name: (() => {
+                  const meta = parseProjectMeta(selectedProject.description);
+                  return meta.citizenName;
+                })(),
+                applicant_cin: (() => {
+                  const meta = parseProjectMeta(selectedProject.description);
+                  return meta.citizenCin;
+                })(),
+                project_title: selectedProject.title,
+                project_description: selectedProject.description || "",
+                location: selectedProject.zone || "Not specified",
+                land_reference: (() => {
+                  const meta = parseProjectMeta(selectedProject.description);
+                  return meta.landRef;
+                })(),
+                dimensions: {
+                  hauteur: selectedProject.hauteur,
+                  recul: selectedProject.recul,
+                  emprise: selectedProject.emprise,
+                  surface_terrain: selectedProject.surface_terrain,
+                },
+                zone: selectedProject.zone || "Not specified",
+                signed_by: selectedProject.signed_by || "Municipal Authority",
+                signature_hash: selectedProject.signature_hash || "",
+                signed_at: selectedProject.signed_at || new Date().toISOString(),
+              }}
+              onClose={() => setShowPermitModal(false)}
+            />
           </div>
         </div>
       )}

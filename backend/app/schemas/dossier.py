@@ -36,12 +36,18 @@ class DossierUpdate(DossierBase):
     title: Optional[str] = None
     status: Optional[str] = None
     ai_analysis: Optional[str] = None
+    signed_by: Optional[str] = None
+    signature_hash: Optional[str] = None
+    signed_at: Optional[datetime] = None
 
 class DossierResponse(DossierBase):
     id: int
     status: str
     owner_id: int
     ai_analysis: Optional[str] = None
+    signed_by: Optional[str] = None
+    signature_hash: Optional[str] = None
+    signed_at: Optional[datetime] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
 

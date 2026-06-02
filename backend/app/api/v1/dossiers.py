@@ -1,7 +1,9 @@
 from typing import List
 import os
 import shutil
+import hashlib
 from pathlib import Path
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
@@ -133,6 +135,41 @@ def update_dossier_status(
     db_dossier = crud_dossier.get_dossier(db, dossier_id=dossier_id)
     if db_dossier is None:
         raise HTTPException(status_code=404, detail="Dossier not found")
+    
+    # If status is being set to "Approved", generate digital signature
+    if status_update.status == "Approved":
+        # Validate all required permit documents are approved
+        permit_documents = db_dossier.permit_documents or []
+        required_docs = [doc for doc in permit_documents if doc.get("required", True)]
+        unapproved_required = [doc for doc in required_docs if not doc.get("approved", False)]
+        
+        if unapproved_required:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Cannot approve dossier: {len(unapproved_required)} required document(s) not approved"
+            )
+        
+        # Generate SHA-256 signature hash
+        timestamp_utc = datetime.now(timezone.utc).isoformat()
+        signer_name = current_user.full_name or current_user.email
+        
+        hash_payload = (
+            f"DOSSIER-{db_dossier.id}|"
+            f"OWNER-{db_dossier.owner_cin}|"
+            f"LAND-{db_dossier.land_reference}|"
+            f"BY-{signer_name}|"
+            f"AT-{timestamp_utc}"
+        )
+        
+        signature_hash = hashlib.sha256(hash_payload.encode()).hexdigest()
+        
+        # Create updated DossierUpdate with signature data
+        update_data = status_update.model_dump(exclude_unset=True)
+        update_data["signed_by"] = signer_name
+        update_data["signature_hash"] = signature_hash
+        update_data["signed_at"] = datetime.now(timezone.utc)
+        status_update = DossierUpdate(**update_data)
+    
     return crud_dossier.update_dossier(db, db_dossier, status_update)
 
 @router.post("/{dossier_id}/verify-compliance")

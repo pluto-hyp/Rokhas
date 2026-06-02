@@ -9,8 +9,13 @@ class Business(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True)
     type = Column(String)
-    status = Column(String, default="Active")
+    status = Column(String, default="Pending")
     registration_date = Column(DateTime, default=datetime.utcnow)
     owner_id = Column(Integer, ForeignKey("users.id"))
+    
+    # Signature fields for official approval
+    signed_by = Column(String, nullable=True)
+    signature_hash = Column(String, nullable=True)
+    signed_at = Column(DateTime(timezone=True), nullable=True)
 
     owner = relationship("User", back_populates="businesses")
