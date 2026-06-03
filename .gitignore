@@ -258,3 +258,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# backend uploads
+/backend/uploads/

@@ -1,5 +1,6 @@
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from app.api.dependencies import get_db, get_current_active_user, get_current_admin_user
 from app.models.user import User
@@ -8,15 +9,43 @@ from app.crud import business_permit as crud_business_permit
 from app.core.config import settings
 import hashlib
 from datetime import datetime, timezone
-import os
 from pathlib import Path
+from urllib.parse import parse_qs, unquote, urlparse
 
 router = APIRouter()
 
 # File management helpers
-UPLOAD_DIR = Path(settings.UPLOAD_DIR if hasattr(settings, 'UPLOAD_DIR') else "backend/uploads")
+UPLOAD_DIR = Path(settings.UPLOADS_DIR)
 
-@router.post("/", response_model=BusinessPermitResponse)
+
+def _safe_file_path(base_dir: Path, filename: str) -> Path:
+    file_path = (base_dir / filename).resolve()
+    if not file_path.is_relative_to(base_dir.resolve()):
+        raise HTTPException(status_code=400, detail="Invalid filename")
+    return file_path
+
+
+def _temporary_document_path(permit, filename: str) -> Path | None:
+    """Resolve legacy business permit docs that still point at temporary dossier uploads."""
+    for document in permit.permit_documents or []:
+        document_url = document.get("url") or ""
+        if not document_url:
+            continue
+
+        parsed_url = urlparse(document_url)
+        stored_filename = unquote(Path(parsed_url.path).name)
+        if stored_filename != filename and document.get("filename") != filename:
+            continue
+
+        query_user_id = parse_qs(parsed_url.query).get("user_id", [None])[0]
+        owner_id = int(query_user_id) if query_user_id and query_user_id.isdigit() else permit.owner_id
+        temp_dir = UPLOAD_DIR / "temporary" / f"user_{owner_id}"
+        return _safe_file_path(temp_dir, stored_filename or filename)
+
+    return None
+
+@router.post("", response_model=BusinessPermitResponse)
+@router.post("/", response_model=BusinessPermitResponse, include_in_schema=False)
 def create_business_permit(
     permit: BusinessPermitCreate,
     db: Session = Depends(get_db),
@@ -152,16 +181,15 @@ def get_document(
     if current_user.id != permit.owner_id and current_user.role not in {"admin", "authority"}:
         raise HTTPException(status_code=403, detail="Not authorized")
     
-    # Prevent directory traversal
-    file_path = (UPLOAD_DIR / f"business_permit_{permit_id}" / filename).resolve()
-    permit_dir = (UPLOAD_DIR / f"business_permit_{permit_id}").resolve()
-    
-    if not file_path.is_relative_to(permit_dir):
-        raise HTTPException(status_code=400, detail="Invalid filename")
+    permit_dir = UPLOAD_DIR / f"business_permit_{permit_id}"
+    file_path = _safe_file_path(permit_dir, filename)
+
+    if not file_path.exists():
+        fallback_path = _temporary_document_path(permit, filename)
+        if fallback_path is not None:
+            file_path = fallback_path
     
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="Document not found")
     
-    # Return file
-    from fastapi.responses import FileResponse
-    return FileResponse(file_path)
+    return FileResponse(path=file_path, filename=file_path.name)

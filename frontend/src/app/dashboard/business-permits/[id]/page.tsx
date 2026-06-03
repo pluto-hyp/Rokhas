@@ -15,10 +15,10 @@ import {
   Building2,
   User,
   FileCheck,
-  Trash2,
   Send,
   Printer,
-  MessageSquare
+  MessageSquare,
+  X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -37,11 +37,11 @@ interface Document {
   url: string;
   approved?: boolean;
   required?: boolean;
-  notes?: string;
+  notes?: string[] | string;
 }
 
 interface BusinessPermit {
-  id: string;
+  id: number;
   business_name: string;
   business_type: string;
   business_description: string;
@@ -50,7 +50,7 @@ interface BusinessPermit {
   surface_area?: number;
   applicant_name: string;
   applicant_cin: string;
-  owner_id: string;
+  owner_id: number;
   status: string;
   created_at: string;
   permit_documents: Document[];
@@ -58,6 +58,12 @@ interface BusinessPermit {
   signature_hash?: string;
   signed_at?: string;
 }
+
+type PreviewDocument = {
+  filename: string;
+  type: string;
+  url: string;
+};
 
 export default function PermitDetailPage() {
   const params = useParams();
@@ -73,7 +79,7 @@ export default function PermitDetailPage() {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [rejectionNotes, setRejectionNotes] = useState<{ [key: string]: string }>({});
   const [showCertificate, setShowCertificate] = useState(false);
-  const [previewDoc, setPreviewDoc] = useState<string | null>(null);
+  const [previewDoc, setPreviewDoc] = useState<PreviewDocument | null>(null);
 
   useEffect(() => {
     async function fetchPermit() {
@@ -99,6 +105,53 @@ export default function PermitDetailPage() {
     fetchPermit();
   }, [token, permitId]);
 
+  useEffect(() => {
+    return () => {
+      if (previewDoc?.url) {
+        URL.revokeObjectURL(previewDoc.url);
+      }
+    };
+  }, [previewDoc]);
+
+  const getDocumentNotesText = (notes: Document["notes"]) => {
+    if (Array.isArray(notes)) return notes.join("; ");
+    return notes || "";
+  };
+
+  const getDocumentFilename = (doc: Document) => {
+    if (!doc.url) return doc.filename;
+
+    try {
+      const parsedUrl = new URL(doc.url, window.location.origin);
+      const filenameFromUrl = decodeURIComponent(parsedUrl.pathname.split("/").pop() || "");
+      return filenameFromUrl || doc.filename;
+    } catch {
+      return doc.filename;
+    }
+  };
+
+  const getDocumentEndpoint = (doc: Document) => {
+    const filename = getDocumentFilename(doc);
+    return `${API_URL}/api/v1/business-permits/${permitId}/documents/${encodeURIComponent(filename)}`;
+  };
+
+  const fetchDocumentBlob = async (doc: Document) => {
+    if (!token) {
+      throw new Error("Your session has expired. Please sign in again.");
+    }
+
+    const response = await fetch(getDocumentEndpoint(doc), {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: "Document request failed" }));
+      throw new Error(error.detail || "Document request failed");
+    }
+
+    return response.blob();
+  };
+
   const handleToggleDocumentApproval = (docKey: string, approved: boolean) => {
     setDocuments(prev =>
       prev.map(doc =>
@@ -116,7 +169,6 @@ export default function PermitDetailPage() {
 
   const canApprove = () => {
     if (!permit) return false;
-    // Check if all required documents are approved
     const requiredDocs = documents.filter(doc => doc.required !== false);
     return requiredDocs.length > 0 && requiredDocs.every(doc => doc.approved);
   };
@@ -126,7 +178,6 @@ export default function PermitDetailPage() {
     
     setApproving(true);
     try {
-      // Update permit status with new documents and approval
       const updatePayload = {
         status: "Approved",
         permit_documents: documents.map(doc => ({
@@ -135,7 +186,13 @@ export default function PermitDetailPage() {
           url: doc.url,
           approved: doc.approved || false,
           required: doc.required,
-          notes: rejectionNotes[doc.key] || doc.notes || ""
+          notes: rejectionNotes[doc.key]?.trim()
+            ? [rejectionNotes[doc.key].trim()]
+            : Array.isArray(doc.notes)
+              ? doc.notes
+              : doc.notes
+                ? [doc.notes]
+                : []
         }))
       };
 
@@ -165,24 +222,35 @@ export default function PermitDetailPage() {
     }
   };
 
-  const handleDownloadDocument = async (docKey: string, filename: string) => {
-    if (!token) return;
+  const handleDownloadDocument = async (doc: Document) => {
     try {
-      const response = await fetch(`${API_URL}/api/v1/business-permits/${permitId}/documents/${filename}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = filename;
-        a.click();
-        window.URL.revokeObjectURL(url);
-      }
+      const blob = await fetchDocumentBlob(doc);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = getDocumentFilename(doc);
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
     } catch (err) {
       console.error(err);
-      toast.error("Failed to download document");
+      toast.error(err instanceof Error ? err.message : "Failed to download document");
+    }
+  };
+
+  const handleViewDocument = async (doc: Document) => {
+    try {
+      const blob = await fetchDocumentBlob(doc);
+      const url = window.URL.createObjectURL(blob);
+      setPreviewDoc({
+        filename: getDocumentFilename(doc),
+        type: blob.type,
+        url
+      });
+    } catch (err) {
+      console.error(err);
+      toast.error(err instanceof Error ? err.message : "Failed to open document preview");
     }
   };
 
@@ -205,7 +273,6 @@ export default function PermitDetailPage() {
   }
 
   const isAuthority = role === "authority" || role === "admin";
-  const isOwner = authUser?.id === permit.owner_id;
   const canReview = isAuthority && permit.status !== "Approved";
 
   return (
@@ -368,7 +435,7 @@ export default function PermitDetailPage() {
                             </label>
                             <Textarea
                               placeholder="Add notes for applicant or rejection reason..."
-                              value={rejectionNotes[doc.key] || doc.notes || ""}
+                              value={rejectionNotes[doc.key] || getDocumentNotesText(doc.notes)}
                               onChange={(e) => handleSetRejectionNote(doc.key, e.target.value)}
                               className="text-xs h-20 resize-none rounded-lg"
                             />
@@ -388,8 +455,8 @@ export default function PermitDetailPage() {
                               Pending
                             </Badge>
                           )}
-                          {doc.notes && (
-                            <p className="text-xs text-muted-foreground italic">"{doc.notes}"</p>
+                          {getDocumentNotesText(doc.notes) && (
+                            <p className="text-xs text-muted-foreground italic">&quot;{getDocumentNotesText(doc.notes)}&quot;</p>
                           )}
                         </div>
                       )}
@@ -399,7 +466,7 @@ export default function PermitDetailPage() {
                         size="sm"
                         variant="outline"
                         className="gap-1"
-                        onClick={() => handleDownloadDocument(doc.key, doc.filename)}
+                        onClick={() => handleDownloadDocument(doc)}
                       >
                         <Download className="w-3 h-3" />
                         <span className="hidden sm:inline">Download</span>
@@ -408,7 +475,7 @@ export default function PermitDetailPage() {
                         size="sm"
                         variant="outline"
                         className="gap-1"
-                        onClick={() => setPreviewDoc(doc.url)}
+                        onClick={() => handleViewDocument(doc)}
                       >
                         <Eye className="w-3 h-3" />
                         <span className="hidden sm:inline">View</span>
@@ -501,6 +568,51 @@ export default function PermitDetailPage() {
               }}
               onClose={() => setShowCertificate(false)}
             />
+          </div>
+        </div>
+      )}
+
+      {/* Document Preview Modal */}
+      {previewDoc && (
+        <div className="fixed inset-0 z-[9998] flex items-center justify-center bg-background/90 p-4 backdrop-blur-md">
+          <div className="flex h-[85vh] w-full max-w-5xl flex-col overflow-hidden rounded-xl border border-border/40 bg-card shadow-2xl">
+            <div className="flex items-center justify-between gap-4 border-b border-border/40 px-4 py-3">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold">{previewDoc.filename}</p>
+                <p className="text-xs text-muted-foreground">Document preview</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <a href={previewDoc.url} download={previewDoc.filename}>
+                  <Button size="sm" variant="outline" className="gap-2">
+                    <Download className="h-4 w-4" />
+                    Download
+                  </Button>
+                </a>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => setPreviewDoc(null)}
+                  aria-label="Close document preview"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            <div className="flex min-h-0 flex-1 items-center justify-center bg-muted/30">
+              {previewDoc.type.startsWith("image/") ? (
+                <img
+                  src={previewDoc.url}
+                  alt={previewDoc.filename}
+                  className="max-h-full max-w-full object-contain"
+                />
+              ) : (
+                <iframe
+                  src={previewDoc.url}
+                  title={previewDoc.filename}
+                  className="h-full w-full bg-background"
+                />
+              )}
+            </div>
           </div>
         </div>
       )}

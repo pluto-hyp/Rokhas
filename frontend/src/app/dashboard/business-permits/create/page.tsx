@@ -4,7 +4,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { uploadTemporaryDocument } from "@/lib/api";
+import { ApiError, BusinessPermitDocument, createBusinessPermit, uploadTemporaryDocument } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,11 +34,8 @@ import {
   ShieldCheck, 
   ArrowLeft,
   Sparkles,
-  CheckCircle2,
   FileCheck
 } from "lucide-react";
-
-const API_URL = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/+$/, "");
 
 const BUSINESS_TYPES = [
   "Restaurant",
@@ -102,7 +99,8 @@ export default function CreateBusinessPermitPage() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSelectChange = (value: string) => {
+  const handleSelectChange = (value: string | null) => {
+    if (!value) return;
     setFormData(prev => ({ ...prev, business_type: value }));
   };
 
@@ -139,7 +137,7 @@ export default function CreateBusinessPermitPage() {
       })(),
       {
         loading: `Uploading ${file.name}...`,
-        success: (uploadResult) => {
+        success: () => {
           // Extract metadata from filename if available
           const cinMatch = file.name.match(/\b([A-Z]{1,2}\d{5,6})\b/i);
           if (cinMatch && !formData.applicant_cin) {
@@ -193,6 +191,11 @@ export default function CreateBusinessPermitPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!token) {
+      toast.error("Your session has expired. Please sign in again before submitting.");
+      return;
+    }
     
     if (!formData.business_name || !formData.business_type || !formData.address || !formData.applicant_cin) {
       toast.error("Please fill in all required fields");
@@ -211,7 +214,7 @@ export default function CreateBusinessPermitPage() {
     try {
       toast.loading("Creating business permit request...", { id: "submit" });
 
-      const permitDocuments = [...REQUIRED_DOCUMENTS, ...OPTIONAL_DOCUMENTS]
+      const permitDocuments: BusinessPermitDocument[] = [...REQUIRED_DOCUMENTS, ...OPTIONAL_DOCUMENTS]
         .filter((doc) => files[doc.key])
         .map((doc) => ({
           key: doc.key,
@@ -222,30 +225,20 @@ export default function CreateBusinessPermitPage() {
           notes: files[doc.key]?.notes || [],
         }));
 
-      // Create the permit
-      const permitResponse = await fetch(`${API_URL}/api/v1/business-permits/`, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          ...formData,
-          surface_area: formData.surface_area ? parseInt(formData.surface_area) : null,
-          permit_documents: permitDocuments
-        })
-      });
-
-      if (!permitResponse.ok) {
-        throw new Error("Failed to create permit");
-      }
-
-      const permit = await permitResponse.json();
+      const permit = await createBusinessPermit({
+        ...formData,
+        surface_area: formData.surface_area ? parseInt(formData.surface_area) : null,
+        permit_documents: permitDocuments
+      }, token);
 
       toast.success("Business permit request submitted successfully!", { id: "submit" });
       router.push(`/dashboard/business-permits/${permit.id}`);
     } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : "Failed to submit permit";
+      const errorMsg = error instanceof ApiError && error.status === 401
+        ? "Your session has expired. Please sign in again before submitting."
+        : error instanceof Error
+          ? error.message
+          : "Failed to submit permit";
       toast.error(errorMsg, { id: "submit" });
     } finally {
       setLoading(false);
