@@ -1,31 +1,76 @@
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from app.api.dependencies import get_db, get_current_active_user, get_current_admin_user
 from app.models.user import User
 from app.schemas.business_permit import BusinessPermitCreate, BusinessPermitResponse, BusinessPermitUpdate
 from app.crud import business_permit as crud_business_permit
+from app.crud import notification as crud_notification
 from app.core.config import settings
 import hashlib
 from datetime import datetime, timezone
-import os
 from pathlib import Path
+from urllib.parse import parse_qs, unquote, urlparse
 
 router = APIRouter()
 
 # File management helpers
-UPLOAD_DIR = Path(settings.UPLOAD_DIR if hasattr(settings, 'UPLOAD_DIR') else "backend/uploads")
+UPLOAD_DIR = Path(settings.UPLOADS_DIR)
 
-@router.post("/", response_model=BusinessPermitResponse)
+
+def _safe_file_path(base_dir: Path, filename: str) -> Path:
+    file_path = (base_dir / filename).resolve()
+    if not file_path.is_relative_to(base_dir.resolve()):
+        raise HTTPException(status_code=400, detail="Invalid filename")
+    return file_path
+
+
+def _temporary_document_path(permit, filename: str) -> Path | None:
+    """Resolve legacy business permit docs that still point at temporary dossier uploads."""
+    for document in permit.permit_documents or []:
+        document_url = document.get("url") or ""
+        if not document_url:
+            continue
+
+        parsed_url = urlparse(document_url)
+        stored_filename = unquote(Path(parsed_url.path).name)
+        if stored_filename != filename and document.get("filename") != filename:
+            continue
+
+        query_user_id = parse_qs(parsed_url.query).get("user_id", [None])[0]
+        owner_id = int(query_user_id) if query_user_id and query_user_id.isdigit() else permit.owner_id
+        temp_dir = UPLOAD_DIR / "temporary" / f"user_{owner_id}"
+        return _safe_file_path(temp_dir, stored_filename or filename)
+
+    return None
+
+@router.post("", response_model=BusinessPermitResponse)
+@router.post("/", response_model=BusinessPermitResponse, include_in_schema=False)
 def create_business_permit(
     permit: BusinessPermitCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
     """Create a new business permit request"""
-    return crud_business_permit.create_business_permit(db=db, permit=permit, owner_id=current_user.id)
+    # Create the permit
+    new_permit = crud_business_permit.create_business_permit(db=db, permit=permit, owner_id=current_user.id)
+    
+    # Create notifications for all admin/authority users
+    admin_users = db.query(User).filter(User.role.in_(["admin", "authority"])).all()
+    for admin in admin_users:
+        crud_notification.create_notification(
+            db=db,
+            user_id=admin.id,
+            title="New Business Permit Request",
+            message=f"A new business permit request for '{new_permit.business_name}' has been submitted by {current_user.full_name or 'A citizen'}.",
+            business_permit_id=new_permit.id
+        )
+    
+    return new_permit
 
-@router.get("/", response_model=List[BusinessPermitResponse])
+@router.get("", response_model=List[BusinessPermitResponse])
+@router.get("/", response_model=List[BusinessPermitResponse], include_in_schema=False)
 def read_business_permits(
     skip: int = 0,
     limit: int = 100,
@@ -70,6 +115,10 @@ def update_business_permit(
     if permit_update.status == "Approved" and current_user.role not in {"admin", "authority"}:
         raise HTTPException(status_code=403, detail="Only admins and authorities can approve permits")
     
+    # Only admins/authorities can reject permits
+    if permit_update.status == "Rejected" and current_user.role not in {"admin", "authority"}:
+        raise HTTPException(status_code=403, detail="Only admins and authorities can reject permits")
+    
     # Generate signature if approving
     if permit_update.status == "Approved":
         timestamp = datetime.now(timezone.utc).isoformat()
@@ -89,6 +138,7 @@ def update_business_permit(
 def upload_document(
     permit_id: int,
     file: UploadFile = File(...),
+    key: str = Query("business_document"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
@@ -109,6 +159,25 @@ def upload_document(
     file_path = permit_dir / file.filename
     with open(file_path, "wb") as f:
         f.write(file.file.read())
+    
+    # Update permit_documents list
+    docs = list(permit.permit_documents or [])
+    # Remove any existing document with the same key
+    docs = [d for d in docs if d.get("key") != key]
+    
+    # Append new document info
+    docs.append({
+        "key": key,
+        "filename": file.filename,
+        "url": f"/api/v1/business-permits/{permit_id}/documents/{file.filename}",
+        "approved": True,
+        "required": True,
+        "notes": []
+    })
+    permit.permit_documents = docs
+    db.add(permit)
+    db.commit()
+    db.refresh(permit)
     
     # Return file URL
     return {
@@ -132,16 +201,15 @@ def get_document(
     if current_user.id != permit.owner_id and current_user.role not in {"admin", "authority"}:
         raise HTTPException(status_code=403, detail="Not authorized")
     
-    # Prevent directory traversal
-    file_path = (UPLOAD_DIR / f"business_permit_{permit_id}" / filename).resolve()
-    permit_dir = (UPLOAD_DIR / f"business_permit_{permit_id}").resolve()
-    
-    if not file_path.is_relative_to(permit_dir):
-        raise HTTPException(status_code=400, detail="Invalid filename")
+    permit_dir = UPLOAD_DIR / f"business_permit_{permit_id}"
+    file_path = _safe_file_path(permit_dir, filename)
+
+    if not file_path.exists():
+        fallback_path = _temporary_document_path(permit, filename)
+        if fallback_path is not None:
+            file_path = fallback_path
     
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="Document not found")
     
-    # Return file
-    from fastapi.responses import FileResponse
-    return FileResponse(file_path)
+    return FileResponse(path=file_path, filename=file_path.name)

@@ -350,7 +350,7 @@ async def upload_temporary_document(
             f.write(content)
         
         # Generate URL for the document
-        file_url = f"/api/v1/temporary-documents/{file_path.name}?user_id={current_user.id}"
+        file_url = f"/api/v1/dossiers/temporary-documents/{file_path.name}?user_id={current_user.id}"
         
         return {
             "filename": file_path.name,

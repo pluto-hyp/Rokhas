@@ -99,7 +99,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       ];
     }
 
-    if (role === "authority") {
+    if (role === "authority" || role === "admin") {
       return [
         ...common,
         {
@@ -142,7 +142,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       },
     ];
 
-    if (role === "authority") {
+    if (role === "authority" || role === "admin") {
       items.push({
         name: "Compliance & Audits",
         url: "/dashboard/compliance",

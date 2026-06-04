@@ -10,10 +10,11 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8
     GOOGLE_CLIENT_ID: str = os.getenv("GOOGLE_CLIENT_ID", "")
     
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./rokhas.db")
+    BASE_DIR: str = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+    DATABASE_URL: str = os.getenv("DATABASE_URL", f"sqlite:///{os.path.join(BASE_DIR, 'rokhas.db')}")
     
     # File uploads configuration
-    UPLOADS_DIR: str = os.getenv("UPLOADS_DIR", os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "uploads"))
+    UPLOADS_DIR: str = os.getenv("UPLOADS_DIR", os.path.join(BASE_DIR, "uploads"))
     MAX_UPLOAD_SIZE: int = 50 * 1024 * 1024  # 50MB
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")

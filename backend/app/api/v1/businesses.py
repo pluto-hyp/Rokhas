@@ -10,7 +10,8 @@ from datetime import datetime, timezone
 
 router = APIRouter()
 
-@router.post("/", response_model=BusinessResponse)
+@router.post("", response_model=BusinessResponse)
+@router.post("/", response_model=BusinessResponse, include_in_schema=False)
 def create_business(
     business: BusinessCreate,
     db: Session = Depends(get_db),
@@ -18,7 +19,8 @@ def create_business(
 ):
     return crud_business.create_business(db=db, business=business, owner_id=current_user.id)
 
-@router.get("/", response_model=List[BusinessResponse])
+@router.get("", response_model=List[BusinessResponse])
+@router.get("/", response_model=List[BusinessResponse], include_in_schema=False)
 def read_businesses(
     skip: int = 0,
     limit: int = 100,
