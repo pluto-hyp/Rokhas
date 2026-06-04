@@ -18,7 +18,10 @@ import {
   Send,
   Printer,
   MessageSquare,
-  X
+  X,
+  Clock,
+  XCircle,
+  ChevronDown
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,7 +32,7 @@ import { cn } from "@/lib/utils";
 import { OfficialBusinessPermitCertificate } from "@/components/OfficialBusinessPermitCertificate";
 import { Textarea } from "@/components/ui/textarea";
 
-const API_URL = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/+$/, "");
+const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || "/api/v1").replace(/\/+$/, "");
 
 interface Document {
   key: string;
@@ -76,8 +79,10 @@ export default function PermitDetailPage() {
   const [permit, setPermit] = useState<BusinessPermit | null>(null);
   const [loading, setLoading] = useState(true);
   const [approving, setApproving] = useState(false);
+  const [rejecting, setRejecting] = useState(false);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [rejectionNotes, setRejectionNotes] = useState<{ [key: string]: string }>({});
+  const [openRejectPanels, setOpenRejectPanels] = useState<{ [key: string]: boolean }>({});
   const [showCertificate, setShowCertificate] = useState(false);
   const [previewDoc, setPreviewDoc] = useState<PreviewDocument | null>(null);
 
@@ -85,7 +90,7 @@ export default function PermitDetailPage() {
     async function fetchPermit() {
       if (!token || !permitId) return;
       try {
-        const response = await fetch(`${API_URL}/api/v1/business-permits/${permitId}`, {
+        const response = await fetch(`${API_BASE_URL}/business-permits/${permitId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (response.ok) {
@@ -104,6 +109,15 @@ export default function PermitDetailPage() {
     }
     fetchPermit();
   }, [token, permitId]);
+
+  useEffect(() => {
+    if (permit?.business_name) {
+      const event = new CustomEvent("rokhas-breadcrumb-override", {
+        detail: permit.business_name
+      });
+      window.dispatchEvent(event);
+    }
+  }, [permit]);
 
   useEffect(() => {
     return () => {
@@ -132,7 +146,7 @@ export default function PermitDetailPage() {
 
   const getDocumentEndpoint = (doc: Document) => {
     const filename = getDocumentFilename(doc);
-    return `${API_URL}/api/v1/business-permits/${permitId}/documents/${encodeURIComponent(filename)}`;
+    return `${API_BASE_URL}/business-permits/${permitId}/documents/${encodeURIComponent(filename)}`;
   };
 
   const fetchDocumentBlob = async (doc: Document) => {
@@ -158,6 +172,9 @@ export default function PermitDetailPage() {
         doc.key === docKey ? { ...doc, approved } : doc
       )
     );
+    if (approved) {
+      setOpenRejectPanels(prev => ({ ...prev, [docKey]: false }));
+    }
   };
 
   const handleSetRejectionNote = (docKey: string, note: string) => {
@@ -167,44 +184,41 @@ export default function PermitDetailPage() {
     }));
   };
 
+  const toggleRejectPanel = (docKey: string) => {
+    setOpenRejectPanels(prev => ({ ...prev, [docKey]: !prev[docKey] }));
+  };
+
   const canApprove = () => {
     if (!permit) return false;
     const requiredDocs = documents.filter(doc => doc.required !== false);
     return requiredDocs.length > 0 && requiredDocs.every(doc => doc.approved);
   };
 
+  const buildPermitDocumentsPayload = () =>
+    documents.map(doc => ({
+      key: doc.key,
+      filename: doc.filename,
+      url: doc.url,
+      approved: doc.approved || false,
+      required: doc.required,
+      notes: rejectionNotes[doc.key]?.trim()
+        ? [rejectionNotes[doc.key].trim()]
+        : Array.isArray(doc.notes)
+          ? doc.notes
+          : doc.notes
+            ? [doc.notes]
+            : []
+    }));
+
   const handleApprovePermit = async () => {
     if (!permit || !token) return;
-    
     setApproving(true);
     try {
-      const updatePayload = {
-        status: "Approved",
-        permit_documents: documents.map(doc => ({
-          key: doc.key,
-          filename: doc.filename,
-          url: doc.url,
-          approved: doc.approved || false,
-          required: doc.required,
-          notes: rejectionNotes[doc.key]?.trim()
-            ? [rejectionNotes[doc.key].trim()]
-            : Array.isArray(doc.notes)
-              ? doc.notes
-              : doc.notes
-                ? [doc.notes]
-                : []
-        }))
-      };
-
-      const response = await fetch(`${API_URL}/api/v1/business-permits/${permitId}`, {
+      const response = await fetch(`${API_BASE_URL}/business-permits/${permitId}`, {
         method: "PATCH",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(updatePayload)
+        headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "Approved", permit_documents: buildPermitDocumentsPayload() })
       });
-
       if (response.ok) {
         const updatedPermit: BusinessPermit = await response.json();
         setPermit(updatedPermit);
@@ -219,6 +233,36 @@ export default function PermitDetailPage() {
       toast.error("Error approving permit");
     } finally {
       setApproving(false);
+    }
+  };
+
+  const handleRejectPermit = async () => {
+    if (!permit || !token) return;
+    const hasNotes = documents.some(doc => rejectionNotes[doc.key]?.trim());
+    if (!hasNotes) {
+      toast.error("Please provide a rejection reason for at least one document.");
+      return;
+    }
+    setRejecting(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/business-permits/${permitId}`, {
+        method: "PATCH",
+        headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "Rejected", permit_documents: buildPermitDocumentsPayload() })
+      });
+      if (response.ok) {
+        const updatedPermit: BusinessPermit = await response.json();
+        setPermit(updatedPermit);
+        toast.success("Permit rejected and applicant notified.");
+      } else {
+        const err = await response.json();
+        toast.error(err.detail || "Failed to reject permit");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Error rejecting permit");
+    } finally {
+      setRejecting(false);
     }
   };
 
@@ -273,10 +317,11 @@ export default function PermitDetailPage() {
   }
 
   const isAuthority = role === "authority" || role === "admin";
-  const canReview = isAuthority && permit.status !== "Approved";
+  const canReview = isAuthority && permit.status !== "Approved" && permit.status !== "Rejected";
+  const canReject = canReview && documents.some(doc => !doc.approved);
 
   return (
-    <div className="space-y-8 px-4 py-6 max-w-5xl mx-auto">
+    <div className="space-y-8 px-4 py-6">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button
@@ -310,6 +355,12 @@ export default function PermitDetailPage() {
               Under Review
             </Badge>
           )}
+          {permit.status === "Rejected" && (
+            <Badge className="bg-destructive text-white gap-1">
+              <XCircle className="w-3 h-3" />
+              Rejected
+            </Badge>
+          )}
           {permit.status === "Approved" && (
             <Button
               size="sm"
@@ -324,135 +375,158 @@ export default function PermitDetailPage() {
       </div>
 
       {/* Permit Information */}
-      <Card className="bg-muted/30 border-border/40">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg">Permit Information</CardTitle>
+      <Card className="rounded-2xl border-border/40 bg-card shadow-sm overflow-hidden">
+        <CardHeader className="p-6 pb-2">
+          <CardTitle className="text-xl font-bold">Permit Information</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-3">
-              <div className="flex items-start gap-3">
-                <Building2 className="w-5 h-5 text-muted-foreground mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="text-xs font-bold text-muted-foreground uppercase">Business Name</p>
-                  <p className="font-semibold">{permit.business_name}</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <FileText className="w-5 h-5 text-muted-foreground mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="text-xs font-bold text-muted-foreground uppercase">Business Type</p>
-                  <p className="font-semibold">{permit.business_type}</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <MapPin className="w-5 h-5 text-muted-foreground mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="text-xs font-bold text-muted-foreground uppercase">Address</p>
-                  <p className="font-semibold">{permit.address}</p>
-                </div>
-              </div>
+        <CardContent className="p-6 space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="p-3.5 rounded-xl bg-muted/10 border border-border/40 space-y-1">
+              <Building2 className="size-4 text-primary" />
+              <p className="text-[9px] font-bold text-muted-foreground uppercase mt-1">Business Name</p>
+              <p className="text-xs font-bold text-foreground">{permit.business_name}</p>
             </div>
-            <div className="space-y-3">
-              <div className="flex items-start gap-3">
-                <User className="w-5 h-5 text-muted-foreground mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="text-xs font-bold text-muted-foreground uppercase">Applicant Name</p>
-                  <p className="font-semibold">{permit.applicant_name}</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <FileText className="w-5 h-5 text-muted-foreground mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="text-xs font-bold text-muted-foreground uppercase">CIN/ID</p>
-                  <p className="font-semibold">{permit.applicant_cin}</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <Calendar className="w-5 h-5 text-muted-foreground mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="text-xs font-bold text-muted-foreground uppercase">Submitted Date</p>
-                  <p className="font-semibold">{new Date(permit.created_at).toLocaleDateString()}</p>
-                </div>
-              </div>
+
+            <div className="p-3.5 rounded-xl bg-muted/10 border border-border/40 space-y-1">
+              <FileText className="size-4 text-primary" />
+              <p className="text-[9px] font-bold text-muted-foreground uppercase mt-1">Business Type</p>
+              <p className="text-xs font-bold text-foreground capitalize">{permit.business_type}</p>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-muted/10 border border-border/40 space-y-1">
+              <MapPin className="size-4 text-primary" />
+              <p className="text-[9px] font-bold text-muted-foreground uppercase mt-1">Address</p>
+              <p className="text-xs font-bold text-foreground truncate">{permit.address}</p>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-muted/10 border border-border/40 space-y-1">
+              <User className="size-4 text-primary" />
+              <p className="text-[9px] font-bold text-muted-foreground uppercase mt-1">Applicant Name</p>
+              <p className="text-xs font-bold text-foreground">{permit.applicant_name}</p>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-muted/10 border border-border/40 space-y-1">
+              <FileText className="size-4 text-primary" />
+              <p className="text-[9px] font-bold text-muted-foreground uppercase mt-1">CIN/ID</p>
+              <p className="text-xs font-bold text-foreground">{permit.applicant_cin}</p>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-muted/10 border border-border/40 space-y-1">
+              <Calendar className="size-4 text-primary" />
+              <p className="text-[9px] font-bold text-muted-foreground uppercase mt-1">Submitted Date</p>
+              <p className="text-xs font-bold text-foreground">{new Date(permit.created_at).toLocaleDateString()}</p>
             </div>
           </div>
-          <div className="mt-4 pt-4 border-t border-border/40">
-            <p className="text-xs font-bold text-muted-foreground uppercase mb-2">Description</p>
-            <p className="text-sm">{permit.business_description}</p>
+          <div className="pt-4 border-t border-border/40 space-y-2">
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Description</p>
+            <p className="text-xs text-foreground leading-relaxed">{permit.business_description || "Commercial business operations."}</p>
           </div>
         </CardContent>
       </Card>
 
       {/* Documents Section */}
-      <Card className="bg-card border-border/40">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg flex items-center gap-2">
+      <Card className="rounded-2xl border-border/40 bg-card shadow-sm overflow-hidden">
+        <CardHeader className="p-6 pb-2">
+          <CardTitle className="text-xl font-bold flex items-center gap-2">
             <FileCheck className="w-5 h-5" />
             Required Documents
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="p-6">
           {documents.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <FileText className="w-8 h-8 mx-auto mb-2 opacity-40" />
               <p>No documents submitted</p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {documents.map((doc) => (
                 <div
                   key={doc.key}
                   className={cn(
-                    "p-4 rounded-lg border border-border/40 bg-card hover:bg-muted/5 transition-colors",
-                    doc.approved && "border-emerald-500/30 bg-emerald-500/5"
+                    "p-3.5 rounded-xl border transition-all space-y-3 bg-background/50",
+                    doc.approved 
+                      ? "border-emerald-500/25 bg-emerald-500/[0.01]" 
+                      : getDocumentNotesText(doc.notes)
+                        ? "border-destructive/25 bg-destructive/[0.01]"
+                        : "border-border/40"
                   )}
                 >
                   <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 space-y-2">
-                      <div className="flex items-center gap-2">
-                        <FileText className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                        <p className="font-semibold text-sm">{doc.filename}</p>
+                    <div className="flex-1 space-y-2 min-w-0">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <FileText className={cn("size-4 shrink-0", doc.approved ? "text-emerald-500" : getDocumentNotesText(doc.notes) ? "text-destructive" : "text-primary")} />
+                        <p className="font-bold text-xs text-foreground truncate">{doc.filename}</p>
                         {doc.required !== false && (
-                          <Badge variant="outline" className="text-xs">Required</Badge>
+                          <span className="text-[8px] bg-destructive/10 text-destructive border border-destructive/20 px-1.5 py-0.1 rounded font-black uppercase shrink-0">
+                            Req
+                          </span>
                         )}
                       </div>
+                      
                       {isAuthority && canReview && (
                         <div className="space-y-3 mt-3 pt-3 border-t border-border/40">
-                          <label className="flex items-center gap-3 cursor-pointer">
+                          <label className="flex items-center gap-3 cursor-pointer select-none">
                             <input
                               type="checkbox"
                               checked={doc.approved || false}
                               onChange={(e) => handleToggleDocumentApproval(doc.key, e.target.checked)}
-                              className="w-4 h-4 rounded"
+                              className="w-4 h-4 rounded border-border/40 bg-background"
                             />
-                            <span className="text-sm font-medium">Approve this document</span>
+                            <span className="text-xs font-semibold">Approve this document</span>
                           </label>
-                          <div className="space-y-2">
-                            <label className="flex items-center gap-2 text-xs font-medium">
-                              <MessageSquare className="w-3 h-3" />
-                              Notes / Rejection Reason
-                            </label>
-                            <Textarea
-                              placeholder="Add notes for applicant or rejection reason..."
-                              value={rejectionNotes[doc.key] || getDocumentNotesText(doc.notes)}
-                              onChange={(e) => handleSetRejectionNote(doc.key, e.target.value)}
-                              className="text-xs h-20 resize-none rounded-lg"
-                            />
-                          </div>
+
+                          {/* Reject panel — only visible when doc is NOT approved */}
+                          {!doc.approved && (
+                            <div className="space-y-2">
+                              <button
+                                type="button"
+                                onClick={() => toggleRejectPanel(doc.key)}
+                                className="flex items-center gap-1.5 text-xs font-semibold text-destructive hover:underline"
+                              >
+                                <XCircle className="w-3.5 h-3.5" />
+                                Reject this document
+                                <ChevronDown
+                                  className={cn(
+                                    "w-3 h-3 transition-transform",
+                                    openRejectPanels[doc.key] ? "rotate-180" : ""
+                                  )}
+                                />
+                              </button>
+
+                              {openRejectPanels[doc.key] && (
+                                <div className="space-y-2 animate-in slide-in-from-top-1 duration-150">
+                                  <label className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                                    <MessageSquare className="w-3 h-3" />
+                                    Rejection Reason
+                                  </label>
+                                  <Textarea
+                                    placeholder="Explain why this document is being rejected..."
+                                    value={rejectionNotes[doc.key]}
+                                    onChange={(e) => handleSetRejectionNote(doc.key, e.target.value)}
+                                    className="text-xs h-20 resize-none rounded-lg border-destructive/40 bg-destructive/5 focus:border-destructive"
+                                    autoFocus
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
                       )}
+                      
                       {!canReview && (
-                        <div className="flex items-center gap-2 mt-2">
+                        <div className="flex items-center gap-2 mt-2 flex-wrap">
                           {doc.approved ? (
-                            <Badge className="bg-emerald-500/10 text-emerald-600 gap-1 text-xs">
-                              <CheckCircle2 className="w-3 h-3" />
-                              Approved
+                            <Badge className="bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 text-[9px] hover:bg-emerald-500/15 font-bold gap-1 py-0.5">
+                              <CheckCircle2 className="size-2.5" /> Approved
+                            </Badge>
+                          ) : getDocumentNotesText(doc.notes) ? (
+                            <Badge className="bg-destructive/10 text-destructive border border-destructive/20 text-[9px] hover:bg-destructive/15 font-bold gap-1 py-0.5">
+                              <AlertCircle className="size-2.5" /> Revoked
                             </Badge>
                           ) : (
-                            <Badge className="bg-amber-500/10 text-amber-600 gap-1 text-xs">
-                              <AlertCircle className="w-3 h-3" />
-                              Pending
+                            <Badge className="bg-amber-500/10 text-amber-500 border border-amber-500/20 text-[9px] hover:bg-amber-500/15 font-bold gap-1 py-0.5">
+                              <Clock className="size-2.5" /> Pending
                             </Badge>
                           )}
                           {getDocumentNotesText(doc.notes) && (
@@ -461,24 +535,25 @@ export default function PermitDetailPage() {
                         </div>
                       )}
                     </div>
+                    
                     <div className="flex items-center gap-2 flex-shrink-0">
                       <Button
                         size="sm"
                         variant="outline"
-                        className="gap-1"
+                        className="h-9 px-3 rounded-lg text-[10px] font-bold"
                         onClick={() => handleDownloadDocument(doc)}
                       >
-                        <Download className="w-3 h-3" />
-                        <span className="hidden sm:inline">Download</span>
+                        <Download className="w-3 h-3 mr-1" />
+                        Download
                       </Button>
                       <Button
                         size="sm"
                         variant="outline"
-                        className="gap-1"
+                        className="h-9 px-3 rounded-lg text-[10px] font-bold"
                         onClick={() => handleViewDocument(doc)}
                       >
-                        <Eye className="w-3 h-3" />
-                        <span className="hidden sm:inline">View</span>
+                        <Eye className="w-3 h-3 mr-1" />
+                        View
                       </Button>
                     </div>
                   </div>
@@ -491,27 +566,27 @@ export default function PermitDetailPage() {
 
       {/* Signature Information (if approved) */}
       {permit.status === "Approved" && permit.signed_by && (
-        <Card className="bg-emerald-500/5 border-emerald-500/20">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center gap-2 text-emerald-600">
+        <Card className="rounded-2xl border-border/40 bg-emerald-500/5 border-emerald-500/20 overflow-hidden">
+          <CardHeader className="p-6 pb-2 bg-emerald-500/[0.02]">
+            <CardTitle className="text-lg flex items-center gap-2 text-emerald-600 font-bold">
               <CheckCircle2 className="w-5 h-5" />
               Signature Information
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="grid grid-cols-2 gap-4">
+          <CardContent className="p-6 space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <p className="text-xs font-bold text-muted-foreground uppercase">Signed By</p>
-                <p className="font-semibold">{permit.signed_by}</p>
+                <p className="text-sm font-semibold">{permit.signed_by}</p>
               </div>
               <div>
                 <p className="text-xs font-bold text-muted-foreground uppercase">Signed At</p>
-                <p className="font-semibold">{new Date(permit.signed_at || "").toLocaleString()}</p>
+                <p className="text-sm font-semibold">{new Date(permit.signed_at || "").toLocaleString()}</p>
               </div>
             </div>
-            <div>
+            <div className="pt-2">
               <p className="text-xs font-bold text-muted-foreground uppercase mb-2">Signature Hash</p>
-              <p className="font-mono text-xs break-all bg-background p-2 rounded border border-border/40">{permit.signature_hash}</p>
+              <p className="font-mono text-xs break-all bg-background p-3 rounded-xl border border-border/40">{permit.signature_hash}</p>
             </div>
           </CardContent>
         </Card>
@@ -519,30 +594,55 @@ export default function PermitDetailPage() {
 
       {/* Action Buttons */}
       {canReview && (
-        <div className="flex items-center justify-between sticky bottom-0 bg-background/95 backdrop-blur p-4 rounded-lg border border-border/40 shadow-lg">
-          <p className="text-sm font-medium text-muted-foreground">
+        <div className="flex items-center justify-between sticky bottom-0 bg-background/95 backdrop-blur p-4 rounded-xl border border-border/40 shadow-lg mt-8">
+          <p className="text-xs font-bold text-muted-foreground">
             {canApprove()
               ? "All required documents approved. Ready to sign and issue permit."
-              : "Approve all required documents to proceed."}
+              : canReject
+                ? "Some documents are unchecked — you can reject the permit."
+                : "Approve all required documents to proceed."}
           </p>
-          <Button
-            size="lg"
-            onClick={handleApprovePermit}
-            disabled={!canApprove() || approving}
-            className="gap-2 bg-emerald-600 hover:bg-emerald-700"
-          >
-            {approving ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Processing...
-              </>
-            ) : (
-              <>
-                <Send className="w-4 h-4" />
-                Approve & Sign Permit
-              </>
+          <div className="flex items-center gap-2">
+            {canReject && (
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={handleRejectPermit}
+                disabled={rejecting || approving}
+                className="gap-2 border-destructive/50 text-destructive hover:bg-destructive hover:text-white rounded-xl h-11 px-5 text-xs font-bold"
+              >
+                {rejecting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Rejecting...
+                  </>
+                ) : (
+                  <>
+                    <XCircle className="w-4 h-4" />
+                    Reject Permit
+                  </>
+                )}
+              </Button>
             )}
-          </Button>
+            <Button
+              size="lg"
+              onClick={handleApprovePermit}
+              disabled={!canApprove() || approving || rejecting}
+              className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl h-11 px-5 text-xs font-bold"
+            >
+              {approving ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <Send className="w-4 h-4" />
+                  Approve & Sign Permit
+                </>
+              )}
+            </Button>
+          </div>
         </div>
       )}
 

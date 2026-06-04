@@ -11,8 +11,10 @@ class Notification(Base):
     title = Column(String, nullable=False)
     message = Column(Text, nullable=False)
     dossier_id = Column(Integer, ForeignKey("dossiers.id"), nullable=True)
+    business_permit_id = Column(Integer, ForeignKey("business_permits.id"), nullable=True)
     read = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     user = relationship("User")
     dossier = relationship("Dossier")
+    business_permit = relationship("BusinessPermit")

@@ -6,6 +6,7 @@ class NotificationBase(BaseModel):
     title: str
     message: str
     dossier_id: Optional[int] = None
+    business_permit_id: Optional[int] = None
     read: bool = False
 
 class NotificationCreate(NotificationBase):

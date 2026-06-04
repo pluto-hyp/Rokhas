@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { toast } from "sonner";
 
-const API_URL = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/+$/, "");
+const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || "/api/v1").replace(/\/+$/, "");
 
 export default function BusinessPermitsPage() {
   const [permits, setPermits] = useState<any[]>([]);
@@ -21,24 +21,41 @@ export default function BusinessPermitsPage() {
 
   useEffect(() => {
     async function fetchPermits() {
-      if (!token) return;
+      if (!token) {
+        console.log("[DEBUG] No token available");
+        return;
+      }
       try {
-        const response = await fetch(`${API_URL}/api/v1/business-permits/`, {
+        const url = `${API_BASE_URL}/business-permits`;
+        console.log("[DEBUG] Fetching from:", url);
+        console.log("[DEBUG] API_BASE_URL:", API_BASE_URL);
+        console.log("[DEBUG] User role:", role);
+        
+        const response = await fetch(url, {
           headers: { "Authorization": `Bearer ${token}` }
         });
+        
+        console.log("[DEBUG] Response status:", response.status);
+        
         if (response.ok) {
           const data = await response.json();
+          console.log("[DEBUG] Permits count:", data.length);
+          console.log("[DEBUG] Permits:", data);
           setPermits(data);
+        } else {
+          const errorText = await response.text();
+          console.error("[DEBUG] Error response:", response.status, errorText);
+          toast.error(`Failed to load permits: ${response.status}`);
         }
       } catch (err) {
-        console.error(err);
+        console.error("[DEBUG] Exception:", err);
         toast.error("Failed to load business permits");
       } finally {
         setLoading(false);
       }
     }
     fetchPermits();
-  }, [token]);
+  }, [token, role]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {

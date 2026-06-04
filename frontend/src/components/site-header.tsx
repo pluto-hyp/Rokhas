@@ -87,6 +87,8 @@ export function SiteHeader() {
       )
       if (notif.dossier_id) {
         router.push(`/dashboard/projects?id=${notif.dossier_id}`)
+      } else if (notif.business_permit_id) {
+        router.push(`/dashboard/business-permits/${notif.business_permit_id}`)
       }
     } catch (error) {
       console.error("Failed to mark notification as read:", error)
@@ -104,6 +106,25 @@ export function SiteHeader() {
   }
 
   const unreadCount = notifications.filter(n => !n.read).length
+
+  const [breadcrumbOverride, setBreadcrumbOverride] = React.useState<string | null>(null)
+
+  React.useEffect(() => {
+    const handleOverride = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail) {
+        setBreadcrumbOverride(customEvent.detail);
+      }
+    };
+    window.addEventListener("rokhas-breadcrumb-override", handleOverride);
+    return () => {
+      window.removeEventListener("rokhas-breadcrumb-override", handleOverride);
+    };
+  }, []);
+
+  React.useEffect(() => {
+    setBreadcrumbOverride(null);
+  }, [pathname]);
 
   const getBreadcrumbs = () => {
     const breadcrumbs: { label: string; href?: string; active: boolean }[] = []
@@ -138,8 +159,23 @@ export function SiteHeader() {
       } else if (segment === "businesses") {
         breadcrumbs.push({ label: "Businesses", active: true })
       } else {
-        const capSegment = segment ? segment.charAt(0).toUpperCase() + segment.slice(1) : ""
-        breadcrumbs.push({ label: capSegment, active: true })
+        const segments = pathname.split("/").filter(Boolean).slice(1) // exclude dashboard
+        segments.forEach((seg, index) => {
+          const isLast = index === segments.length - 1
+          let label = seg.charAt(0).toUpperCase() + seg.slice(1)
+          label = label.replace(/-/g, " ")
+          
+          if (isLast && breadcrumbOverride) {
+            label = breadcrumbOverride
+          }
+          
+          const href = "/dashboard/" + segments.slice(0, index + 1).join("/")
+          breadcrumbs.push({
+            label,
+            href: isLast ? undefined : href,
+            active: isLast,
+          })
+        })
       }
     } else if (pathname === "/settings") {
       breadcrumbs.push({ label: "Settings", active: true })
@@ -149,7 +185,11 @@ export function SiteHeader() {
       const segments = pathname.split("/").filter(Boolean)
       segments.forEach((seg, index) => {
         const isLast = index === segments.length - 1
-        const label = seg.charAt(0).toUpperCase() + seg.slice(1)
+        let label = seg.charAt(0).toUpperCase() + seg.slice(1)
+        label = label.replace(/-/g, " ")
+        if (isLast && breadcrumbOverride) {
+          label = breadcrumbOverride
+        }
         const href = "/" + segments.slice(0, index + 1).join("/")
         breadcrumbs.push({
           label,
@@ -158,7 +198,6 @@ export function SiteHeader() {
         })
       })
     }
-
     return breadcrumbs
   }
 

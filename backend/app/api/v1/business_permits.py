@@ -6,6 +6,7 @@ from app.api.dependencies import get_db, get_current_active_user, get_current_ad
 from app.models.user import User
 from app.schemas.business_permit import BusinessPermitCreate, BusinessPermitResponse, BusinessPermitUpdate
 from app.crud import business_permit as crud_business_permit
+from app.crud import notification as crud_notification
 from app.core.config import settings
 import hashlib
 from datetime import datetime, timezone
@@ -52,9 +53,24 @@ def create_business_permit(
     current_user: User = Depends(get_current_active_user)
 ):
     """Create a new business permit request"""
-    return crud_business_permit.create_business_permit(db=db, permit=permit, owner_id=current_user.id)
+    # Create the permit
+    new_permit = crud_business_permit.create_business_permit(db=db, permit=permit, owner_id=current_user.id)
+    
+    # Create notifications for all admin/authority users
+    admin_users = db.query(User).filter(User.role.in_(["admin", "authority"])).all()
+    for admin in admin_users:
+        crud_notification.create_notification(
+            db=db,
+            user_id=admin.id,
+            title="New Business Permit Request",
+            message=f"A new business permit request for '{new_permit.business_name}' has been submitted by {current_user.full_name or 'A citizen'}.",
+            business_permit_id=new_permit.id
+        )
+    
+    return new_permit
 
-@router.get("/", response_model=List[BusinessPermitResponse])
+@router.get("", response_model=List[BusinessPermitResponse])
+@router.get("/", response_model=List[BusinessPermitResponse], include_in_schema=False)
 def read_business_permits(
     skip: int = 0,
     limit: int = 100,
@@ -98,6 +114,10 @@ def update_business_permit(
     # Only admins/authorities can change status to Approved
     if permit_update.status == "Approved" and current_user.role not in {"admin", "authority"}:
         raise HTTPException(status_code=403, detail="Only admins and authorities can approve permits")
+    
+    # Only admins/authorities can reject permits
+    if permit_update.status == "Rejected" and current_user.role not in {"admin", "authority"}:
+        raise HTTPException(status_code=403, detail="Only admins and authorities can reject permits")
     
     # Generate signature if approving
     if permit_update.status == "Approved":

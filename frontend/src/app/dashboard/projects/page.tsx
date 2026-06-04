@@ -18,7 +18,8 @@ import {
   Download,
   AlertCircle,
   Sparkles,
-  Bot
+  Bot,
+  Eye
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -31,6 +32,8 @@ import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
 import { OfficialPermitCertificate, PermitCertificateData } from "@/components/OfficialPermitCertificate";
+
+const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || "/api/v1").replace(/\/+$/, "");
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -45,6 +48,7 @@ export default function ProjectsPage() {
   const [revokingDocKey, setRevokingDocKey] = useState<string | null>(null);
   const [revocationReason, setRevocationReason] = useState<string>("");
   const [selectedDocKey, setSelectedDocKey] = useState<string | null>(null);
+  const [previewDoc, setPreviewDoc] = useState<{ filename: string; type: string; url: string } | null>(null);
 
   useEffect(() => {
     async function loadProjects() {
@@ -89,6 +93,35 @@ export default function ProjectsPage() {
     setRevocationReason("");
   }, [selectedProject?.id]);
 
+  useEffect(() => {
+    return () => {
+      if (previewDoc?.url) {
+        URL.revokeObjectURL(previewDoc.url);
+      }
+    };
+  }, [previewDoc]);
+
+  const fetchDocumentBlob = async (doc: PermitDocument) => {
+    if (!token) {
+      throw new Error("Your session has expired. Please sign in again.");
+    }
+
+    const filename = doc.filename?.trim() || "document";
+    const endpoint = `${API_BASE_URL}/dossiers/${selectedProject?.id}/documents/${encodeURIComponent(filename)}`;
+
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: "Document request failed" }));
+      throw new Error(error.detail || "Document request failed");
+    }
+
+    return response.blob();
+  };
+
   const parseProjectMeta = (desc?: string) => {
     const text = desc || "";
     const refMatch = text.match(/\[REF:\s*([^\]]+)\]/);
@@ -116,29 +149,17 @@ export default function ProjectsPage() {
   };
 
   const openDocumentPreview = async (doc: PermitDocument) => {
-    const normalizedFilename = doc.filename?.trim();
-    const explicitUrl = doc.url?.trim();
-    if (explicitUrl) {
-      window.open(explicitUrl, "_blank", "noopener,noreferrer");
-      return;
-    }
-
-    if (!normalizedFilename?.toLowerCase().endsWith(".pdf")) {
-      toast.error("No preview available for this document.");
-      return;
-    }
-
-    const candidateUrl = `${window.location.origin}/${encodeURIComponent(normalizedFilename)}`;
-
     try {
-      const res = await fetch(candidateUrl, { method: "HEAD" });
-      if (res.ok || res.status === 405) {
-        window.open(candidateUrl, "_blank", "noopener,noreferrer");
-      } else {
-        toast.error("PDF preview is not available because the file is not stored on this server.");
-      }
-    } catch {
-      toast.error("PDF preview is not available because the file is not accessible.");
+      const blob = await fetchDocumentBlob(doc);
+      const url = window.URL.createObjectURL(blob);
+      setPreviewDoc({
+        filename: doc.filename || "document",
+        type: blob.type,
+        url
+      });
+    } catch (err) {
+      console.error(err);
+      toast.error(err instanceof Error ? err.message : "Failed to open document preview");
     }
   };
 
@@ -178,12 +199,7 @@ export default function ProjectsPage() {
     try {
       toast.loading('Verifying digital CMI payment ledger and stamping permit...', { id: "permit-extraction" });
       
-      // Call the backend to approve and sign the dossier
-      const updatedProject = await updateProjectStatus(
-        selectedProject.id, 
-        { status: "Approved" }, 
-        token
-      );
+      const updatedProject = await updateProjectStatus(selectedProject.id, { status: "Approved" }, token);
       
       setProjects(prev => 
         prev.map(p => p.id === updatedProject.id ? updatedProject : p)
@@ -548,18 +564,31 @@ export default function ProjectsPage() {
 
                                     <div className="flex flex-col gap-3">
                                       {canInspect && (
-                                        <Button
-                                          size="sm"
-                                          variant="outline"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            openDocumentPreview(doc);
-                                          }}
-                                          className="h-9 px-3 rounded-lg text-[10px] font-bold"
-                                        >
-                                          <Download className="size-3" />
-                                          Open PDF
-                                        </Button>
+                                        <div className="flex items-center gap-2">
+                                          <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                            }}
+                                            className="h-9 px-3 rounded-lg text-[10px] font-bold flex-1"
+                                          >
+                                            <Download className="size-3" />
+                                            Download
+                                          </Button>
+                                          <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              openDocumentPreview(doc);
+                                            }}
+                                            className="h-9 px-3 rounded-lg text-[10px] font-bold flex-1"
+                                          >
+                                            <Eye className="size-3" />
+                                            View
+                                          </Button>
+                                        </div>
                                       )}
                                       <p className="text-[10px] text-muted-foreground/80">
                                         Review the file metadata above before approving or revoking. If the file is available in the source system, open it to verify the PDF contents.
@@ -720,6 +749,50 @@ export default function ProjectsPage() {
         </div>
       )}
 
+      {/* Document Preview Modal */}
+      {previewDoc && (
+        <div className="fixed inset-0 z-[9998] flex items-center justify-center bg-background/90 p-4 backdrop-blur-md">
+          <div className="flex h-[85vh] w-full max-w-5xl flex-col overflow-hidden rounded-xl border border-border/40 bg-card shadow-2xl">
+            <div className="flex items-center justify-between gap-4 border-b border-border/40 px-4 py-3">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold">{previewDoc.filename}</p>
+                <p className="text-xs text-muted-foreground">Document preview</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <a href={previewDoc.url} download={previewDoc.filename}>
+                  <Button size="sm" variant="outline" className="gap-2">
+                    <Download className="h-4 w-4" />
+                    Download
+                  </Button>
+                </a>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => setPreviewDoc(null)}
+                  aria-label="Close document preview"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            <div className="flex min-h-0 flex-1 items-center justify-center bg-muted/30">
+              {previewDoc.type.startsWith("image/") ? (
+                <img
+                  src={previewDoc.url}
+                  alt={previewDoc.filename}
+                  className="max-h-full max-w-full object-contain"
+                />
+              ) : (
+                <iframe
+                  src={previewDoc.url}
+                  title={previewDoc.filename}
+                  className="h-full w-full bg-background"
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

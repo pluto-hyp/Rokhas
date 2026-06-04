@@ -8,12 +8,13 @@ def get_notifications_for_user(db: Session, user_id: int, skip: int = 0, limit: 
         Notification.created_at.desc()
     ).offset(skip).limit(limit).all()
 
-def create_notification(db: Session, user_id: int, title: str, message: str, dossier_id: int = None):
+def create_notification(db: Session, user_id: int, title: str, message: str, dossier_id: int = None, business_permit_id: int = None):
     db_notif = Notification(
         user_id=user_id,
         title=title,
         message=message,
-        dossier_id=dossier_id
+        dossier_id=dossier_id,
+        business_permit_id=business_permit_id
     )
     db.add(db_notif)
     db.commit()

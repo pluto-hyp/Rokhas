@@ -42,10 +42,10 @@ export default function BusinessesPage() {
       if (!token) return;
       try {
         const [bizResponse, permitsResponse] = await Promise.all([
-          fetch(`${API_URL}/api/v1/businesses/`, {
+          fetch(`${API_URL}/api/v1/businesses`, {
             headers: { "Authorization": `Bearer ${token}` }
           }),
-          fetch(`${API_URL}/api/v1/business-permits/`, {
+          fetch(`${API_URL}/api/v1/business-permits`, {
             headers: { "Authorization": `Bearer ${token}` }
           })
         ]);
@@ -117,40 +117,38 @@ export default function BusinessesPage() {
       </div>
 
       {/* Tabs for Authority/Admin */}
-      {(role === "authority" || role === "admin") && (
-        <div className="flex gap-4 border-b border-border/40">
-          <button
-            onClick={() => setActiveTab("permits")}
-            className={cn(
-              "px-4 py-3 font-semibold text-sm border-b-2 transition-colors",
-              activeTab === "permits"
-                ? "border-primary text-primary"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            )}
-          >
-            Permit Requests
-            {permits.some(p => p.status === "Pending") && (
-              <span className="ml-2 inline-flex items-center px-2 py-0.5 bg-red-500 text-white text-xs font-bold rounded-full">
-                {permits.filter(p => p.status === "Pending").length}
-              </span>
-            )}
-          </button>
-          <button
-            onClick={() => setActiveTab("registered")}
-            className={cn(
-              "px-4 py-3 font-semibold text-sm border-b-2 transition-colors",
-              activeTab === "registered"
-                ? "border-primary text-primary"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            )}
-          >
-            Registered
-          </button>
-        </div>
-      )}
+      <div className="flex gap-4 border-b border-border/40">
+        <button
+          onClick={() => setActiveTab("permits")}
+          className={cn(
+            "px-4 py-3 font-semibold text-sm border-b-2 transition-colors",
+            activeTab === "permits"
+              ? "border-primary text-primary"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          )}
+        >
+          Permit Requests
+          {permits.some(p => p.status === "Pending") && (
+            <span className="ml-2 inline-flex items-center px-2 py-0.5 bg-red-500 text-white text-xs font-bold rounded-full">
+              {permits.filter(p => p.status === "Pending").length}
+            </span>
+          )}
+        </button>
+        <button
+          onClick={() => setActiveTab("registered")}
+          className={cn(
+            "px-4 py-3 font-semibold text-sm border-b-2 transition-colors",
+            activeTab === "registered"
+              ? "border-primary text-primary"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          )}
+        >
+          Registered
+        </button>
+      </div>
 
       {/* Business Permit Requests Tab */}
-      {(role === "authority" || role === "admin" ? activeTab === "permits" : false) && (
+      {activeTab === "permits" && (
         <Card className="border-border/40 shadow-none bg-card overflow-hidden">
           <div className="p-4 border-b border-border/40 flex items-center justify-between">
             <p className="text-xs text-muted-foreground font-bold">{permits.length} business permit requests</p>
@@ -210,7 +208,7 @@ export default function BusinessesPage() {
                             }}
                           >
                             <CheckCircle2 className="w-3 h-3" />
-                            Review
+                            {role === "authority" || role === "admin" ? "Review" : "View Details"}
                           </Button>
                         ) : permit.status === "Approved" ? (
                           <Button
@@ -239,7 +237,7 @@ export default function BusinessesPage() {
       )}
 
       {/* Registered Businesses Tab */}
-      {(!role || activeTab === "registered" || (role !== "authority" && role !== "admin")) && (
+      {activeTab === "registered" && (
         <Card className="border-border/40 shadow-none bg-white overflow-hidden">
           <div className="p-4 bg-muted/10 border-b border-border/40 flex items-center justify-between">
             <div className="flex items-center gap-2">

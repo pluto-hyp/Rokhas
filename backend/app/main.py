@@ -85,6 +85,29 @@ def ensure_business_permit_columns():
 
 ensure_business_permit_columns()
 
+def ensure_notifications_columns():
+    """Ensure notifications table has business_permit_id column."""
+    inspector = inspect(engine)
+    if "notifications" not in inspector.get_table_names():
+        return
+
+    existing_columns = {column["name"] for column in inspector.get_columns("notifications")}
+    
+    if "business_permit_id" not in existing_columns:
+        if engine.dialect.name == "sqlite":
+            with engine.begin() as connection:
+                connection.execute(text(
+                    "ALTER TABLE notifications ADD COLUMN business_permit_id INTEGER"
+                ))
+        else:
+            # PostgreSQL or other DB
+            with engine.begin() as connection:
+                connection.execute(text(
+                    "ALTER TABLE notifications ADD COLUMN business_permit_id INTEGER REFERENCES business_permits(id) ON DELETE CASCADE"
+                ))
+
+ensure_notifications_columns()
+
 app = FastAPI(
     title=settings.PROJECT_NAME,
     openapi_url=f"{settings.API_V1_STR}/openapi.json"

@@ -204,6 +204,7 @@ export interface Notification {
   title: string;
   message: string;
   dossier_id?: number;
+  business_permit_id?: number;
   read: boolean;
   created_at: string;
 }
