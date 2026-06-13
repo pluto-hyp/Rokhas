@@ -153,6 +153,15 @@ export async function getProjects(token: string): Promise<Project[]> {
   });
 }
 
+export async function getProject(id: number, token: string): Promise<Project> {
+  return fetchJson(apiUrl(`/dossiers/${id}`), {
+    headers: {
+      "Authorization": `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
+}
+
 export async function createProject(project: ProjectCreate, token: string): Promise<Project> {
   return fetchJson(apiUrl("/dossiers"), {
     method: "POST",

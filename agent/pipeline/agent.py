@@ -30,7 +30,7 @@ class RokhasAgent:
             print(f"Vector store unavailable: {e}. Agent will use rule-based fallback without document search.")
         
         # Options: "ollama", "gemini"
-        self.provider = os.getenv("LLM_PROVIDER", "ollama").lower()
+        self.provider = os.getenv("LLM_PROVIDER", "gemini").lower()
 
         if self.provider == "gemini":
             import google.generativeai as genai

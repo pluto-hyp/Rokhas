@@ -121,7 +121,7 @@ def read_dossier(
     db_dossier = crud_dossier.get_dossier(db, dossier_id=dossier_id)
     if db_dossier is None:
         raise HTTPException(status_code=404, detail="Dossier not found")
-    if current_user.role != "admin" and db_dossier.owner_id != current_user.id:
+    if current_user.role not in {"admin", "authority"} and db_dossier.owner_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not enough privileges")
     return db_dossier
 
