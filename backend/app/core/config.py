@@ -1,6 +1,11 @@
 import os
+import tempfile
 from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+IS_VERCEL = os.getenv("VERCEL") == "1" or os.getenv("VERCEL_ENV") is not None
+DEFAULT_STORAGE_DIR = tempfile.gettempdir() if IS_VERCEL else BASE_DIR
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Rokhas API"
@@ -10,11 +15,11 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8
     GOOGLE_CLIENT_ID: str = os.getenv("GOOGLE_CLIENT_ID", "")
     
-    BASE_DIR: str = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-    DATABASE_URL: str = os.getenv("DATABASE_URL", f"sqlite:///{os.path.join(BASE_DIR, 'rokhas.db')}")
+    BASE_DIR: str = BASE_DIR
+    DATABASE_URL: str = os.getenv("DATABASE_URL", f"sqlite:///{os.path.join(DEFAULT_STORAGE_DIR, 'rokhas.db')}")
     
     # File uploads configuration
-    UPLOADS_DIR: str = os.getenv("UPLOADS_DIR", os.path.join(BASE_DIR, "uploads"))
+    UPLOADS_DIR: str = os.getenv("UPLOADS_DIR", os.path.join(DEFAULT_STORAGE_DIR, "uploads"))
     MAX_UPLOAD_SIZE: int = 50 * 1024 * 1024  # 50MB
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
