@@ -7,6 +7,7 @@ from app.models.user import User
 from app.schemas.business_permit import BusinessPermitCreate, BusinessPermitResponse, BusinessPermitUpdate
 from app.crud import business_permit as crud_business_permit
 from app.crud import notification as crud_notification
+from app.services.agent_client import verify_business_permit_with_agent
 from app.core.config import settings
 import hashlib
 from datetime import datetime, timezone
@@ -47,15 +48,60 @@ def _temporary_document_path(permit, filename: str) -> Path | None:
 
 @router.post("", response_model=BusinessPermitResponse)
 @router.post("/", response_model=BusinessPermitResponse, include_in_schema=False)
-def create_business_permit(
+async def create_business_permit(
     permit: BusinessPermitCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
     """Create a new business permit request"""
-    # Create the permit
+    # Create the permit in the database
     new_permit = crud_business_permit.create_business_permit(db=db, permit=permit, owner_id=current_user.id)
     
+    # Copy documents from temporary directory to permanent business_permit_{id} directory
+    # so they persist and are accessible correctly
+    permit_dir = UPLOAD_DIR / f"business_permit_{new_permit.id}"
+    permit_dir.mkdir(parents=True, exist_ok=True)
+    
+    updated_docs = []
+    import shutil
+    for doc in permit.permit_documents or []:
+        doc_dict = doc.model_dump()
+        if doc.url:
+            parsed_url = urlparse(doc.url)
+            temp_filename = unquote(Path(parsed_url.path).name)
+            query_user_id = parse_qs(parsed_url.query).get("user_id", [None])[0]
+            owner_id = int(query_user_id) if query_user_id and query_user_id.isdigit() else current_user.id
+            temp_file_path = UPLOAD_DIR / "temporary" / f"user_{owner_id}" / temp_filename
+            
+            if temp_file_path.exists():
+                permanent_file_path = permit_dir / temp_filename
+                shutil.copy2(temp_file_path, permanent_file_path)
+                doc_dict["url"] = f"/api/v1/business-permits/{new_permit.id}/documents/{temp_filename}"
+        updated_docs.append(doc_dict)
+        
+    new_permit.permit_documents = updated_docs
+    db.commit()
+    db.refresh(new_permit)
+    
+    # Trigger automatic compliance check using the Rokhas agent
+    permit_data = {
+        "business_name": new_permit.business_name,
+        "business_type": new_permit.business_type,
+        "business_description": new_permit.business_description or "",
+        "address": new_permit.address,
+        "zone": new_permit.zone or "",
+        "surface_area": new_permit.surface_area,
+        "permit_documents": new_permit.permit_documents
+    }
+    
+    try:
+        agent_response = await verify_business_permit_with_agent(permit_data)
+        new_permit.ai_analysis = agent_response.get("answer", "")
+        db.commit()
+        db.refresh(new_permit)
+    except Exception as e:
+        print(f"Error during automatic business permit compliance check: {e}")
+
     # Create notifications for all admin/authority users
     admin_users = db.query(User).filter(User.role.in_(["admin", "authority"])).all()
     for admin in admin_users:

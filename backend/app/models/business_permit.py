@@ -28,6 +28,8 @@ class BusinessPermit(Base):
     # Documents (JSON array of {key, filename, url, approved, required, notes})
     permit_documents = Column(JSON, default=[])
     
+    ai_analysis = Column(String, nullable=True)
+    
     # Signature fields for official approval
     signed_by = Column(String, nullable=True)
     signature_hash = Column(String, nullable=True)

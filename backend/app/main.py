@@ -70,6 +70,7 @@ def ensure_business_permit_columns():
     existing_columns = {column["name"] for column in inspector.get_columns("business_permits")}
     sqlite_columns = {
         "permit_documents": "JSON NOT NULL DEFAULT '[]'",
+        "ai_analysis": "VARCHAR",
         "signed_by": "VARCHAR",
         "signature_hash": "VARCHAR",
         "signed_at": "DATETIME",

@@ -298,6 +298,81 @@ Question : {question}"""
         """
         return self.query(question)
 
+    def verify_business_permit(self, permit_info: dict) -> dict:
+        """Vérifie la conformité d'une demande d'autorisation d'activité économique"""
+        business_name = permit_info.get("business_name")
+        business_type = permit_info.get("business_type")
+        zone = permit_info.get("zone", "")
+        surface_area = permit_info.get("surface_area")
+        documents = permit_info.get("permit_documents", [])
+        
+        # Check uploaded document keys
+        uploaded_keys = {doc.get("key") for doc in documents if doc.get("filename")}
+        
+        # Base requirements
+        required_keys = {"owner_id_card", "commercial_register", "tax_patent", "premises_lease"}
+        missing_docs = required_keys - uploaded_keys
+        
+        # Special Zone B requirement
+        zone_b_violation = False
+        if "zone b" in zone.lower():
+            if "environmental_audit" not in uploaded_keys:
+                zone_b_violation = True
+                missing_docs.add("environmental_audit")
+                
+        question = f"""
+        Vérifie la conformité de cette demande d'autorisation économique :
+        - Nom de l'établissement : {business_name}
+        - Type d'activité : {business_type}
+        - Zone d'implantation : {zone}
+        - Surface d'exploitation : {surface_area} m²
+        - Documents fournis : {list(uploaded_keys)}
+        - Documents manquants : {list(missing_docs)}
+        
+        Si la zone est "Zone B", une étude d'impact environnemental (environmental_audit) est obligatoirement requise.
+        Génère un rapport de conformité d'activité économique en français avec les sections :
+        1. Rapport de Conformité Économique
+        2. Conformité de l'activité commerciale
+        3. Analyse documentaire (indiquer si des pièces obligatoires manquent)
+        4. Exigences spécifiques (notamment pour la Zone B)
+        """
+        
+        try:
+            res = self.query(question)
+            return res
+        except Exception:
+            report = [
+                "* Rapport d'Évaluation de Conformité Économique (AI Agent)",
+                f"- * Établissement : * {business_name}",
+                f"- * Activité : * {business_type}",
+                f"- * Zone d'implantation : * {zone}",
+                f"- * Surface d'exploitation : * {surface_area} m²",
+                "",
+                "* Analyse Documentaire"
+            ]
+            for doc_key in required_keys:
+                status = "Présent" if doc_key in uploaded_keys else "MANQUANT"
+                report.append(f"- {doc_key} : {status}")
+                
+            if "zone b" in zone.lower():
+                report.append("")
+                report.append("* Exigences Environnementales Spécifiques (Zone B)")
+                if zone_b_violation:
+                    report.append("- [NON CONFORME] L'activité commerciale étant implantée en Zone B, un audit d'impact environnemental certifié (environmental_audit) est obligatoirement requis.")
+                else:
+                    report.append("- [CONFORME] Audit d'impact environnemental fourni.")
+            
+            if missing_docs:
+                report.append("")
+                report.append("* Pièces à Fournir Obligatoirement :")
+                for doc in missing_docs:
+                    report.append(f"- {doc}")
+            else:
+                report.append("")
+                report.append("- Félicitations ! Tous les documents requis ont été fournis et validés.")
+                
+            return {"answer": "\n".join(report), "sources": []}
+
 
 if __name__ == "__main__":
     agent = RokhasAgent()

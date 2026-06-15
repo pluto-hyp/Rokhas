@@ -113,19 +113,38 @@ export default function ProjectDetailPage() {
     }
 
     const filename = doc.filename?.trim() || "document";
-    const endpoint = `${API_BASE_URL}/dossiers/${dossierId}/documents/${encodeURIComponent(filename)}`;
+    const primaryEndpoint = `${API_BASE_URL}/dossiers/${dossierId}/documents/${encodeURIComponent(filename)}`;
 
-    const response = await fetch(endpoint, {
+    const response = await fetch(primaryEndpoint, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` }
     });
 
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ detail: "Document request failed" }));
-      throw new Error(error.detail || "Document request failed");
+    if (response.ok) {
+      return response.blob();
     }
 
-    return response.blob();
+    // If primary endpoint failed with 404 and we have a stored URL pointing to temporary upload,
+    // try fetching from that URL directly (handles dossiers where files weren't moved to permanent storage)
+    if (response.status === 404 && doc.url) {
+      const fallbackUrl = doc.url.startsWith("/") 
+        ? `${window.location.origin}${doc.url}` 
+        : doc.url;
+      
+      const fallbackResponse = await fetch(fallbackUrl, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (fallbackResponse.ok) {
+        return fallbackResponse.blob();
+      }
+
+      const fallbackError = await fallbackResponse.json().catch(() => ({ detail: "Document request failed" }));
+      throw new Error(fallbackError.detail || "Document request failed");
+    }
+
+    const error = await response.json().catch(() => ({ detail: "Document request failed" }));
+    throw new Error(error.detail || "Document request failed");
   };
 
   const handleSelectDocument = async (doc: PermitDocument) => {
@@ -136,7 +155,26 @@ export default function ProjectDetailPage() {
 
     setLoadingPreview(true);
     try {
-      const blob = await fetchDocumentBlob(doc);
+      let blob = await fetchDocumentBlob(doc);
+      
+      // Ensure the Blob has the correct MIME type based on file extension for previewing
+      if (blob.type === "application/octet-stream" || !blob.type) {
+        const filename = doc.filename || "";
+        let inferredType = blob.type;
+        if (filename.toLowerCase().endsWith(".pdf")) {
+          inferredType = "application/pdf";
+        } else if (filename.toLowerCase().endsWith(".jpg") || filename.toLowerCase().endsWith(".jpeg")) {
+          inferredType = "image/jpeg";
+        } else if (filename.toLowerCase().endsWith(".png")) {
+          inferredType = "image/png";
+        } else if (filename.toLowerCase().endsWith(".gif")) {
+          inferredType = "image/gif";
+        }
+        if (inferredType !== blob.type) {
+          blob = new Blob([blob], { type: inferredType });
+        }
+      }
+
       const url = window.URL.createObjectURL(blob);
       
       if (activePreviewDoc?.url) {
@@ -155,6 +193,25 @@ export default function ProjectDetailPage() {
       setActivePreviewDoc(null);
     } finally {
       setLoadingPreview(false);
+    }
+  };
+
+  const handleDownloadDocument = async (doc: PermitDocument) => {
+    try {
+      toast.loading("Preparing download...", { id: "doc-download" });
+      const blob = await fetchDocumentBlob(doc);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = doc.filename || "document";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success("Download started!", { id: "doc-download" });
+    } catch (err) {
+      console.error(err);
+      toast.error(err instanceof Error ? err.message : "Failed to download document", { id: "doc-download" });
     }
   };
 
@@ -529,23 +586,15 @@ export default function ProjectDetailPage() {
                             {isDocActive ? "Viewing Preview" : "Preview Document"}
                           </Button>
 
-                          <a 
-                            href={`${API_BASE_URL}/dossiers/${dossierId}/documents/${encodeURIComponent(doc.filename)}`} 
-                            onClick={async (e) => {
-                              // If download fails directly, we fetch blob and download
-                              e.stopPropagation();
-                            }}
-                            download
+                           <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleDownloadDocument(doc)}
+                            className="h-8 px-2.5 rounded-lg text-[10px] font-bold gap-1 text-muted-foreground"
                           >
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="h-8 px-2.5 rounded-lg text-[10px] font-bold gap-1 text-muted-foreground"
-                            >
-                              <Download className="size-3" />
-                              Download
-                            </Button>
-                          </a>
+                            <Download className="size-3" />
+                            Download
+                          </Button>
                         </div>
 
                         {/* Interactive Verification Actions (restricted to admin & authority) */}

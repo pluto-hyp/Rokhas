@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from typing import Optional
 from pydantic import BaseModel
 from pipeline.agent import RokhasAgent
 
@@ -34,6 +35,15 @@ class DossierRequest(BaseModel):
     surface_terrain: float
     zone: str = ""
 
+class BusinessPermitRequest(BaseModel):
+    business_name: str
+    business_type: str
+    business_description: Optional[str] = None
+    address: str
+    zone: Optional[str] = ""
+    surface_area: Optional[int] = None
+    permit_documents: Optional[list] = []
+
 
 class FileAnalyzeRequest(BaseModel):
     filename: str
@@ -47,6 +57,10 @@ def chat(req: QuestionRequest):
 @app.post("/verify-dossier")
 def verify(req: DossierRequest):
     return agent.verify_dossier(req.dict())
+
+@app.post("/verify-business-permit")
+def verify_business_permit(req: BusinessPermitRequest):
+    return agent.verify_business_permit(req.dict())
 
 
 @app.post("/analyze-file")
