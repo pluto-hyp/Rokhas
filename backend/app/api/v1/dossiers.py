@@ -2,8 +2,10 @@ from typing import List
 import os
 import shutil
 import hashlib
+import mimetypes
 from pathlib import Path
 from datetime import datetime, timezone
+from urllib.parse import parse_qs, unquote, urlparse
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
@@ -121,7 +123,7 @@ def read_dossier(
     db_dossier = crud_dossier.get_dossier(db, dossier_id=dossier_id)
     if db_dossier is None:
         raise HTTPException(status_code=404, detail="Dossier not found")
-    if current_user.role != "admin" and db_dossier.owner_id != current_user.id:
+    if current_user.role not in {"admin", "authority"} and db_dossier.owner_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not enough privileges")
     return db_dossier
 
@@ -265,7 +267,35 @@ async def upload_document(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"File upload failed: {str(e)}")
 
+def _safe_file_path(base_dir: Path, filename: str) -> Path:
+    file_path = (base_dir / filename).resolve()
+    if not file_path.is_relative_to(base_dir.resolve()):
+        raise HTTPException(status_code=400, detail="Invalid filename")
+    return file_path
+
+
+def _temporary_document_path(dossier, filename: str) -> Path | None:
+    """Resolve dossier docs that still point at temporary uploads."""
+    for document in dossier.permit_documents or []:
+        document_url = document.get("url") or ""
+        if not document_url:
+            continue
+
+        parsed_url = urlparse(document_url)
+        stored_filename = unquote(Path(parsed_url.path).name)
+        if stored_filename != filename and document.get("filename") != filename:
+            continue
+
+        query_user_id = parse_qs(parsed_url.query).get("user_id", [None])[0]
+        owner_id = int(query_user_id) if query_user_id and query_user_id.isdigit() else dossier.owner_id
+        temp_dir = Path(settings.UPLOADS_DIR) / "temporary" / f"user_{owner_id}"
+        return _safe_file_path(temp_dir, stored_filename or filename)
+
+    return None
+
+
 @router.post("/{dossier_id}/documents/{filename}")
+@router.get("/{dossier_id}/documents/{filename}")
 async def download_document(
     dossier_id: int,
     filename: str,
@@ -284,26 +314,32 @@ async def download_document(
     if current_user.role not in {"admin", "authority"} and db_dossier.owner_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized to access this document")
     
-    # Construct safe file path
+    # Construct safe file path — security: ensure filename can't escape the dossier dir
     dossier_dir = Path(settings.UPLOADS_DIR) / f"dossier_{dossier_id}"
-    file_path = dossier_dir / filename
     
-    # Security: verify file is within dossier directory
-    try:
-        file_path = file_path.resolve()
-        dossier_dir = dossier_dir.resolve()
-        if not str(file_path).startswith(str(dossier_dir)):
-            raise HTTPException(status_code=403, detail="Invalid file path")
-    except Exception as e:
+    # Validate filename doesn't contain path traversal (don't require dir to exist)
+    if ".." in filename or filename.startswith("/") or filename.startswith("\\"):
         raise HTTPException(status_code=403, detail="Invalid file path")
     
+    file_path = dossier_dir / filename
+    
+    if not file_path.exists():
+        # Try fallback: docs that were submitted before dossier creation (temporary uploads)
+        fallback_path = _temporary_document_path(db_dossier, filename)
+        if fallback_path is not None and fallback_path.exists():
+            file_path = fallback_path
+            
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="Document not found")
     
+    content_type, _ = mimetypes.guess_type(file_path.name)
+    if not content_type:
+        content_type = "application/octet-stream"
+        
     return FileResponse(
         path=file_path,
         filename=file_path.name,
-        media_type="application/octet-stream"
+        media_type=content_type
     )
 
 @router.post("/upload-temporary-document")
@@ -389,8 +425,12 @@ async def download_temporary_document(
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="Document not found")
     
+    content_type, _ = mimetypes.guess_type(file_path.name)
+    if not content_type:
+        content_type = "application/octet-stream"
+        
     return FileResponse(
         path=file_path,
         filename=file_path.name,
-        media_type="application/octet-stream"
+        media_type=content_type
     )

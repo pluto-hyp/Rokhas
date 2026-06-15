@@ -86,7 +86,7 @@ export function SiteHeader() {
         prev.map(n => (n.id === notif.id ? { ...n, read: true } : n))
       )
       if (notif.dossier_id) {
-        router.push(`/dashboard/projects?id=${notif.dossier_id}`)
+        router.push(`/dashboard/projects/${notif.dossier_id}`)
       } else if (notif.business_permit_id) {
         router.push(`/dashboard/business-permits/${notif.business_permit_id}`)
       }

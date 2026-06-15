@@ -34,6 +34,15 @@ import { Textarea } from "@/components/ui/textarea";
 
 const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || "/api/v1").replace(/\/+$/, "");
 
+const DOCUMENT_LABELS: Record<string, string> = {
+  owner_id_card: "Copy of Owner ID Card (CIN)",
+  commercial_register: "Commercial Register (RC)",
+  tax_patent: "Tax Patent (Patente / IF)",
+  premises_lease: "Lease Agreement / Title Deed",
+  zoning_plan: "Location or Zoning Plan",
+  environmental_audit: "Environmental Impact Audit",
+};
+
 interface Document {
   key: string;
   filename: string;
@@ -57,6 +66,7 @@ interface BusinessPermit {
   status: string;
   created_at: string;
   permit_documents: Document[];
+  ai_analysis?: string;
   signed_by?: string;
   signature_hash?: string;
   signed_at?: string;
@@ -154,16 +164,32 @@ export default function PermitDetailPage() {
       throw new Error("Your session has expired. Please sign in again.");
     }
 
-    const response = await fetch(getDocumentEndpoint(doc), {
+    const primaryEndpoint = getDocumentEndpoint(doc);
+    const response = await fetch(primaryEndpoint, {
       headers: { Authorization: `Bearer ${token}` }
     });
 
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ detail: "Document request failed" }));
-      throw new Error(error.detail || "Document request failed");
+    if (response.ok) {
+      return response.blob();
     }
 
-    return response.blob();
+    // Fallback: try the doc's stored URL directly (temporary docs)
+    if (doc.url && response.status === 404) {
+      const fallbackUrl = doc.url.startsWith("/")
+        ? `${window.location.origin}${doc.url}`
+        : doc.url;
+      const fallbackResponse = await fetch(fallbackUrl, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (fallbackResponse.ok) {
+        return fallbackResponse.blob();
+      }
+      const fallbackError = await fallbackResponse.json().catch(() => ({ detail: "Document request failed" }));
+      throw new Error(fallbackError.detail || "Document request failed");
+    }
+
+    const error = await response.json().catch(() => ({ detail: "Document request failed" }));
+    throw new Error(error.detail || "Document request failed");
   };
 
   const handleToggleDocumentApproval = (docKey: string, approved: boolean) => {
@@ -283,9 +309,20 @@ export default function PermitDetailPage() {
     }
   };
 
+  const inferMimeType = (blob: Blob, filename: string): Blob => {
+    if (blob.type && blob.type !== "application/octet-stream") return blob;
+    const lower = filename.toLowerCase();
+    if (lower.endsWith(".pdf")) return new Blob([blob], { type: "application/pdf" });
+    if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return new Blob([blob], { type: "image/jpeg" });
+    if (lower.endsWith(".png")) return new Blob([blob], { type: "image/png" });
+    if (lower.endsWith(".gif")) return new Blob([blob], { type: "image/gif" });
+    return blob;
+  };
+
   const handleViewDocument = async (doc: Document) => {
     try {
-      const blob = await fetchDocumentBlob(doc);
+      let blob = await fetchDocumentBlob(doc);
+      blob = inferMimeType(blob, getDocumentFilename(doc));
       const url = window.URL.createObjectURL(blob);
       setPreviewDoc({
         filename: getDocumentFilename(doc),
@@ -456,7 +493,10 @@ export default function PermitDetailPage() {
                     <div className="flex-1 space-y-2 min-w-0">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <FileText className={cn("size-4 shrink-0", doc.approved ? "text-emerald-500" : getDocumentNotesText(doc.notes) ? "text-destructive" : "text-primary")} />
-                        <p className="font-bold text-xs text-foreground truncate">{doc.filename}</p>
+                        <div className="min-w-0">
+                          <p className="font-bold text-xs text-foreground">{DOCUMENT_LABELS[doc.key] || doc.key}</p>
+                          <p className="text-[10px] text-muted-foreground truncate">{doc.filename}</p>
+                        </div>
                         {doc.required !== false && (
                           <span className="text-[8px] bg-destructive/10 text-destructive border border-destructive/20 px-1.5 py-0.1 rounded font-black uppercase shrink-0">
                             Req
@@ -588,6 +628,26 @@ export default function PermitDetailPage() {
               <p className="text-xs font-bold text-muted-foreground uppercase mb-2">Signature Hash</p>
               <p className="font-mono text-xs break-all bg-background p-3 rounded-xl border border-border/40">{permit.signature_hash}</p>
             </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* AI Compliance Analysis */}
+      {permit.ai_analysis && (
+        <Card className="rounded-2xl border-border/40 bg-card shadow-sm overflow-hidden">
+          <CardHeader className="p-6 pb-2">
+            <CardTitle className="text-xl font-bold flex items-center gap-2">
+              <span className="size-6 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
+                <FileCheck className="size-4 text-primary" />
+              </span>
+              Agent Compliance Analysis
+              <span className="text-[9px] uppercase tracking-widest bg-amber-500/10 text-amber-600 border border-amber-500/20 px-2 py-0.5 rounded-full font-black ml-auto">AI Report</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            <pre className="whitespace-pre-wrap text-xs leading-relaxed text-foreground font-mono bg-muted/30 rounded-xl p-4 border border-border/30 max-h-[400px] overflow-auto">
+              {permit.ai_analysis}
+            </pre>
           </CardContent>
         </Card>
       )}

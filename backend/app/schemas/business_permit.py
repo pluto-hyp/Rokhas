@@ -36,6 +36,7 @@ class BusinessPermitResponse(BusinessPermitBase):
     status: str
     created_at: datetime
     permit_documents: List[PermitDocumentSchema] = []
+    ai_analysis: Optional[str] = None
     signed_by: Optional[str] = None
     signature_hash: Optional[str] = None
     signed_at: Optional[datetime] = None

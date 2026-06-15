@@ -26,3 +26,27 @@ async def verify_dossier_with_agent(dossier_data: Dict[str, Any]) -> Dict[str, A
             return {"answer": f"Erreur de connexion à l'agent IA : {exc}", "sources": []}
         except Exception as exc:
             return {"answer": f"Erreur inattendue : {exc}", "sources": []}
+
+async def verify_business_permit_with_agent(permit_data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Sends the business permit properties to the Rokhas AI agent microservice
+    to verify compliance for economic requests.
+    """
+    async with httpx.AsyncClient() as client:
+        try:
+            payload = {
+                "business_name": permit_data.get("business_name", "Non spécifié"),
+                "business_type": permit_data.get("business_type", "Non spécifié"),
+                "business_description": permit_data.get("business_description", ""),
+                "address": permit_data.get("address", ""),
+                "zone": permit_data.get("zone", "Non spécifié"),
+                "surface_area": permit_data.get("surface_area"),
+                "permit_documents": permit_data.get("permit_documents", [])
+            }
+            response = await client.post(f"{AGENT_URL}/verify-business-permit", json=payload, timeout=30.0)
+            response.raise_for_status()
+            return response.json()
+        except httpx.RequestError as exc:
+            return {"answer": f"Erreur de connexion à l'agent IA : {exc}", "sources": []}
+        except Exception as exc:
+            return {"answer": f"Erreur inattendue : {exc}", "sources": []}
