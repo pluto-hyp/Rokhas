@@ -1,6 +1,7 @@
 import os
 import tempfile
 from pathlib import Path
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
@@ -24,7 +25,17 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
+    @field_validator("DATABASE_URL")
+    @classmethod
+    def normalize_database_url(cls, value: str) -> str:
+        if value.startswith("postgres://"):
+            return value.replace("postgres://", "postgresql://", 1)
+        return value
+
 settings = Settings()
 
 # Ensure uploads directory exists
-Path(settings.UPLOADS_DIR).mkdir(parents=True, exist_ok=True)
+try:
+    Path(settings.UPLOADS_DIR).mkdir(parents=True, exist_ok=True)
+except OSError as exc:
+    print(f"Could not create uploads directory {settings.UPLOADS_DIR}: {exc}")

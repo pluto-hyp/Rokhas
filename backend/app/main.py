@@ -5,8 +5,6 @@ from app.api.v1.api import api_router
 from app.core.database import Base, engine
 from sqlalchemy import inspect, text
 
-Base.metadata.create_all(bind=engine)
-
 def ensure_dossier_columns():
     """Keep local SQLite databases compatible when models gain nullable columns."""
     inspector = inspect(engine)
@@ -35,8 +33,6 @@ def ensure_dossier_columns():
             if column_name not in existing_columns:
                 connection.execute(text(f"ALTER TABLE dossiers ADD COLUMN {column_name} {column_type}"))
 
-ensure_dossier_columns()
-
 def ensure_business_columns():
     """Ensure business table has signature columns for digital approval."""
     inspector = inspect(engine)
@@ -57,8 +53,6 @@ def ensure_business_columns():
         for column_name, column_type in sqlite_columns.items():
             if column_name not in existing_columns:
                 connection.execute(text(f"ALTER TABLE businesses ADD COLUMN {column_name} {column_type}"))
-
-ensure_business_columns()
 
 def ensure_business_permit_columns():
     """Ensure business_permits table exists and has required columns."""
@@ -84,8 +78,6 @@ def ensure_business_permit_columns():
             if column_name not in existing_columns:
                 connection.execute(text(f"ALTER TABLE business_permits ADD COLUMN {column_name} {column_type}"))
 
-ensure_business_permit_columns()
-
 def ensure_notifications_columns():
     """Ensure notifications table has business_permit_id column."""
     inspector = inspect(engine)
@@ -107,12 +99,28 @@ def ensure_notifications_columns():
                     "ALTER TABLE notifications ADD COLUMN business_permit_id INTEGER REFERENCES business_permits(id) ON DELETE CASCADE"
                 ))
 
-ensure_notifications_columns()
+def initialize_database():
+    try:
+        if engine is None:
+            print("Database initialization skipped: engine is unavailable")
+            return
+
+        Base.metadata.create_all(bind=engine)
+        ensure_dossier_columns()
+        ensure_business_columns()
+        ensure_business_permit_columns()
+        ensure_notifications_columns()
+    except Exception as exc:
+        print(f"Database initialization failed: {exc}")
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
     openapi_url=f"{settings.API_V1_STR}/openapi.json"
 )
+
+@app.on_event("startup")
+def startup_event():
+    initialize_database()
 
 app.add_middleware(
     CORSMiddleware,
@@ -127,3 +135,10 @@ app.include_router(api_router, prefix=settings.API_V1_STR)
 @app.get("/")
 def root():
     return {"message": "Welcome to the Rokhas API. Visit /docs for the Swagger UI."}
+
+@app.get("/health")
+def health():
+    return {
+        "status": "ok",
+        "database": "available" if engine is not None else "unavailable",
+    }

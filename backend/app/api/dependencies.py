@@ -12,6 +12,12 @@ from app.schemas.token import TokenData
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/auth/login")
 
 def get_db():
+    if SessionLocal is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database is not available. Check DATABASE_URL and database dependencies.",
+        )
+
     db = SessionLocal()
     try:
         yield db
