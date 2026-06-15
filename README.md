@@ -15,6 +15,68 @@ With Rokhas, citizens and businesses can easily manage their administrative need
 - **Intelligent Automation**: Integrated AI agent for RGC compliance and user assistance.
 - **Premium Design**: Modern, responsive UI with advanced data visualization and a "paper-feel" aesthetic.
 
+---
+ 
+## Screenshots.
+ 
+### Landing Page
+> The main entry point of the platform — presenting the platform to citizens, architects, and authorities.
+ 
+![Landing Page](<img width="1353" height="644" alt="home" src="https://github.com/user-attachments/assets/9df6f71d-d6e2-42a5-be12-ce007b2bd5eb" />)
+ 
+---
+ 
+### Dashboards
+ 
+#### Citizen Dashboard
+> Personalized dashboard for citizens to track their submitted dossiers and receive notifications.
+ 
+![Citizen Dashboard](<img width="1345" height="643" alt="dashboard-citoyen" src="https://github.com/user-attachments/assets/d1c9e5c6-b345-4ad2-b59d-e72ef01c85c7" />)
+ 
+#### Architect Dashboard
+> Dedicated workspace for architects to manage technical plans and monitor validation status.
+ 
+![Architect Dashboard](<img width="1341" height="634" alt="dashboard-architect" src="https://github.com/user-attachments/assets/19de4a74-0820-43b6-8145-db9e07cac774" />)
+ 
+#### Authority Dashboard
+> Administrative panel for instructeurs to review dossiers, consult AI compliance reports, and issue decisions.
+ 
+![Authority Dashboard](<img width="1340" height="639" alt="dashboard-admin" src="https://github.com/user-attachments/assets/3846bc5d-3394-4fb5-b734-0dad072a3bb3" />)
+ 
+---
+ 
+### Submit a Dossier Request
+> Step-by-step form for citizens and architects to submit a construction permit request with all required documents.
+ 
+![Submit Dossier](<img width="1350" height="645" alt="submit-1" src="https://github.com/user-attachments/assets/b38ed28a-c2de-4474-8541-332a92f57d51" />)
+ 
+---
+
+### Agent Rokhas
+> AI agent for RGC compliance and user assistance
+
+![Agent Page](<img width="1061" height="631" alt="agent" src="https://github.com/user-attachments/assets/aef15ccc-cead-42aa-a5ca-5740528531e2" />)
+
+ ---
+ 
+### Construction Permit Example
+> Example of a construction permit compliance report generated automatically by the Rokhas AI agent, showing conformity checks against the RGC (Règlement Général de Construction).
+ 
+![Construction Permit](<img width="1351" height="670" alt="permit-construction" src="https://github.com/user-attachments/assets/9cff4331-ef4c-4a7a-9319-ab105ae1b4d2" />)
+ 
+> **Example input:**
+> | Parameter | Value |
+> |---|---|
+> | Type | Villa individuelle |
+> | Zone | R2 |
+> | Height | 7.5 m ✅ (max 8.5 m) |
+> | Setback | 4 m ✅ (min 3 m) |
+> | Ground Coverage | 55% ✅ (max 60%) |
+> | Plot Area | 300 m² |
+ 
+---
+
+
 ## Key Features.
 
 ### Digital Dashboard
