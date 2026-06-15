@@ -13,6 +13,8 @@ router = APIRouter()
 class RoleUpdate(BaseModel):
     role: str
 
+VALID_ROLES = {"citizen", "architect", "authority", "admin"}
+
 @router.get("/me", response_model=UserResponse)
 def read_user_me(current_user: User = Depends(get_current_active_user)):
     return current_user
@@ -42,14 +44,26 @@ def update_user_role(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
-    valid_roles = ["citizen", "architect", "authority"]
-    if role_update.role not in valid_roles:
+    raise HTTPException(status_code=403, detail="Role changes require an authority account")
+
+@router.patch("/{user_id}/role", response_model=UserResponse)
+def update_user_role_by_id(
+    user_id: int,
+    role_update: RoleUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_admin_user),
+):
+    if role_update.role not in VALID_ROLES:
         raise HTTPException(status_code=400, detail="Invalid role")
-    
-    current_user.role = role_update.role
+
+    user = crud_user.get_user(db, user_id=user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user.role = role_update.role
     db.commit()
-    db.refresh(current_user)
-    return current_user
+    db.refresh(user)
+    return user
 
 @router.get("/", response_model=List[UserResponse])
 def read_users(

@@ -41,7 +41,6 @@ def read_business(
     if not business:
         raise HTTPException(status_code=404, detail="Business not found")
     
-    # Allow access if user is owner, admin, or authority
     if current_user.id != business.owner_id and current_user.role not in {"admin", "authority"}:
         raise HTTPException(status_code=403, detail="Not authorized")
     
@@ -58,16 +57,13 @@ def update_business(
     if not business:
         raise HTTPException(status_code=404, detail="Business not found")
     
-    # Only admins and authorities can approve businesses
     if business_update.status == "Approved" and current_user.role not in {"admin", "authority"}:
         raise HTTPException(status_code=403, detail="Only admins and authorities can approve businesses")
     
-    # Generate signature if approving
     if business_update.status == "Approved":
         timestamp = datetime.now(timezone.utc).isoformat()
         signer = business_update.signed_by or current_user.name or "Municipal Authority"
         
-        # Create hash payload with business details
         hash_payload = f"BUSINESS-{business_id}|OWNER-{business.owner_id}|NAME-{business.name}|BY-{signer}|AT-{timestamp}"
         signature_hash = hashlib.sha256(hash_payload.encode()).hexdigest()
         

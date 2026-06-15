@@ -3,7 +3,6 @@ from pathlib import Path
 import chromadb
 from .ingest import chunk_documents, extract_text_from_pdf
 
-# Multilingual model for Arabic, French, and English.
 EMBED_MODEL = os.getenv(
     "EMBED_MODEL",
     "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",

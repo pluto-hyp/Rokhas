@@ -9,7 +9,6 @@ class BusinessPermit(Base):
     id = Column(Integer, primary_key=True, index=True)
     owner_id = Column(Integer, ForeignKey("users.id"))
     
-    # Business Info
     business_name = Column(String, index=True)
     business_type = Column(String)  # e.g., "Restaurant", "Shop", "Salon"
     business_description = Column(String)
@@ -17,20 +16,16 @@ class BusinessPermit(Base):
     zone = Column(String)
     surface_area = Column(Integer, nullable=True)  # in m²
     
-    # Applicant Info
     applicant_name = Column(String)
     applicant_cin = Column(String)
     
-    # Status & Workflow
     status = Column(String, default="Pending")  # Pending, Under Review, Approved, Rejected
     created_at = Column(DateTime, default=datetime.utcnow)
     
-    # Documents (JSON array of {key, filename, url, approved, required, notes})
     permit_documents = Column(JSON, default=[])
     
     ai_analysis = Column(String, nullable=True)
     
-    # Signature fields for official approval
     signed_by = Column(String, nullable=True)
     signature_hash = Column(String, nullable=True)
     signed_at = Column(DateTime(timezone=True), nullable=True)

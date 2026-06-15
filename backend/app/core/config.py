@@ -34,7 +34,6 @@ class Settings(BaseSettings):
 
 settings = Settings()
 
-# Ensure uploads directory exists
 try:
     Path(settings.UPLOADS_DIR).mkdir(parents=True, exist_ok=True)
 except OSError as exc:

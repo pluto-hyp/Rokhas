@@ -16,7 +16,6 @@ from urllib.parse import parse_qs, unquote, urlparse
 
 router = APIRouter()
 
-# File management helpers
 UPLOAD_DIR = Path(settings.UPLOADS_DIR)
 
 
@@ -54,11 +53,8 @@ async def create_business_permit(
     current_user: User = Depends(get_current_active_user)
 ):
     """Create a new business permit request"""
-    # Create the permit in the database
     new_permit = crud_business_permit.create_business_permit(db=db, permit=permit, owner_id=current_user.id)
     
-    # Copy documents from temporary directory to permanent business_permit_{id} directory
-    # so they persist and are accessible correctly
     permit_dir = UPLOAD_DIR / f"business_permit_{new_permit.id}"
     permit_dir.mkdir(parents=True, exist_ok=True)
     
@@ -83,7 +79,6 @@ async def create_business_permit(
     db.commit()
     db.refresh(new_permit)
     
-    # Trigger automatic compliance check using the Rokhas agent
     permit_data = {
         "business_name": new_permit.business_name,
         "business_type": new_permit.business_type,
@@ -102,7 +97,6 @@ async def create_business_permit(
     except Exception as e:
         print(f"Error during automatic business permit compliance check: {e}")
 
-    # Create notifications for all admin/authority users
     admin_users = db.query(User).filter(User.role.in_(["admin", "authority"])).all()
     for admin in admin_users:
         crud_notification.create_notification(
@@ -139,7 +133,6 @@ def read_business_permit(
     if not permit:
         raise HTTPException(status_code=404, detail="Business permit not found")
     
-    # Allow access if user is owner, admin, or authority
     if current_user.id != permit.owner_id and current_user.role not in {"admin", "authority"}:
         raise HTTPException(status_code=403, detail="Not authorized")
     
@@ -157,20 +150,16 @@ def update_business_permit(
     if not permit:
         raise HTTPException(status_code=404, detail="Business permit not found")
     
-    # Only admins/authorities can change status to Approved
     if permit_update.status == "Approved" and current_user.role not in {"admin", "authority"}:
         raise HTTPException(status_code=403, detail="Only admins and authorities can approve permits")
     
-    # Only admins/authorities can reject permits
     if permit_update.status == "Rejected" and current_user.role not in {"admin", "authority"}:
         raise HTTPException(status_code=403, detail="Only admins and authorities can reject permits")
     
-    # Generate signature if approving
     if permit_update.status == "Approved":
         timestamp = datetime.now(timezone.utc).isoformat()
         signer = permit_update.signed_by or current_user.full_name or "Municipal Authority"
         
-        # Create hash payload with business details
         hash_payload = f"BUSINESSPERMIT-{permit_id}|OWNER-{permit.owner_id}|NAME-{permit.business_name}|BY-{signer}|AT-{timestamp}"
         signature_hash = hashlib.sha256(hash_payload.encode()).hexdigest()
         
@@ -193,25 +182,19 @@ def upload_document(
     if not permit:
         raise HTTPException(status_code=404, detail="Business permit not found")
     
-    # Only owner can upload documents
     if current_user.id != permit.owner_id and current_user.role not in {"admin", "authority"}:
         raise HTTPException(status_code=403, detail="Not authorized")
     
-    # Create directory if it doesn't exist
     permit_dir = UPLOAD_DIR / f"business_permit_{permit_id}"
     permit_dir.mkdir(parents=True, exist_ok=True)
     
-    # Save file
     file_path = permit_dir / file.filename
     with open(file_path, "wb") as f:
         f.write(file.file.read())
     
-    # Update permit_documents list
     docs = list(permit.permit_documents or [])
-    # Remove any existing document with the same key
     docs = [d for d in docs if d.get("key") != key]
     
-    # Append new document info
     docs.append({
         "key": key,
         "filename": file.filename,
@@ -225,7 +208,6 @@ def upload_document(
     db.commit()
     db.refresh(permit)
     
-    # Return file URL
     return {
         "filename": file.filename,
         "url": f"/api/v1/business-permits/{permit_id}/documents/{file.filename}"
@@ -243,7 +225,6 @@ def get_document(
     if not permit:
         raise HTTPException(status_code=404, detail="Business permit not found")
     
-    # Check access
     if current_user.id != permit.owner_id and current_user.role not in {"admin", "authority"}:
         raise HTTPException(status_code=403, detail="Not authorized")
     

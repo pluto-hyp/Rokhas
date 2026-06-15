@@ -69,7 +69,6 @@ async def create_dossier(
 
     db_dossier = crud_dossier.create_dossier(db=db, dossier=dossier, owner_id=current_user.id)
     
-    # Trigger automatic compliance check using the Rokhas agent
     dossier_data = {
         "type": db_dossier.type,
         "hauteur": db_dossier.hauteur,
@@ -87,7 +86,6 @@ async def create_dossier(
     except Exception as e:
         print(f"Error during automatic compliance check: {e}")
 
-    # Trigger notifications for all administrative users (admins and authorities)
     try:
         admin_users = db.query(User).filter(User.role.in_(["admin", "authority"])).all()
         for admin in admin_users:
@@ -138,7 +136,6 @@ def update_dossier_status(
     if db_dossier is None:
         raise HTTPException(status_code=404, detail="Dossier not found")
     
-    # If status is being set to "Approved", generate digital signature
     if status_update.status == "Approved":
         # Validate all required permit documents are approved
         permit_documents = db_dossier.permit_documents or []
@@ -151,7 +148,6 @@ def update_dossier_status(
                 detail=f"Cannot approve dossier: {len(unapproved_required)} required document(s) not approved"
             )
         
-        # Generate SHA-256 signature hash
         timestamp_utc = datetime.now(timezone.utc).isoformat()
         signer_name = current_user.full_name or current_user.email
         
@@ -165,7 +161,6 @@ def update_dossier_status(
         
         signature_hash = hashlib.sha256(hash_payload.encode()).hexdigest()
         
-        # Create updated DossierUpdate with signature data
         update_data = status_update.model_dump(exclude_unset=True)
         update_data["signed_by"] = signer_name
         update_data["signature_hash"] = signature_hash
@@ -215,7 +210,6 @@ async def upload_document(
     Upload a document file for a specific dossier.
     Returns the file URL to be stored in document metadata.
     """
-    # Verify dossier ownership/access
     db_dossier = crud_dossier.get_dossier(db, dossier_id=dossier_id)
     if db_dossier is None:
         raise HTTPException(status_code=404, detail="Dossier not found")
@@ -223,26 +217,20 @@ async def upload_document(
     if current_user.role not in {"admin", "authority"} and db_dossier.owner_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized to upload documents to this dossier")
     
-    # Validate file size
     if file.size and file.size > settings.MAX_UPLOAD_SIZE:
         raise HTTPException(status_code=413, detail="File too large")
     
     try:
-        # Create dossier-specific directory
         dossier_dir = Path(settings.UPLOADS_DIR) / f"dossier_{dossier_id}"
         dossier_dir.mkdir(parents=True, exist_ok=True)
         
-        # Sanitize filename
         filename = file.filename or "document"
-        # Remove potentially dangerous characters
         filename = "".join(c for c in filename if c.isalnum() or c in "._- ").rstrip()
         if not filename:
             filename = "document"
         
-        # Save file
         file_path = dossier_dir / filename
         
-        # If file exists, append counter
         if file_path.exists():
             name, ext = filename.rsplit(".", 1) if "." in filename else (filename, "")
             counter = 1
@@ -251,12 +239,10 @@ async def upload_document(
                 file_path = dossier_dir / new_name
                 counter += 1
         
-        # Write file
         with open(file_path, "wb") as f:
             content = await file.read()
             f.write(content)
         
-        # Generate URL for the document
         file_url = f"/api/v1/dossiers/{dossier_id}/documents/{file_path.name}"
         
         return {
@@ -306,7 +292,6 @@ async def download_document(
     Download or preview a document from a dossier.
     Accessible by dossier owner, admins, and authorities.
     """
-    # Verify dossier exists and user has access
     db_dossier = crud_dossier.get_dossier(db, dossier_id=dossier_id)
     if db_dossier is None:
         raise HTTPException(status_code=404, detail="Dossier not found")
@@ -314,10 +299,8 @@ async def download_document(
     if current_user.role not in {"admin", "authority"} and db_dossier.owner_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized to access this document")
     
-    # Construct safe file path — security: ensure filename can't escape the dossier dir
     dossier_dir = Path(settings.UPLOADS_DIR) / f"dossier_{dossier_id}"
     
-    # Validate filename doesn't contain path traversal (don't require dir to exist)
     if ".." in filename or filename.startswith("/") or filename.startswith("\\"):
         raise HTTPException(status_code=403, detail="Invalid file path")
     
@@ -352,26 +335,20 @@ async def upload_temporary_document(
     Used for file uploads during form creation.
     Returns the file URL to be stored in document metadata.
     """
-    # Validate file size
     if file.size and file.size > settings.MAX_UPLOAD_SIZE:
         raise HTTPException(status_code=413, detail="File too large")
     
     try:
-        # Create temporary directory for user
         temp_dir = Path(settings.UPLOADS_DIR) / "temporary" / f"user_{current_user.id}"
         temp_dir.mkdir(parents=True, exist_ok=True)
         
-        # Sanitize filename
         filename = file.filename or "document"
-        # Remove potentially dangerous characters
         filename = "".join(c for c in filename if c.isalnum() or c in "._- ").rstrip()
         if not filename:
             filename = "document"
         
-        # Save file
         file_path = temp_dir / filename
         
-        # If file exists, append counter
         if file_path.exists():
             name, ext = filename.rsplit(".", 1) if "." in filename else (filename, "")
             counter = 1
@@ -380,12 +357,10 @@ async def upload_temporary_document(
                 file_path = temp_dir / new_name
                 counter += 1
         
-        # Write file
         with open(file_path, "wb") as f:
             content = await file.read()
             f.write(content)
         
-        # Generate URL for the document
         file_url = f"/api/v1/dossiers/temporary-documents/{file_path.name}?user_id={current_user.id}"
         
         return {
@@ -405,15 +380,12 @@ async def download_temporary_document(
     """
     Download or preview a temporarily uploaded document.
     """
-    # Security: only allow users to access their own temporary files
     if current_user.id != user_id:
         raise HTTPException(status_code=403, detail="Not authorized to access this document")
     
-    # Construct safe file path
     temp_dir = Path(settings.UPLOADS_DIR) / "temporary" / f"user_{user_id}"
     file_path = temp_dir / filename
     
-    # Security: verify file is within temp directory
     try:
         file_path = file_path.resolve()
         temp_dir = temp_dir.resolve()

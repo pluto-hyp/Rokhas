@@ -45,7 +45,15 @@ def register_user(user_in: UserCreate, db: Session = Depends(get_db)):
             status_code=400,
             detail="The user with this email already exists in the system.",
         )
-    user = crud_user.create_user(db, user=user_in)
+    user = crud_user.create_user(
+        db,
+        user=UserCreate(
+            email=user_in.email,
+            full_name=user_in.full_name,
+            password=user_in.password,
+            role="citizen",
+        ),
+    )
     return user
 
 
@@ -81,11 +89,6 @@ async def google_access_token(payload: GoogleAuthRequest, db: Session = Depends(
                 role="citizen",
             ),
         )
-    elif user.role != "citizen":
-        user.role = "citizen"
-        db.add(user)
-        db.commit()
-        db.refresh(user)
 
     if not user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")

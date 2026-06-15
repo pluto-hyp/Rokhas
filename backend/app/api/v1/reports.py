@@ -25,7 +25,6 @@ def get_report_summary(
     total_businesses = db.query(Business).count()
     total_evaluations = db.query(Evaluation).count()
     
-    # Category distribution for dossiers
     category_data = db.query(Dossier.type, func.count(Dossier.id)).group_by(Dossier.type).all()
     categories = {t or "Other": count for t, count in category_data}
 

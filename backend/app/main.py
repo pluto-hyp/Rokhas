@@ -58,7 +58,6 @@ def ensure_business_permit_columns():
     """Ensure business_permits table exists and has required columns."""
     inspector = inspect(engine)
     if "business_permits" not in inspector.get_table_names():
-        # Table will be created by SQLAlchemy models
         return
 
     existing_columns = {column["name"] for column in inspector.get_columns("business_permits")}
@@ -93,7 +92,6 @@ def ensure_notifications_columns():
                     "ALTER TABLE notifications ADD COLUMN business_permit_id INTEGER"
                 ))
         else:
-            # PostgreSQL or other DB
             with engine.begin() as connection:
                 connection.execute(text(
                     "ALTER TABLE notifications ADD COLUMN business_permit_id INTEGER REFERENCES business_permits(id) ON DELETE CASCADE"

@@ -306,14 +306,11 @@ Question : {question}"""
         surface_area = permit_info.get("surface_area")
         documents = permit_info.get("permit_documents", [])
         
-        # Check uploaded document keys
         uploaded_keys = {doc.get("key") for doc in documents if doc.get("filename")}
         
-        # Base requirements
         required_keys = {"owner_id_card", "commercial_register", "tax_patent", "premises_lease"}
         missing_docs = required_keys - uploaded_keys
         
-        # Special Zone B requirement
         zone_b_violation = False
         if "zone b" in zone.lower():
             if "environmental_audit" not in uploaded_keys:

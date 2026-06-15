@@ -77,7 +77,6 @@ async def get_agent_response(message: str, user_name: str):
     except Exception as e:
         print(f"Agent API error: {e}. Falling back to simulation.")
     
-    # Fallback to simulation if Agent API is down
     return simulate_agent_response(message, user_name)
 
 
@@ -93,7 +92,6 @@ async def analyze_file(request: FileAnalyzeRequest):
     except Exception as e:
         print(f"Agent analyze-file error: {e}")
 
-    # Fallback: simple filename heuristics
     name = request.filename or ""
     simulated = {
         "approved": True,
