@@ -31,6 +31,12 @@ export function NavMain({
     return "Manage Dossiers";
   };
 
+  const getCreateButtonHref = () => {
+    if (role === "architect") return "/dashboard/projects/create";
+    if (role === "citizen") return "/dashboard/business-permits/create";
+    return "/dashboard/dossiers";
+  };
+
   const showCreateButton = role === "architect" || role === "citizen";
 
   return (
