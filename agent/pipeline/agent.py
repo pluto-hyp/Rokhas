@@ -1,7 +1,6 @@
 import os
 import requests
 from dotenv import load_dotenv
-from .vectorstore import VectorStore
 
 load_dotenv()
 
@@ -24,10 +23,7 @@ Règles importantes :
 class RokhasAgent:
     def __init__(self):
         self.store = None
-        try:
-            self.store = VectorStore()
-        except Exception as e:
-            print(f"Vector store unavailable: {e}. Agent will use rule-based fallback without document search.")
+        self.vectorstore_enabled = os.getenv("ENABLE_VECTORSTORE", "false").lower() in {"1", "true", "yes", "on"}
         
         # Options: "ollama", "gemini"
         self.provider = os.getenv("LLM_PROVIDER", "gemini").lower()
@@ -39,11 +35,26 @@ class RokhasAgent:
             self.gemini_fallback_model_name = os.getenv("GEMINI_FALLBACK_MODEL", "gemini-2.0-flash")
             self.gemini_model = genai.GenerativeModel(self.gemini_model_name, system_instruction=SYSTEM_PROMPT)
 
+    def get_store(self):
+        if not self.vectorstore_enabled:
+            return None
+
+        if self.store is None:
+            try:
+                from .vectorstore import VectorStore
+                self.store = VectorStore()
+            except Exception as e:
+                print(f"Vector store unavailable: {e}. Agent will continue without document search.")
+                self.vectorstore_enabled = False
+
+        return self.store
+
     def query(self, question: str, conversation_history: list = []) -> dict:
         relevant_chunks = []
-        if self.store:
+        store = self.get_store()
+        if store:
             try:
-                relevant_chunks = self.store.search(question, n_results=5)
+                relevant_chunks = store.search(question, n_results=5)
             except Exception as e:
                 print(f"Vector search unavailable: {e}. Continuing without retrieved context.")
 
