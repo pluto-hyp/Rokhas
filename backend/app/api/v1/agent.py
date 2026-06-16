@@ -17,8 +17,8 @@ class ChatResponse(BaseModel):
     content: str
     timestamp: str
 
-AGENT_API_URL = os.getenv("AGENT_API_URL", "http://127.0.0.1:8001/chat")
 AGENT_BASE = os.getenv("AGENT_URL", "http://127.0.0.1:8001")
+AGENT_API_URL = os.getenv("AGENT_API_URL", f"{AGENT_BASE}/chat")
 
 
 class FileAnalyzeRequest(BaseModel):
