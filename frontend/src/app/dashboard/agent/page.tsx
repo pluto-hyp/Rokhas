@@ -22,16 +22,16 @@ export default function AgentPage() {
   ]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null); // ✅ Container ref
+  const messagesEndRef = useRef<HTMLDivElement>(null); // ✅ End marker ref
 
   useEffect(() => {
-    if (scrollRef.current) {
-      const scrollContainer = scrollRef.current.querySelector('[data-radix-scroll-area-viewport]');
-      if (scrollContainer) {
-        scrollContainer.scrollTop = scrollContainer.scrollHeight;
-      }
+    if (messagesEndRef.current) {
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+      }, 50);
     }
-  }, [messages, isTyping]);
+  }, [messages]);
 
   const handleSend = async (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -98,7 +98,10 @@ export default function AgentPage() {
           <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:20px_20px]" />
         </div>
 
-        <ScrollArea className="flex-1" ref={scrollRef}>
+        <div 
+          ref={messagesContainerRef}
+          className="flex-1 overflow-y-auto overflow-x-hidden"
+        >
           <div className="p-6 space-y-8 max-w-3xl mx-auto w-full">
             {messages.map((msg) => (
               <div
@@ -147,8 +150,10 @@ export default function AgentPage() {
                 </div>
               </div>
             )}
+            
+            <div ref={messagesEndRef} />
           </div>
-        </ScrollArea>
+        </div>
         
         <div className="p-6 bg-background/80 border-t border-border/40 backdrop-blur-md">
           <form onSubmit={handleSend} className="max-w-3xl mx-auto relative flex items-center group">

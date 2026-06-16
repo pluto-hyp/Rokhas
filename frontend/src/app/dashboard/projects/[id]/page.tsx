@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, ReactElement } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { 
   ApiError, 
@@ -9,13 +9,12 @@ import {
   Project, 
   PermitDocument 
 } from "@/lib/api";
-import { 
-  ArrowLeft,
+import {
   FileText, 
-  Search, 
   CheckCircle2,
   Clock,
   Printer,
+  Loader2,
   ShieldCheck,
   Building,
   User,
@@ -25,18 +24,17 @@ import {
   Bot,
   Eye,
   X,
-  ExternalLink,
   ChevronRight,
-  RefreshCw
+  RefreshCw,
+  XCircle
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
 import { OfficialPermitCertificate } from "@/components/OfficialPermitCertificate";
 
@@ -57,6 +55,7 @@ export default function ProjectDetailPage() {
 
   const [showPermitModal, setShowPermitModal] = useState(false);
   const [extracting, setExtracting] = useState(false);
+  const [rejectingDossier, setRejectingDossier] = useState(false);
 
   const [revokingDocKey, setRevokingDocKey] = useState<string | null>(null);
   const [revocationReason, setRevocationReason] = useState<string>("");
@@ -261,7 +260,7 @@ export default function ProjectDetailPage() {
       toast.success(approve ? "Document approved successfully!" : "Document revoked.", { id: "doc-update" });
       setRevokingDocKey(null);
       setRevocationReason("");
-    } catch (err) {
+    } catch {
       toast.error("Failed to update document status.", { id: "doc-update" });
     }
   };
@@ -281,6 +280,43 @@ export default function ProjectDetailPage() {
       toast.error(errorMsg, { id: "permit-extraction" });
     } finally {
       setExtracting(false);
+    }
+  };
+
+  const canApproveDossier = () => {
+    if (!project) return false;
+    const requiredDocs = (project.permit_documents || []).filter((doc) => doc.required !== false);
+    return requiredDocs.length > 0 && requiredDocs.every((doc) => doc.approved);
+  };
+
+  const canRejectDossier = () => {
+    if (!project) return false;
+    return (project.permit_documents || []).some((doc) => !doc.approved && doc.notes?.some((note) => note.trim()));
+  };
+
+  const handleRejectDossier = async () => {
+    if (!project || !token) return;
+
+    if (!canRejectDossier()) {
+      toast.error("Reject at least one document and provide a reason before rejecting the dossier.");
+      return;
+    }
+
+    setRejectingDossier(true);
+    try {
+      toast.loading("Rejecting dossier and saving document remarks...", { id: "dossier-reject" });
+      const updatedProject = await updateProjectStatus(
+        project.id,
+        { status: "Rejected", permit_documents: project.permit_documents || [] },
+        token
+      );
+      setProject(updatedProject);
+      toast.success("Dossier rejected. The applicant can see the rejected file remarks.", { id: "dossier-reject" });
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : "Failed to reject dossier";
+      toast.error(errorMsg, { id: "dossier-reject" });
+    } finally {
+      setRejectingDossier(false);
     }
   };
 
@@ -317,6 +353,13 @@ export default function ProjectDetailPage() {
         </Badge>
       );
     }
+    if (status === "Rejected") {
+      return (
+        <Badge className="bg-destructive hover:bg-destructive/90 text-white font-bold gap-1 px-3 py-1 rounded-full text-xs">
+          <XCircle className="size-3.5" /> Rejected
+        </Badge>
+      );
+    }
     return (
       <Badge className="bg-amber-500 hover:bg-amber-600 text-white font-bold gap-1 px-3 py-1 rounded-full text-xs animate-pulse">
         <Clock className="size-3.5" /> Under Administrative Review
@@ -338,7 +381,7 @@ export default function ProjectDetailPage() {
       <div className="flex flex-col items-center justify-center min-h-[70vh] space-y-4">
         <AlertCircle className="size-12 text-destructive" />
         <h3 className="text-lg font-bold">Dossier Workspace Error</h3>
-        <p className="text-sm text-muted-foreground">We couldn't retrieve the specified dossier details.</p>
+        <p className="text-sm text-muted-foreground">We couldn&apos;t retrieve the specified dossier details.</p>
         <Button onClick={() => router.push("/dashboard/projects")} variant="outline" className="rounded-xl">
           Return to Dashboard
         </Button>
@@ -569,7 +612,7 @@ export default function ProjectDetailPage() {
                       {hasNotes && !isVerified && (
                         <div className="p-3 rounded-lg bg-destructive/5 border border-destructive/10 text-[11px] text-destructive font-medium space-y-1">
                           <p className="text-[9px] uppercase font-bold text-destructive/80 tracking-wider">Reason for Revocation:</p>
-                          <p className="italic">"{doc.notes[0]}"</p>
+                          <p className="italic">&quot;{doc.notes[0]}&quot;</p>
                         </div>
                       )}
 
@@ -673,10 +716,26 @@ export default function ProjectDetailPage() {
 
           {/* Sticky Actions Footer Card inside Left Column */}
           <Card className="rounded-2xl border-border/40 bg-card/65 backdrop-blur-md shadow-lg p-5 flex flex-col sm:flex-row gap-3">
-            {role === "authority" && project.status !== "Approved" && (
+            {(role === "authority" || role === "admin") && project.status !== "Approved" && project.status !== "Rejected" && (
+              <Button
+                variant="outline"
+                onClick={handleRejectDossier}
+                disabled={!canRejectDossier() || rejectingDossier || extracting}
+                className="flex-1 h-12 rounded-xl text-sm font-black border-destructive/50 text-destructive hover:bg-destructive hover:text-white transition-all flex items-center justify-center gap-2"
+              >
+                {rejectingDossier ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <XCircle className="size-4" />
+                )}
+                {rejectingDossier ? "Rejecting Dossier..." : "Reject Dossier"}
+              </Button>
+            )}
+
+            {(role === "authority" || role === "admin") && project.status !== "Approved" && project.status !== "Rejected" && (
               <Button 
                 onClick={handleExtractPermit}
-                disabled={extracting}
+                disabled={!canApproveDossier() || extracting || rejectingDossier}
                 className="flex-1 h-12 rounded-xl text-sm font-black bg-primary text-primary-foreground hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/10"
               >
                 <Printer className="size-4" />
@@ -770,7 +829,7 @@ export default function ProjectDetailPage() {
                 </div>
                 <h3 className="text-sm font-black text-foreground uppercase tracking-wider mb-1">Dossier Interactive Viewer</h3>
                 <p className="text-xs text-muted-foreground max-w-xs leading-relaxed">
-                  Select "Preview Document" next to any checklist file on the left. It will stream and render here immediately for compliance vetting.
+                  Select &quot;Preview Document&quot; next to any checklist file on the left. It will stream and render here immediately for compliance vetting.
                 </p>
                 <div className="mt-6 w-full max-w-[240px] space-y-2 border-t border-border/25 pt-6 text-[10px] text-left text-muted-foreground/80 font-medium">
                   <p className="flex items-center gap-1.5">

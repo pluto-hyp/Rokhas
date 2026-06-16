@@ -490,8 +490,8 @@ export default function CreateProjectPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-6 space-y-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  <div className="space-y-2">
+                <div className={role === "architect" ? "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4" : "grid grid-cols-1 sm:grid-cols-2 gap-6"}>
+                  <div className={role === "architect" ? "space-y-2 xl:col-span-4" : "space-y-2"}>
                     <Label htmlFor="type" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
                       Request Type
                     </Label>
@@ -518,14 +518,74 @@ export default function CreateProjectPage() {
                       </SelectContent>
                     </Select>
                   </div>
+                  {role === "architect" && (
+                    <>
+                      <div className="space-y-2">
+                        <Label htmlFor="hauteur" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                          Hauteur (m)
+                        </Label>
+                        <Input
+                          id="hauteur"
+                          name="hauteur"
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          placeholder="e.g. 12"
+                          value={formData.hauteur || ""}
+                          onChange={handleChange}
+                          required
+                          className="rounded-xl h-11 border-border/40 bg-background focus:ring-primary/20 font-semibold"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="recul" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                          Recul (m)
+                        </Label>
+                        <Input
+                          id="recul"
+                          name="recul"
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          placeholder="e.g. 5"
+                          value={formData.recul || ""}
+                          onChange={handleChange}
+                          required
+                          className="rounded-xl h-11 border-border/40 bg-background focus:ring-primary/20 font-semibold"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="emprise" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                          Emprise (%)
+                        </Label>
+                        <Input
+                          id="emprise"
+                          name="emprise"
+                          type="number"
+                          min="0"
+                          max="100"
+                          step="0.01"
+                          placeholder="e.g. 45"
+                          value={formData.emprise || ""}
+                          onChange={handleChange}
+                          required
+                          className="rounded-xl h-11 border-border/40 bg-background focus:ring-primary/20 font-semibold"
+                        />
+                      </div>
+                    </>
+                  )}
                   <div className="space-y-2">
                     <Label htmlFor="surface_terrain" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-                      Surface Terrain (m²)
+                      Surface (m²)
                     </Label>
                     <Input
                       id="surface_terrain"
                       name="surface_terrain"
                       type="number"
+                      min="0"
+                      step="0.01"
                       placeholder="e.g. 150"
                       value={formData.surface_terrain || ""}
                       onChange={handleChange}
