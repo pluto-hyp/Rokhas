@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/next"
 import { EB_Garamond, Geist } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";

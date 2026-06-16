@@ -2,7 +2,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional
 from pydantic import BaseModel
-from pipeline.agent import RokhasAgent
+
+try:
+    from pipeline.agent import RokhasAgent
+except ModuleNotFoundError:
+    from agent.pipeline.agent import RokhasAgent
 
 app = FastAPI(title="Rokhas Agent API")
 agent = RokhasAgent()
@@ -65,7 +69,6 @@ def verify_business_permit(req: BusinessPermitRequest):
 
 @app.post("/analyze-file")
 def analyze_file(req: FileAnalyzeRequest):
-    # prefer content_base64 if provided (image/text preview)
     preview = req.content_base64 or req.preview
     return agent.analyze_file(req.filename, preview)
 
