@@ -9,13 +9,17 @@ import mimetypes
 from pathlib import Path
 from typing import Optional
 
-BLOB_READ_WRITE_TOKEN = os.getenv("BLOB_READ_WRITE_TOKEN", "")
+def get_token() -> str:
+    """Retrieve the Vercel Blob read/write token dynamically."""
+    return os.getenv("BLOB_READ_WRITE_TOKEN", "")
+
+
 VERCEL_BLOB_API_URL = "https://blob.vercel-storage.com"
 
 
 def is_blob_enabled() -> bool:
     """Check if Vercel Blob Storage is configured."""
-    return bool(BLOB_READ_WRITE_TOKEN)
+    return bool(get_token())
 
 
 def is_blob_url(url: str) -> bool:
@@ -50,7 +54,7 @@ async def upload_to_blob(
             content_type = "application/octet-stream"
 
     headers = {
-        "Authorization": f"Bearer {BLOB_READ_WRITE_TOKEN}",
+        "Authorization": f"Bearer {get_token()}",
         "x-api-version": "1",
         "Content-Type": content_type,
     }
@@ -81,7 +85,7 @@ async def delete_from_blob(blob_url: str) -> bool:
     import httpx
 
     headers = {
-        "Authorization": f"Bearer {BLOB_READ_WRITE_TOKEN}",
+        "Authorization": f"Bearer {get_token()}",
         "x-api-version": "1",
         "Content-Type": "application/json",
     }

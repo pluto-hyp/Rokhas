@@ -153,28 +153,19 @@ export default function ProjectDetailPage() {
     setLoadingPreview(true);
     try {
       const isBlobUrl = doc.url && doc.url.includes("blob.vercel-storage.com");
-      if (isBlobUrl && doc.url) {
-        if (activePreviewDoc?.url && !activePreviewDoc.url.includes("blob.vercel-storage.com")) {
-          URL.revokeObjectURL(activePreviewDoc.url);
-        }
-        const filename = doc.filename || "";
-        let mimeType = "application/octet-stream";
-        if (filename.toLowerCase().endsWith(".pdf")) mimeType = "application/pdf";
-        else if (filename.toLowerCase().endsWith(".jpg") || filename.toLowerCase().endsWith(".jpeg")) mimeType = "image/jpeg";
-        else if (filename.toLowerCase().endsWith(".png")) mimeType = "image/png";
-        else if (filename.toLowerCase().endsWith(".gif")) mimeType = "image/gif";
+      let blob: Blob;
 
-        setActivePreviewDoc({
-          key: doc.key,
-          filename: doc.filename || "document",
-          type: mimeType,
-          url: doc.url,
-        });
-        return;
+      if (isBlobUrl && doc.url) {
+        // Fetch the file bytes directly from Vercel Blob to prevent forced downloads (Content-Disposition: attachment)
+        const response = await fetch(doc.url);
+        if (!response.ok) {
+          throw new Error("Failed to fetch document from blob storage");
+        }
+        blob = await response.blob();
+      } else {
+        blob = await fetchDocumentBlob(doc);
       }
 
-      let blob = await fetchDocumentBlob(doc);
-      
       if (blob.type === "application/octet-stream" || !blob.type) {
         const filename = doc.filename || "";
         let inferredType = blob.type;

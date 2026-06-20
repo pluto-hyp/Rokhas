@@ -201,7 +201,11 @@ async def upload_document(
     # --- Vercel Blob Storage ---
     if blob_storage.is_blob_enabled():
         blob_path = f"business_permits/{permit_id}/{filename}"
-        result = await blob_storage.upload_to_blob(content, blob_path)
+        result = await blob_storage.upload_to_blob(
+            content, 
+            blob_path, 
+            content_type=file.content_type
+        )
         file_url = result["url"]
     else:
         # --- Local disk fallback ---

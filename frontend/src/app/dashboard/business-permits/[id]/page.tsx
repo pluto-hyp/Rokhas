@@ -131,8 +131,7 @@ export default function PermitDetailPage() {
 
   useEffect(() => {
     return () => {
-      // Only revoke object URLs (not Vercel blob URLs which are persistent)
-      if (previewDoc?.url && !previewDoc.url.includes("blob.vercel-storage.com")) {
+      if (previewDoc?.url) {
         URL.revokeObjectURL(previewDoc.url);
       }
     };
@@ -334,20 +333,18 @@ export default function PermitDetailPage() {
 
   const handleViewDocument = async (doc: Document) => {
     try {
-      // If file is on Vercel Blob, use public URL directly
+      let blob: Blob;
+      
       if (doc.url && doc.url.includes("blob.vercel-storage.com")) {
-        const filename = getDocumentFilename(doc);
-        let mimeType = "application/octet-stream";
-        const lower = filename.toLowerCase();
-        if (lower.endsWith(".pdf")) mimeType = "application/pdf";
-        else if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) mimeType = "image/jpeg";
-        else if (lower.endsWith(".png")) mimeType = "image/png";
-        else if (lower.endsWith(".gif")) mimeType = "image/gif";
-        setPreviewDoc({ filename, type: mimeType, url: doc.url });
-        return;
+        const response = await fetch(doc.url);
+        if (!response.ok) {
+          throw new Error("Failed to fetch document from blob storage");
+        }
+        blob = await response.blob();
+      } else {
+        blob = await fetchDocumentBlob(doc);
       }
 
-      let blob = await fetchDocumentBlob(doc);
       blob = inferMimeType(blob, getDocumentFilename(doc));
       const url = window.URL.createObjectURL(blob);
       setPreviewDoc({

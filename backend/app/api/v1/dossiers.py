@@ -232,7 +232,11 @@ async def upload_document(
         # --- Vercel Blob Storage (preferred in production) ---
         if blob_storage.is_blob_enabled():
             blob_path = f"dossiers/{dossier_id}/{filename}"
-            result = await blob_storage.upload_to_blob(content, blob_path)
+            result = await blob_storage.upload_to_blob(
+                content, 
+                blob_path, 
+                content_type=file.content_type
+            )
             return {
                 "filename": filename,
                 "url": result["url"],
@@ -369,7 +373,11 @@ async def upload_temporary_document(
         # --- Vercel Blob Storage (preferred in production) ---
         if blob_storage.is_blob_enabled():
             blob_path = f"temporary/user_{current_user.id}/{filename}"
-            result = await blob_storage.upload_to_blob(content, blob_path)
+            result = await blob_storage.upload_to_blob(
+                content, 
+                blob_path, 
+                content_type=file.content_type
+            )
             return {
                 "filename": filename,
                 "url": result["url"],
