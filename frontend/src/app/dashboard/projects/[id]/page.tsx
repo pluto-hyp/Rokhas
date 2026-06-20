@@ -99,6 +99,17 @@ export default function ProjectDetailPage() {
   }, [isLoading, token, logout, dossierId]);
 
   useEffect(() => {
+    if (project) {
+      const year = project.created_at ? new Date(project.created_at).getFullYear() : 2026;
+      const refCode = `RKH-${year}-${project.id.toString().padStart(4, '0')}`;
+      const event = new CustomEvent("rokhas-breadcrumb-override", {
+        detail: refCode
+      });
+      window.dispatchEvent(event);
+    }
+  }, [project]);
+
+  useEffect(() => {
     return () => {
       if (activePreviewDoc?.url) {
         URL.revokeObjectURL(activePreviewDoc.url);
@@ -156,7 +167,6 @@ export default function ProjectDetailPage() {
       let blob: Blob;
 
       if (isBlobUrl && doc.url) {
-        // Fetch the file bytes directly from Vercel Blob to prevent forced downloads (Content-Disposition: attachment)
         const response = await fetch(doc.url);
         if (!response.ok) {
           throw new Error("Failed to fetch document from blob storage");
@@ -748,7 +758,7 @@ export default function ProjectDetailPage() {
                 className="flex-1 h-12 rounded-xl text-sm font-black bg-primary text-primary-foreground hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/10"
               >
                 <Printer className="size-4" />
-                {extracting ? "Validating & Stamping..." : "Approve & Stamp Construction Permit"}
+                {extracting ? "Validating & Stamping..." : "Approve"}
               </Button>
             )}
 
