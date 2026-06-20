@@ -36,9 +36,9 @@ export function Navbar() {
           <span>Rokhas.</span>
         </Link>
         
-        <div className="h-6 w-px bg-border/40" />
+        <div className="hidden sm:block h-6 w-px bg-border/40" />
 
-        <NavigationMenu>
+        <NavigationMenu className="hidden sm:block">
           <NavigationMenuList className="gap-2">
             <NavigationMenuItem>
               <NavigationMenuLink asChild>
@@ -57,7 +57,7 @@ export function Navbar() {
           </NavigationMenuList>
         </NavigationMenu>
 
-        <div className="h-6 w-px bg-border/40" />
+        <div className="hidden sm:block h-6 w-px bg-border/40" />
 
         <div className="flex items-center gap-3">
           {token ? (

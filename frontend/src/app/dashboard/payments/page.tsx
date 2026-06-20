@@ -180,7 +180,7 @@ export default function PaymentsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* Ledger List */}
-        <Card className="lg:col-span-2 rounded-lg border bg-card">
+        <Card className="lg:col-span-2 rounded-lg border bg-card py-2">
           <CardHeader className="px-6 border-b">
             <CardTitle className="text-base font-semibold">Ledger</CardTitle>
             <CardDescription className="text-xs">
@@ -239,7 +239,7 @@ export default function PaymentsPage() {
 
         {/* Card Management */}
         <div className="space-y-4">
-          <Card className="rounded-lg border bg-card">
+          <Card className="rounded-lg border bg-card py-2">
             <CardHeader className="px-6 border-b">
               <CardTitle className="text-base font-semibold">Saved Cards</CardTitle>
             </CardHeader>
@@ -263,7 +263,7 @@ export default function PaymentsPage() {
             </CardContent>
           </Card>
 
-          <Card className="rounded-lg border bg-card/40">
+          <Card className="rounded-lg border bg-card/40 py-2">
             <CardContent className="text-xs text-muted-foreground leading-relaxed">
               <p className="font-semibold text-foreground mb-1">CMI Protocol Security</p>
               Transactions are securely processed through regional government vaults. Once paid, the validation ledger automatically links receipt logs to your dossiers.

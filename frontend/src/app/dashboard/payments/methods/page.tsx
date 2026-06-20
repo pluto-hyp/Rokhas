@@ -135,7 +135,7 @@ export default function BillingMethodsPage() {
         <div className="lg:col-span-2 space-y-6">
           
           {/* Saved Cards */}
-          <Card className="rounded-lg border bg-card">
+          <Card className="rounded-lg border bg-card py-2">
             <CardHeader className="px-6 border-b">
               <CardTitle className="text-base font-semibold">Active Cards & Profiles</CardTitle>
               <CardDescription className="text-xs">
@@ -191,7 +191,7 @@ export default function BillingMethodsPage() {
           </Card>
 
           {/* Add Card Form */}
-          <Card className="rounded-lg border bg-card">
+          <Card className="rounded-lg border bg-card py-2">
             <CardHeader className="px-6 border-b">
               <CardTitle className="text-base font-semibold">Add Card Profile</CardTitle>
             </CardHeader>
@@ -282,7 +282,7 @@ export default function BillingMethodsPage() {
         <div className="space-y-6">
           
           {/* Corporate Invoice Settings */}
-          <Card className="rounded-lg border bg-card">
+          <Card className="rounded-lg border bg-card py-2">
             <CardHeader className="px-6 border-b">
               <CardTitle className="text-base font-semibold">Corporate Invoice Info</CardTitle>
               <CardDescription className="text-xs">

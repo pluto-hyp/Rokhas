@@ -70,7 +70,7 @@ export default function Home() {
             <span className="text-xs font-bold uppercase tracking-[0.3em] text-primary/40">
               Modern Administration
             </span>
-            <h1 className="font-serif text-7xl md:text-9xl font-bold tracking-tighter leading-[0.85] text-primary">
+            <h1 className="font-serif text-5xl sm:text-7xl md:text-9xl font-bold tracking-tighter leading-[0.85] text-primary">
               Rokhas<br />
               <span className="opacity-20 italic">Platform.</span>
             </h1>
@@ -80,22 +80,22 @@ export default function Home() {
             <p className="text-xl md:text-2xl text-primary/70 leading-tight font-medium max-w-md">
               Streamlining construction permits for citizens, architects, and authorities across Morocco.
             </p>
-            <div className="flex md:justify-end gap-6">
+            <div className="flex flex-col sm:flex-row md:justify-end gap-4 sm:gap-6 w-full">
               {token ? (
-                <Link href="/dashboard">
-                  <Button size="lg" className="rounded-full h-16 px-10 text-base font-bold bg-primary text-background hover:scale-105 transition-transform active:scale-95">
+                <Link href="/dashboard" className="w-full sm:w-auto">
+                  <Button size="lg" className="w-full sm:w-auto rounded-full h-16 px-10 text-base font-bold bg-primary text-background hover:scale-105 transition-transform active:scale-95">
                     Go to Dashboard
                   </Button>
                 </Link>
               ) : (
                 <>
-                  <Link href="/signup">
-                    <Button size="lg" className="rounded-full h-16 px-10 text-base font-bold bg-primary text-background hover:scale-105 transition-transform active:scale-95">
+                  <Link href="/signup" className="w-full sm:w-auto">
+                    <Button size="lg" className="w-full sm:w-auto rounded-full h-16 px-10 text-base font-bold bg-primary text-background hover:scale-105 transition-transform active:scale-95">
                       Start Your Project
                     </Button>
                   </Link>
-                  <Link href="/login">
-                    <Button size="lg" variant="outline" className="rounded-full h-16 px-10 text-base font-bold border-primary text-primary hover:bg-primary/5 transition-colors">
+                  <Link href="/login" className="w-full sm:w-auto">
+                    <Button size="lg" variant="outline" className="w-full sm:w-auto rounded-full h-16 px-10 text-base font-bold border-primary text-primary hover:bg-primary/5 transition-colors">
                       Sign In
                     </Button>
                   </Link>
@@ -206,7 +206,7 @@ export default function Home() {
               </Link>
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-16">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-12 sm:gap-16">
             <div className="space-y-4">
               <div className="text-xs font-bold uppercase tracking-widest text-primary/30">Company</div>
               <ul className="space-y-2 text-sm font-bold">
