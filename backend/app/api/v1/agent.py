@@ -66,7 +66,7 @@ async def get_agent_response(message: str, user_name: str):
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.post(AGENT_API_URL, json={"question": message, "history": []})
-            if response.ok:
+            if response.is_success:
                 data = response.json()
                 return ChatResponse(
                     id=str(uuid.uuid4())[:8],
@@ -87,7 +87,7 @@ async def analyze_file(request: FileAnalyzeRequest):
         async with httpx.AsyncClient(timeout=30.0) as client:
             payload = {"filename": request.filename, "preview": request.preview, "content_base64": request.content_base64}
             resp = await client.post(f"{AGENT_BASE}/analyze-file", json=payload)
-            if resp.ok:
+            if resp.is_success:
                 return resp.json()
     except Exception as e:
         print(f"Agent analyze-file error: {e}")
