@@ -7,7 +7,8 @@ from pathlib import Path
 from datetime import datetime, timezone
 from urllib.parse import parse_qs, unquote, urlparse
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
+from app.services import blob_storage
 from sqlalchemy.orm import Session
 from app.api.dependencies import get_db, get_current_active_user, get_current_admin_user
 from app.models.user import User
@@ -221,13 +222,26 @@ async def upload_document(
         raise HTTPException(status_code=413, detail="File too large")
     
     try:
-        dossier_dir = Path(settings.UPLOADS_DIR) / f"dossier_{dossier_id}"
-        dossier_dir.mkdir(parents=True, exist_ok=True)
-        
         filename = file.filename or "document"
         filename = "".join(c for c in filename if c.isalnum() or c in "._- ").rstrip()
         if not filename:
             filename = "document"
+        
+        content = await file.read()
+
+        # --- Vercel Blob Storage (preferred in production) ---
+        if blob_storage.is_blob_enabled():
+            blob_path = f"dossiers/{dossier_id}/{filename}"
+            result = await blob_storage.upload_to_blob(content, blob_path)
+            return {
+                "filename": filename,
+                "url": result["url"],
+                "size": result["size"],
+            }
+
+        # --- Local disk fallback (development / non-Vercel) ---
+        dossier_dir = Path(settings.UPLOADS_DIR) / f"dossier_{dossier_id}"
+        dossier_dir.mkdir(parents=True, exist_ok=True)
         
         file_path = dossier_dir / filename
         
@@ -240,11 +254,9 @@ async def upload_document(
                 counter += 1
         
         with open(file_path, "wb") as f:
-            content = await file.read()
             f.write(content)
         
         file_url = f"/api/v1/dossiers/{dossier_id}/documents/{file_path.name}"
-        
         return {
             "filename": file_path.name,
             "url": file_url,
@@ -291,6 +303,7 @@ async def download_document(
     """
     Download or preview a document from a dossier.
     Accessible by dossier owner, admins, and authorities.
+    If the file is stored on Vercel Blob, redirects to the public blob URL.
     """
     db_dossier = crud_dossier.get_dossier(db, dossier_id=dossier_id)
     if db_dossier is None:
@@ -298,12 +311,18 @@ async def download_document(
     
     if current_user.role not in {"admin", "authority"} and db_dossier.owner_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized to access this document")
-    
-    dossier_dir = Path(settings.UPLOADS_DIR) / f"dossier_{dossier_id}"
-    
+
+    # Check if any matching document URL points to Vercel Blob — redirect directly
+    for doc in (db_dossier.permit_documents or []):
+        doc_filename = doc.get("filename", "")
+        doc_url = doc.get("url", "")
+        if doc_filename == filename and blob_storage.is_blob_url(doc_url):
+            return RedirectResponse(url=doc_url, status_code=302)
+
     if ".." in filename or filename.startswith("/") or filename.startswith("\\"):
         raise HTTPException(status_code=403, detail="Invalid file path")
     
+    dossier_dir = Path(settings.UPLOADS_DIR) / f"dossier_{dossier_id}"
     file_path = dossier_dir / filename
     
     if not file_path.exists():
@@ -333,19 +352,33 @@ async def upload_temporary_document(
     """
     Upload a document file temporarily before dossier creation.
     Used for file uploads during form creation.
-    Returns the file URL to be stored in document metadata.
+    When Vercel Blob is configured, files are uploaded directly to the blob store
+    and the returned URL is a permanent public blob URL.
     """
     if file.size and file.size > settings.MAX_UPLOAD_SIZE:
         raise HTTPException(status_code=413, detail="File too large")
     
     try:
-        temp_dir = Path(settings.UPLOADS_DIR) / "temporary" / f"user_{current_user.id}"
-        temp_dir.mkdir(parents=True, exist_ok=True)
-        
         filename = file.filename or "document"
         filename = "".join(c for c in filename if c.isalnum() or c in "._- ").rstrip()
         if not filename:
             filename = "document"
+
+        content = await file.read()
+
+        # --- Vercel Blob Storage (preferred in production) ---
+        if blob_storage.is_blob_enabled():
+            blob_path = f"temporary/user_{current_user.id}/{filename}"
+            result = await blob_storage.upload_to_blob(content, blob_path)
+            return {
+                "filename": filename,
+                "url": result["url"],
+                "size": result["size"],
+            }
+
+        # --- Local disk fallback (development / non-Vercel) ---
+        temp_dir = Path(settings.UPLOADS_DIR) / "temporary" / f"user_{current_user.id}"
+        temp_dir.mkdir(parents=True, exist_ok=True)
         
         file_path = temp_dir / filename
         
@@ -358,11 +391,9 @@ async def upload_temporary_document(
                 counter += 1
         
         with open(file_path, "wb") as f:
-            content = await file.read()
             f.write(content)
         
         file_url = f"/api/v1/dossiers/temporary-documents/{file_path.name}?user_id={current_user.id}"
-        
         return {
             "filename": file_path.name,
             "url": file_url,

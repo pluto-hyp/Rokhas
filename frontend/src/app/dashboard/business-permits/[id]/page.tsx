@@ -131,7 +131,8 @@ export default function PermitDetailPage() {
 
   useEffect(() => {
     return () => {
-      if (previewDoc?.url) {
+      // Only revoke object URLs (not Vercel blob URLs which are persistent)
+      if (previewDoc?.url && !previewDoc.url.includes("blob.vercel-storage.com")) {
         URL.revokeObjectURL(previewDoc.url);
       }
     };
@@ -294,6 +295,18 @@ export default function PermitDetailPage() {
 
   const handleDownloadDocument = async (doc: Document) => {
     try {
+      // If file is on Vercel Blob, download directly via anchor tag
+      if (doc.url && doc.url.includes("blob.vercel-storage.com")) {
+        const a = document.createElement("a");
+        a.href = doc.url;
+        a.download = getDocumentFilename(doc);
+        a.target = "_blank";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        return;
+      }
+
       const blob = await fetchDocumentBlob(doc);
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -321,6 +334,19 @@ export default function PermitDetailPage() {
 
   const handleViewDocument = async (doc: Document) => {
     try {
+      // If file is on Vercel Blob, use public URL directly
+      if (doc.url && doc.url.includes("blob.vercel-storage.com")) {
+        const filename = getDocumentFilename(doc);
+        let mimeType = "application/octet-stream";
+        const lower = filename.toLowerCase();
+        if (lower.endsWith(".pdf")) mimeType = "application/pdf";
+        else if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) mimeType = "image/jpeg";
+        else if (lower.endsWith(".png")) mimeType = "image/png";
+        else if (lower.endsWith(".gif")) mimeType = "image/gif";
+        setPreviewDoc({ filename, type: mimeType, url: doc.url });
+        return;
+      }
+
       let blob = await fetchDocumentBlob(doc);
       blob = inferMimeType(blob, getDocumentFilename(doc));
       const url = window.URL.createObjectURL(blob);

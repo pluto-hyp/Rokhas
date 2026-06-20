@@ -123,8 +123,6 @@ export default function ProjectDetailPage() {
       return response.blob();
     }
 
-    // If primary endpoint failed with 404 and we have a stored URL pointing to temporary upload,
-    // try fetching from that URL directly (handles dossiers where files weren't moved to permanent storage)
     if (response.status === 404 && doc.url) {
       const fallbackUrl = doc.url.startsWith("/") 
         ? `${window.location.origin}${doc.url}` 
@@ -154,9 +152,29 @@ export default function ProjectDetailPage() {
 
     setLoadingPreview(true);
     try {
+      const isBlobUrl = doc.url && doc.url.includes("blob.vercel-storage.com");
+      if (isBlobUrl && doc.url) {
+        if (activePreviewDoc?.url && !activePreviewDoc.url.includes("blob.vercel-storage.com")) {
+          URL.revokeObjectURL(activePreviewDoc.url);
+        }
+        const filename = doc.filename || "";
+        let mimeType = "application/octet-stream";
+        if (filename.toLowerCase().endsWith(".pdf")) mimeType = "application/pdf";
+        else if (filename.toLowerCase().endsWith(".jpg") || filename.toLowerCase().endsWith(".jpeg")) mimeType = "image/jpeg";
+        else if (filename.toLowerCase().endsWith(".png")) mimeType = "image/png";
+        else if (filename.toLowerCase().endsWith(".gif")) mimeType = "image/gif";
+
+        setActivePreviewDoc({
+          key: doc.key,
+          filename: doc.filename || "document",
+          type: mimeType,
+          url: doc.url,
+        });
+        return;
+      }
+
       let blob = await fetchDocumentBlob(doc);
       
-      // Ensure the Blob has the correct MIME type based on file extension for previewing
       if (blob.type === "application/octet-stream" || !blob.type) {
         const filename = doc.filename || "";
         let inferredType = blob.type;

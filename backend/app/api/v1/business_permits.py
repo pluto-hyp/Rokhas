@@ -1,6 +1,6 @@
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from sqlalchemy.orm import Session
 from app.api.dependencies import get_db, get_current_active_user, get_current_admin_user
 from app.models.user import User
@@ -8,6 +8,7 @@ from app.schemas.business_permit import BusinessPermitCreate, BusinessPermitResp
 from app.crud import business_permit as crud_business_permit
 from app.crud import notification as crud_notification
 from app.services.agent_client import verify_business_permit_with_agent
+from app.services import blob_storage
 from app.core.config import settings
 import hashlib
 from datetime import datetime, timezone
@@ -63,6 +64,12 @@ async def create_business_permit(
     for doc in permit.permit_documents or []:
         doc_dict = doc.model_dump()
         if doc.url:
+            # If URL is already a blob URL, keep it as-is (no local copy needed)
+            if blob_storage.is_blob_url(doc.url):
+                updated_docs.append(doc_dict)
+                continue
+
+            # Legacy: try to move from temporary local storage
             parsed_url = urlparse(doc.url)
             temp_filename = unquote(Path(parsed_url.path).name)
             query_user_id = parse_qs(parsed_url.query).get("user_id", [None])[0]
@@ -70,6 +77,8 @@ async def create_business_permit(
             temp_file_path = UPLOAD_DIR / "temporary" / f"user_{owner_id}" / temp_filename
             
             if temp_file_path.exists():
+                permit_dir = UPLOAD_DIR / f"business_permit_{new_permit.id}"
+                permit_dir.mkdir(parents=True, exist_ok=True)
                 permanent_file_path = permit_dir / temp_filename
                 shutil.copy2(temp_file_path, permanent_file_path)
                 doc_dict["url"] = f"/api/v1/business-permits/{new_permit.id}/documents/{temp_filename}"
@@ -170,7 +179,7 @@ def update_business_permit(
     return crud_business_permit.update_business_permit(db=db, db_permit=permit, permit_update=permit_update)
 
 @router.post("/{permit_id}/upload-document")
-def upload_document(
+async def upload_document(
     permit_id: int,
     file: UploadFile = File(...),
     key: str = Query("business_document"),
@@ -184,21 +193,32 @@ def upload_document(
     
     if current_user.id != permit.owner_id and current_user.role not in {"admin", "authority"}:
         raise HTTPException(status_code=403, detail="Not authorized")
-    
-    permit_dir = UPLOAD_DIR / f"business_permit_{permit_id}"
-    permit_dir.mkdir(parents=True, exist_ok=True)
-    
-    file_path = permit_dir / file.filename
-    with open(file_path, "wb") as f:
-        f.write(file.file.read())
+
+    filename = file.filename or "document"
+    filename = "".join(c for c in filename if c.isalnum() or c in "._- ").rstrip() or "document"
+    content = await file.file.read()
+
+    # --- Vercel Blob Storage ---
+    if blob_storage.is_blob_enabled():
+        blob_path = f"business_permits/{permit_id}/{filename}"
+        result = await blob_storage.upload_to_blob(content, blob_path)
+        file_url = result["url"]
+    else:
+        # --- Local disk fallback ---
+        permit_dir = UPLOAD_DIR / f"business_permit_{permit_id}"
+        permit_dir.mkdir(parents=True, exist_ok=True)
+        file_path = permit_dir / filename
+        with open(file_path, "wb") as f:
+            f.write(content)
+        file_url = f"/api/v1/business-permits/{permit_id}/documents/{filename}"
     
     docs = list(permit.permit_documents or [])
     docs = [d for d in docs if d.get("key") != key]
     
     docs.append({
         "key": key,
-        "filename": file.filename,
-        "url": f"/api/v1/business-permits/{permit_id}/documents/{file.filename}",
+        "filename": filename,
+        "url": file_url,
         "approved": True,
         "required": True,
         "notes": []
@@ -209,8 +229,8 @@ def upload_document(
     db.refresh(permit)
     
     return {
-        "filename": file.filename,
-        "url": f"/api/v1/business-permits/{permit_id}/documents/{file.filename}"
+        "filename": filename,
+        "url": file_url,
     }
 
 @router.get("/{permit_id}/documents/{filename}")
@@ -227,7 +247,14 @@ def get_document(
     
     if current_user.id != permit.owner_id and current_user.role not in {"admin", "authority"}:
         raise HTTPException(status_code=403, detail="Not authorized")
-    
+
+    # If matching document is on Vercel Blob, redirect directly
+    for doc in (permit.permit_documents or []):
+        doc_filename = doc.get("filename", "")
+        doc_url = doc.get("url", "")
+        if doc_filename == filename and blob_storage.is_blob_url(doc_url):
+            return RedirectResponse(url=doc_url, status_code=302)
+
     permit_dir = UPLOAD_DIR / f"business_permit_{permit_id}"
     file_path = _safe_file_path(permit_dir, filename)
 
